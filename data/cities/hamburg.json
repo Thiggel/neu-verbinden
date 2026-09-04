@@ -1,0 +1,64 @@
+{
+  "id": "hamburg",
+  "name": "Hamburg",
+  "adjective": "Hamburger",
+  "center": {
+    "lat": 53.5511,
+    "lon": 9.9937
+  },
+  "projectionOrigin": {
+    "lat": 53.55034,
+    "lon": 9.99247
+  },
+  "bbox": "53.32,9.60,53.80,10.40",
+  "regionBbox": "53.00,9.10,54.55,12.55",
+  "stationBbox": "53.00,9.10,54.55,12.55",
+  "transitOperators": [
+    "Hamburger Hochbahn",
+    "S-Bahn Hamburg",
+    "AKN"
+  ],
+  "networkQuery": {
+    "routeMaster": [
+      "subway",
+      "light_rail",
+      "train"
+    ],
+    "networkNames": "HVV|Hamburger Verkehrsverbund"
+  },
+  "boundary": {
+    "adminLevel": 4,
+    "name": "Hamburg"
+  },
+  "districts": {
+    "kind": "geojson",
+    "file": "data/raw/districts.geojson",
+    "nameKey": "stadtteil_name",
+    "note": "Stadtteile der Freien und Hansestadt Hamburg"
+  },
+  "statistics": {
+    "kind": "statistikamt-nord",
+    "note": "Regionalstatistische Daten der Stadtteile, über die OGC-API der FHH",
+    "licence": "dl-de/by-2-0",
+    "label": "Statistikamt Nord"
+  },
+  "jobs": {
+    "total": 1280000,
+    "centreBoostFactor": 1.9,
+    "centreBoostRadiusM": 2600
+  },
+  "colors": {
+    "ubahn": "#0067b3",
+    "sbahn": "#009d58",
+    "tram": "#d5006d"
+  },
+  "modelParams": {
+    "fiscal": {
+      "vatCityShare": 0.0245
+    },
+    "calibratedOn": "Hamburg"
+  },
+  "modelParamsNote": "Hamburg: 1,9 Mio. Einwohner, Anteil am Umsatzsteuer-Länderanteil nach Einwohnerschlüssel.",
+  "districtTerm": "Stadtteile",
+  "majorWater": "(elbe|alster|bille|köhlbrand|hafen|este|dove|gose|norderelbe|süderelbe)"
+}

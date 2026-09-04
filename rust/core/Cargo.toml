@@ -1,0 +1,21 @@
+[package]
+name = "hh-core"
+description = "Domain engine for the Hamburg Transit Network Designer: geometry, topology, station generation, cost, timeline, feasibility, economic and fiscal models."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[features]
+testing = []
+
+[dev-dependencies]
+serde_json = { workspace = true }
+# The integration tests build the crate as a dependency, so the fixtures have
+# to be compiled in explicitly.
+hh-core = { path = ".", features = ["testing"] }

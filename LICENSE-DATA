@@ -1,0 +1,50 @@
+# Licences of the datasets
+
+The MIT licence on the source code does not extend to the data. These files are
+derived from other people's databases, and their licences travel with them.
+
+## OpenStreetMap — ODbL 1.0, with share-alike
+
+`basemap-*.json`, `network-*.json`, `streets-*.json` and the town and region
+tiers are built from OpenStreetMap by the importers in `tools/importer/`.
+
+    © OpenStreetMap contributors, https://www.openstreetmap.org/copyright
+    Open Database License 1.0, https://opendatacommons.org/licenses/odbl/1-0/
+
+These files are **Derivative Databases** in the sense of the ODbL, not merely
+Produced Works: they are a substantial extraction of OSM restructured for this
+application. Section 4.4 of the ODbL therefore applies, and they are offered
+here under the ODbL 1.0. Anyone receiving the application receives them too, at
+`/data/` on the running site and in this repository.
+
+That is the obligation that is easiest to miss. Naming OpenStreetMap on the map
+satisfies attribution for the *rendered map*, which is a Produced Work. It does
+not by itself license the JSON the browser downloads, which is a database.
+
+## Statistics — dl-de/by-2-0
+
+Population and employment rasters:
+
+* Hamburg: Statistikamt Nord
+* Berlin: Amt für Statistik Berlin-Brandenburg, and the Berlin open data portal
+* Region: the census grid of the Statistische Ämter des Bundes und der Länder
+
+    Datenlizenz Deutschland — Namensnennung — Version 2.0
+    https://www.govdata.de/dl-de/by-2-0
+
+The licence requires the source to be named. Where a dataset has been changed,
+the change has to be noted; the importers record what they do in
+`docs/daten.md`, and the derived rasters are aggregations rather than
+corrections.
+
+## Published projects and proposals
+
+Route courses, station lists and published costs of decided projects come from
+the sponsors' own publications, each cited in `data/raw/` and in `docs/daten.md`.
+Facts about a project are not protected; the wording of the sources is, and is
+not reproduced here.
+
+## Model results
+
+Every figure this application computes is its own work and carries no third
+party's rights. It is also a model estimate and not a Standardisierte Bewertung.

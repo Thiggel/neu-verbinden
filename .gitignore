@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+rust/target/
+apps/web/src/wasm/
+apps/web/public/engine/
+apps/web/public/data/
+# Raw Overpass responses are large and reproducible from tools/importer.
+data/raw/
+*.log
+.DS_Store
+.env*.local
+tsconfig.tsbuildinfo
+.test-session-*.json
+
+# Verification builds, so they cannot disturb a running dev server.
+.next-build/

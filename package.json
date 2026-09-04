@@ -1,0 +1,38 @@
+{
+  "name": "hamburg-transit-designer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hamburg Transit Network Designer — draw the transit network you want and find out what it would take to build it.",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "data:fetch": "node tools/importer/fetch-transit.mjs && node tools/importer/fetch-stations.mjs && node tools/importer/fetch-geo.mjs && node tools/importer/fetch-planned.mjs && node tools/importer/fetch-statistics.mjs && node tools/importer/fetch-region.mjs",
+    "data:build": "node tools/importer/build-network.mjs && node tools/importer/build-city.mjs && node tools/importer/build-projects.mjs && npm run engine:import",
+    "data:fetch:berlin": "node tools/importer/fetch-berlin.mjs",
+    "data:build:berlin": "node tools/importer/build-network.mjs --city=berlin && node tools/importer/build-city.mjs --city=berlin && node tools/importer/build-projects.mjs --city=berlin && npm run engine:import:berlin",
+    "engine:import:berlin": "cd rust && cargo run --release -p hh-cli --bin hh -- import --city=berlin",
+    "engine:import": "cd rust && cargo run --release -p hh-cli --bin hh -- import",
+    "engine:calibrate": "cd rust && cargo run --release -p hh-cli --bin hh -- calibrate",
+    "engine:bench": "cd rust && cargo run --release -p hh-cli --bin hh -- bench",
+    "engine:test": "cd rust && cargo test",
+    "wasm:build": "bash tools/build-wasm.sh",
+    "data:publish": "node tools/publish-data.mjs",
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/web",
+    "build:check": "NEXT_DIST_DIR=.next-build npm run build --workspace apps/web",
+    "start": "npm run start --workspace apps/web",
+    "server": "cd rust && cargo run --release -p hh-server",
+    "lint": "npm run lint -w apps/web",
+    "test:engine": "node tools/test-engine.mjs",
+    "test:ui": "node --experimental-strip-types --no-warnings tools/test-ui.mjs",
+    "test:flow": "node tools/test-flow.mjs",
+    "test:api": "node tools/test-api.mjs",
+    "test:security": "node tools/test-security.mjs",
+    "test": "npm run lint && npm run engine:test && npm run test:ui && npm run test:engine && npm run test:flow && npm run test:api && npm run test:browser && npm run test:security",
+    "test:browser": "node tools/test-browser.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
