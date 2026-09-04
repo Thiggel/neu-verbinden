@@ -403,6 +403,17 @@ pub struct Line {
     pub service: ServicePattern,
     /// Whether the line is part of the scenario (plan §12 toggles).
     pub included: bool,
+    /// The line this one continues, where it is an extension somebody drew onto
+    /// an existing route.
+    ///
+    /// Extending used to append the new track to the line itself, which made it
+    /// part of the Bestand: it could not be switched off, and it did not appear
+    /// among the things the author had drawn. Now the extension is a line of its
+    /// own, carrying this pointer so the model still knows it is the same
+    /// service. Without that, riding through the join would cost a transfer
+    /// penalty, and a through service would be appraised as a change of train.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extends: Option<LineId>,
     /// Free-text provenance, shown in the UI.
     #[serde(default)]
     pub note: String,

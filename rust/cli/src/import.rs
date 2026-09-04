@@ -275,6 +275,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 edges,
                 service: ServicePattern::default_for(mode),
                 included: true,
+                extends: None,
                 note: if l.branch {
                     "Verstärker- oder Aststrecke".into()
                 } else {
@@ -607,6 +608,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 service: ServicePattern::default_for(mode),
                 // Planned lines start switched off; the scenarios turn them on.
                 included: false,
+                extends: None,
                 note: p.note.clone(),
                 official_opening_year: p.opening_year,
                 construction_started_year: p.construction_start_year,

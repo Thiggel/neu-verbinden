@@ -54,6 +54,15 @@ impl TravelGraph {
             if !l.included && !only_in_service {
                 continue;
             }
+            // An extension travels under its parent's identity.
+            //
+            // A change of line costs five minutes here, and that is measured by
+            // comparing line ids between one segment and the next. An extension
+            // somebody drew onto the U1 is a separate line object so that it can
+            // be listed and switched off on its own — but it is the same train,
+            // and charging a transfer at the join would appraise a through
+            // service as a change.
+            let identity = l.extends.unwrap_or(l.id);
             for eid in &l.edges {
                 let Some(e) = net.edges.get(eid) else {
                     continue;
@@ -71,14 +80,14 @@ impl TravelGraph {
                             if minutes < existing.minutes {
                                 existing.minutes = minutes;
                             }
-                            if !existing.lines.contains(&l.id) {
-                                existing.lines.push(l.id);
+                            if !existing.lines.contains(&identity) {
+                                existing.lines.push(identity);
                             }
                         }
                         None => entry.push(Link {
                             to: b,
                             minutes,
-                            lines: vec![l.id],
+                            lines: vec![identity],
                             mode: e.mode,
                         }),
                     }

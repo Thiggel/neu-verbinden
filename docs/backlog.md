@@ -183,6 +183,18 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 ## Erledigt
 
+* **[F]** Eine Verlängerung einer bestehenden Linie hängte die neuen Abschnitte
+  an diese Linie an. Damit gehörte sie zum Bestand: sie stand nicht unter
+  „Eigener Entwurf", und sie ließ sich nicht abschalten, um zu sehen, was sie
+  für sich genommen bringt. Sie ist jetzt eine eigene Linie mit `extends` auf
+  die fortgesetzte Route. Der Reisezeitgraph rechnet sie unter der Kennung der
+  Mutterlinie, sonst hätte die Fuge fünf Minuten Umsteigezeit gekostet und eine
+  durchgehende Fahrt wäre als Umstieg bewertet worden. Ein zweites Weiterbauen
+  am selben Ende verlängert dieselbe Verlängerung, statt eine Abzweigung zu
+  erzeugen. Bestehende gespeicherte Entwürfe ändern sich nicht: ohne `extends`
+  rechnet der Graph wie zuvor, was `model_baseline` bestätigt.
+
+
 * **[P→erledigt]** 2026-09-03 Die Zusage „der Editor funktioniert auch ohne
   Server" bei abgeschaltetem API-Server nachgeprüft — sie hält. Der Editor lädt
   vollständig: Rechenkern, Karte, 77 Linien, laufende Kennzahlen. Die

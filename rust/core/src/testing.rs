@@ -84,6 +84,7 @@ fn line(net: &mut Network, label: &str, mode: Mode, edges: Vec<EdgeId>, source: 
             edges,
             service: ServicePattern::default_for(mode),
             included: true,
+            extends: None,
             note: String::new(),
             official_opening_year: None,
             construction_started_year: None,
