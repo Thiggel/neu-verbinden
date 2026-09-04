@@ -34,6 +34,7 @@ monatelang falsch zu laufen (`rust/server/src/preflight.rs`).
 | `HH_WORKER_IDLE_SECS` | bei schlafender Datenbank | Wie lange der Arbeiter wartet, wenn nichts zu tun ist (Vorgabe 60 s) |
 | `HH_DB_IDLE_SECS` | bei schlafender Datenbank | Wann ungenutzte Verbindungen geschlossen werden (Vorgabe 120 s) |
 | `HH_CITIES`, `HH_DATA_DIR`, `HH_DATA_VERSION` | nein | Welche Städte, woher, welcher Stand |
+| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | für Rückmeldungen | Programm und Empfänger für das Feedback-Fenster. Ohne beides bleibt die Rückmeldung in der Tabelle `feedback` stehen, statt verloren zu gehen |
 
 Für die Oberfläche zur *Bauzeit*: `NEXT_PUBLIC_API_URL=https://…`, die Adresse
 der API. Sie steht danach im ausgelieferten JavaScript und lässt sich ohne
@@ -78,6 +79,13 @@ nichts, worauf jemand wartet.
    ```
    Der Sicherheitslauf prüft echte Limits und unterliegt ihnen selbst; zweimal
    kurz hintereinander gestartet sagt er weniger, und sagt das auch.
+
+## Die Beispiele auf der Entdecken-Seite
+
+`npm run examples:seed` veröffentlicht sie unter einem eigenen Konto und ersetzt
+dabei, was dasselbe Konto vorher veröffentlicht hat. `HH_SEED_PASSWORD` ist
+Pflicht, `HH_SEED_PURGE=1` räumt zusätzlich alles andere weg und braucht dafür
+ein Konto mit Moderatorrechten.
 
 ## Was noch offen ist
 

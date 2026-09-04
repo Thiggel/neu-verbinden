@@ -30,7 +30,8 @@
     "test:api": "node tools/test-api.mjs",
     "test:security": "node tools/test-security.mjs",
     "test": "npm run lint && npm run engine:test && npm run test:ui && npm run test:engine && npm run test:flow && npm run test:api && npm run test:browser && npm run test:security",
-    "test:browser": "node tools/test-browser.mjs"
+    "test:browser": "node tools/test-browser.mjs",
+    "examples:seed": "node tools/seed-examples.mjs"
   },
   "devDependencies": {
     "playwright": "^1.62.1"

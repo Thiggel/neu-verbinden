@@ -706,6 +706,91 @@ await check('eine Verlängerung ist ein eigener, abschaltbarer Eintrag', async (
 
 // ------------------------------------------------------------ Pflichten --
 
+// The bar has to be *on screen*, not merely present in the document, and
+// nothing may cover it. On a plan page the sticky analysis panel is a full
+// viewport tall and used to sit right over it: measured, footer at 487-539 and
+// panel at 56-876. A link nobody can click is not a link.
+await check('der Fuß steht unten und wird von nichts überdeckt', async () => {
+  const list = await fetch(`${API}/api/scenarios?limit=40`).then((r) => r.json());
+  const paths = ['/entdecken', '/rechtliches', '/'];
+  if (list.length) paths.push(`/szenario/${list[0].slug}`);
+  for (const path of paths) {
+    const { page, context } = await open(path);
+    if (path === '/') await start(page);
+    await page.locator('footer').waitFor({ timeout: READY });
+    // Scroll everything that can scroll, then look again.
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('*')) {
+        if (el.scrollHeight > el.clientHeight + 50) el.scrollTop = el.scrollHeight;
+      }
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    await page.waitForTimeout(600);
+    const seen = await page.evaluate(() => {
+      const f = document.querySelector('footer');
+      const r = f.getBoundingClientRect();
+      const gap = Math.round(window.innerHeight - r.bottom);
+      // What is actually painted where the footer's links are.
+      const link = f.querySelector('a');
+      const lr = link.getBoundingClientRect();
+      const hit = document.elementFromPoint(lr.left + lr.width / 2, lr.top + lr.height / 2);
+      return { gap, height: Math.round(r.height), covered: !f.contains(hit), hit: hit?.tagName };
+    });
+    assert(seen.height > 10, `${path}: der Fuß ist ${seen.height} px hoch`);
+    assert(seen.gap <= 1, `${path}: der Fuß steht ${seen.gap} px über dem unteren Rand`);
+    assert(!seen.covered, `${path}: über dem Fuß liegt ${seen.hit}`);
+    await context.close();
+  }
+});
+
+await check('der Fuß nennt den Betreiber, den Kontakt und den Kaffee', async () => {
+  const { page, context } = await open('/entdecken');
+  await page.locator('footer').waitFor({ timeout: 30_000 });
+  const links = await page.evaluate(() =>
+    [...document.querySelectorAll('footer a')].map((a) => ({ t: a.textContent?.trim(), h: a.getAttribute('href') }))
+  );
+  const mail = links.find((l) => l.h?.startsWith('mailto:'));
+  assert(mail, 'kein Kontaktlink im Fuß');
+  const coffee = links.find((l) => l.h?.includes('buymeacoffee.com'));
+  assert(coffee, 'kein Kaffeelink im Fuß');
+  const text = await page.evaluate(() => document.querySelector('footer').innerText);
+  assert(/Von .+/.test(text), `der Fuß nennt niemanden: ${text.slice(0, 60)}`);
+  await context.close();
+});
+
+// Reporting something broken has to take fewer steps than the bug did.
+await check('die Rückmeldung lässt sich in drei Schritten abschicken', async () => {
+  const { page, context, errors } = await open('/entdecken');
+  await page.locator('footer').waitFor({ timeout: 30_000 });
+  // The footer is server-rendered, so its presence says nothing about whether
+  // React has attached the handler yet. Clicking once and waiting made this
+  // fail about half the time — on a slow first load the button really is inert
+  // for a moment, which is worth knowing but is not what this check is about.
+  const sheet = page.locator('[role="dialog"]').first();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await page.getByRole('button', { name: 'Feedback' }).click();
+    try {
+      await sheet.waitFor({ timeout: 2000 });
+      break;
+    } catch {
+      if (attempt === 9) throw new Error('das Rückmeldungsfenster öffnet sich nicht');
+    }
+  }
+  // Kind, text, send. No account, no address, nothing to solve by hand.
+  const kinds = await sheet.getByRole('radio').count();
+  assert(kinds === 3, `${kinds} Arten statt drei`);
+  await sheet.getByRole('radio', { name: /Etwas fehlt/ }).click();
+  await sheet.locator('textarea').fill('Ein Testwunsch aus der Browserprüfung, bitte ignorieren.');
+  const send = sheet.getByRole('button', { name: 'Absenden' });
+  assert(await send.isEnabled(), 'Absenden bleibt gesperrt');
+  await send.click();
+  // The proof of work runs in a worker; the confirmation is what proves the
+  // whole path worked, challenge and all.
+  await page.getByText('Angekommen', { exact: false }).waitFor({ timeout: 40_000 });
+  assert(errors.length === 0, `Fehler in der Konsole: ${errors.slice(0, 2).join(' | ')}`);
+  await context.close();
+});
+
 // § 5 DDG wants the operator's details reachable from anywhere, at all times.
 // Asserting that against the source only proves the component exists; this
 // checks the pages a visitor actually lands on.
