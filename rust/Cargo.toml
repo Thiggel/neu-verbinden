@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["core", "cli", "wasm", "server"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+# The wasm build needs unwinding disabled but cdylib + panic=abort conflicts
+# with the test harness, so it is set per-profile in the build script instead.
+
+[profile.release.package.hh-wasm]
+opt-level = "s"

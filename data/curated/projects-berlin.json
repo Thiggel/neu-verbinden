@@ -1,0 +1,127 @@
+{
+  "version": "2026-09",
+  "note": "Offiziell geplante Berliner Vorhaben. Stationsnamen und Reihenfolge sind kuratiert und stammen aus den unten genannten Veröffentlichungen; die Koordinaten werden aus den OSM-Daten dieses Datenstands aufgelöst. Kosten- und Terminangaben sind veröffentlichte Projektangaben und dienen als Vergleichsmaßstab — sie werden vom Modell nicht als Ergebnis übernommen. Wo eine Angabe fehlt, ist sie nicht veröffentlicht und wird hier auch nicht geschätzt.",
+  "projects": [
+    {
+      "id": "siemensbahn",
+      "label": "S",
+      "name": "Siemensbahn: Jungfernheide – Gartenfeld",
+      "mode": "sbahn",
+      "source": "planned",
+      "status": "under_construction",
+      "infrastructure": "elevated",
+      "color": "#008e4f",
+      "openingYear": 2029,
+      "officialCostEur": 500000000,
+      "anchor": [
+        13.279,
+        52.535
+      ],
+      "note": "Reaktivierung der 1980 stillgelegten Strecke, Teil von i2030. Kostenangabe Stand 2021; die Baupreise sind seither erheblich gestiegen. Rund 30 Brücken werden erneuert oder neu gebaut. Das Land Berlin finanziert 36,5 Mio. € vorgezogene Baumaßnahmen. Die Liniennummer der reaktivierten Strecke ist nicht festgelegt; das Netz führt bereits eine S15.",
+      "sources": [
+        "Deutsche Bahn, Projektseite Siemensbahn (siemensbahn.deutschebahn.com)",
+        "VBB/i2030, Pressemitteilung zur Vorfinanzierung durch das Land Berlin"
+      ],
+      "stations": [
+        {
+          "name": "Jungfernheide",
+          "new": false
+        },
+        {
+          "name": "Wernerwerk",
+          "new": true
+        },
+        {
+          "name": "Siemensstadt",
+          "new": true
+        },
+        {
+          "name": "Gartenfeld",
+          "new": true
+        }
+      ],
+      "priceBaseYear": 2021
+    },
+    {
+      "id": "u8-maerkisches-viertel",
+      "label": "U8",
+      "name": "U8: Wittenau – Märkisches Viertel",
+      "mode": "ubahn",
+      "source": "planned",
+      "status": "to_build",
+      "color": "#0a3c8c",
+      "openingYear": null,
+      "officialCostEur": 390000000,
+      "anchor": [
+        13.343,
+        52.596
+      ],
+      "note": "2,8 km unter dem Wilhelmsruher Damm, vier neue Bahnhöfe. Kostenangabe 390 Mio. € auf Preisstand 2025; das entspricht 139 Mio. €/km, deutlich weniger als vergleichbare deutsche U-Bahn-Verlängerungen (291–500 Mio. €/km) — der BUND Berlin bezweifelt die Prognose deshalb öffentlich. Ein Inbetriebnahmejahr ist nicht veröffentlicht. Die Planung nennt einen weiteren Halt „Wesendorfer Straße“; er liegt in den Straßendaten rund 150 m neben dem vorhergehenden und lässt sich daraus nicht als eigener Standort auflösen, deshalb führt die hier gezeichnete Linie vier statt fünf Halte. Die Bauweise ist hier nicht vorgegeben — unter einem breiten Boulevard wie dem Wilhelmsruher Damm ist offene Bauweise so plausibel wie bergmännischer Vortrieb, und welche gewählt wird, ist nicht veröffentlicht; das Modell wählt sie je Abschnitt selbst.",
+      "sources": [
+        "Senatskanzlei Berlin, Pressemitteilung zum Senatsbeschluss zur Fortführung der Planungen (2026)",
+        "BVG Projekt GmbH, Projektseite U8-Verlängerung Märkisches Viertel",
+        "BUND Berlin, Stellungnahme zur Kostenprognose"
+      ],
+      "stations": [
+        {
+          "name": "Wittenau",
+          "new": false
+        },
+        {
+          "name": "Märkisches Zentrum",
+          "new": true
+        },
+        {
+          "name": "Treuenbrietzener Straße",
+          "new": true
+        },
+        {
+          "name": "Senftenberger Ring",
+          "new": true
+        }
+      ],
+      "costDisputed": true,
+      "priceBaseYear": 2025
+    },
+    {
+      "id": "tram-ostkreuz",
+      "label": "Tram",
+      "name": "Straßenbahn Marktstraße – Ostkreuz – Wühlischplatz",
+      "mode": "tram",
+      "source": "planned",
+      "status": "to_build",
+      "infrastructure": "tram_reserved",
+      "color": "#e2001a",
+      "openingYear": null,
+      "officialCostEur": null,
+      "anchor": [
+        13.469,
+        52.503
+      ],
+      "note": "Rund 1,2 km mit vier barrierefreien Haltestellen, Anbindung des Bahnhofs Ostkreuz an das Straßenbahnnetz. Das Planfeststellungsverfahren läuft seit 2017; die Unterlagen lagen zuletzt 2024 erneut aus, ein Beschluss steht aus. Weder Kosten noch Baubeginn sind veröffentlicht — die Senatsverwaltung nennt einen Baubeginn ausdrücklich als nicht valide vorhersagbar.",
+      "sources": [
+        "Senatsverwaltung für Umwelt, Verkehr und Klimaschutz, Projektseite Marktstraße – Ostkreuz – Wühlischplatz",
+        "BVG Projekt GmbH, Projektseite Straßenbahn-Neubaustrecke Ostkreuz"
+      ],
+      "stations": [
+        {
+          "name": "Holteistraße",
+          "new": false
+        },
+        {
+          "name": "Sonntagstraße",
+          "new": true
+        },
+        {
+          "name": "Ostkreuz",
+          "new": true
+        },
+        {
+          "name": "Marktstraße",
+          "new": false
+        }
+      ]
+    }
+  ],
+  "proposals": []
+}

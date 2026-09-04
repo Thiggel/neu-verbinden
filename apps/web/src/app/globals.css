@@ -1,0 +1,334 @@
+/* MapLibre first so Tailwind utilities can override its element styles. */
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@import 'tailwindcss';
+
+/*
+ * The visual language: a quiet, paper-like surface so the transit network is
+ * the only saturated thing on screen, generous tabular numerals for the
+ * figures, and no decoration that does not carry meaning (plan §79).
+ */
+
+/*
+ * The palette points at the runtime variables rather than at fixed hex values.
+ * Tailwind builds every opacity variant (`bg-surface/95`) from these tokens, so
+ * a token frozen to a light hex here would keep those variants white in dark
+ * mode however the `:root.dark` block is written — which is exactly what
+ * happened to the floating cards over the map.
+ */
+@theme {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  /* The page is not the same white as the things on it.
+     Both were #ffffff, so every card, panel and table sat on its own colour and
+     the pages read as text floating in a void. Dark mode always had this right:
+     its paper is darker than its surfaces. */
+  --paper: #f5f6f8;
+  --surface: #ffffff;
+  --subtle: #eceef1;
+  --line: #e3e5e9;
+  --ink: #14181f;
+  --muted: #67707f;
+  --canvas: #f5f3ef;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --paper: #0b0e12;
+  --surface: #14181f;
+  --subtle: #1c222b;
+  --line: #262d38;
+  --ink: #eef1f6;
+  --muted: #8c96a6;
+  --canvas: #12161c;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .bg-paper { background-color: var(--paper); }
+  .bg-surface { background-color: var(--surface); }
+  .bg-subtle { background-color: var(--subtle); }
+  .bg-ink { background-color: var(--ink); }
+  .text-paper { color: var(--paper); }
+  .text-ink { color: var(--ink); }
+  .text-muted { color: var(--muted); }
+  .border-line { border-color: var(--line); }
+  .bg-line { background-color: var(--line); }
+  .stroke-ink { stroke: var(--ink); }
+}
+
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding-inline: 0.75rem;
+    border-radius: 0.625rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 120ms ease;
+  }
+  .btn:hover { background: var(--subtle); }
+  .btn:disabled { opacity: 0.45; pointer-events: none; }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { opacity: 0.9; background: var(--ink); }
+  .btn-danger { color: #dc2626; border-color: #fecaca; }
+  .dark .btn-danger { color: #fca5a5; border-color: #7f1d1d; }
+  .btn-danger:hover { background: #fef2f2; }
+  .dark .btn-danger:hover { background: #450a0a; }
+}
+
+/* --- map labels ---------------------------------------------------------- */
+
+.lbl-station,
+.lbl-street,
+.lbl-place,
+.lbl-water,
+.lbl-region,
+.lbl-focus {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  transform-origin: 0 0;
+  translate: -50% calc(-100% - 9px);
+  pointer-events: none;
+  will-change: transform;
+}
+.lbl-station {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  text-shadow:
+    0 0 3px var(--canvas), 0 0 3px var(--canvas), 0 0 6px var(--canvas);
+}
+.lbl-station-major {
+  font-size: 12.5px;
+  font-weight: 650;
+}
+/* Street names sit under everything else: present when you look for them,
+   quiet when you are not. */
+.lbl-street {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.9;
+  text-shadow: 0 0 3px var(--canvas), 0 0 3px var(--canvas);
+}
+.lbl-place {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.85;
+  text-shadow: 0 0 4px var(--canvas), 0 0 4px var(--canvas);
+}
+.lbl-region {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-shadow: 0 0 4px var(--canvas), 0 0 4px var(--canvas);
+}
+.lbl-water {
+  font-size: 11px;
+  font-style: italic;
+  color: #4d7f9c;
+  opacity: 0.9;
+}
+.dark .lbl-water { color: #6fa5c4; }
+
+/* The label of whatever the pointer is on, or what is selected. Drawn as a
+   chip so it reads clearly over any part of the map. */
+.lbl-focus {
+  translate: -50% calc(-100% - 14px);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 3px 8px;
+  border-radius: 7px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.18);
+  animation: label-pop 140ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@keyframes label-pop {
+  from { opacity: 0; translate: -50% calc(-100% - 6px); }
+  to { opacity: 1; translate: -50% calc(-100% - 14px); }
+}
+
+/* MapLibre sets `position: relative` on its container; ours is absolutely
+   positioned inside the map pane, and that has to win. */
+.map-surface.maplibregl-map {
+  position: absolute;
+  inset: 0;
+}
+
+/* MapLibre chrome, toned down to match the rest of the interface. */
+.maplibregl-ctrl-group {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--line) !important; }
+.maplibregl-ctrl-attrib { font-size: 10px; background: color-mix(in srgb, var(--surface) 80%, transparent) !important; }
+.maplibregl-ctrl-attrib a { color: var(--muted) !important; }
+
+@keyframes pop-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-pop { animation: pop-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-rise { animation: slide-up 220ms cubic-bezier(0.2, 0.9, 0.3, 1.05); }
+
+/* A short pulse when a figure changes, so an edit is felt and not just read. */
+/* A slow halo on the cursor when the next click would join the network. */
+@keyframes ping-slow {
+  0% { transform: scale(0.7); opacity: 0.8; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.animate-ping-slow { animation: ping-slow 1.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+@keyframes value-bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.045); }
+  100% { transform: scale(1); }
+}
+.animate-bump { animation: value-bump 320ms cubic-bezier(0.2, 0.9, 0.3, 1.1); }
+
+/* The newly committed line announces itself once. */
+@keyframes flash-in {
+  0% { opacity: 0.15; }
+  40% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+button, .btn, [role='radio'], [role='tab'] {
+  transition:
+    background-color 130ms ease,
+    color 130ms ease,
+    box-shadow 130ms ease,
+    transform 90ms ease;
+}
+button:active:not(:disabled), .btn:active:not(:disabled) { transform: scale(0.97); }
+
+/* --- the one button that has to be noticed ------------------------------- */
+
+/*
+ * "Entdecken" leads to everyone else's plans, which is the half of the app a
+ * first-time visitor does not know exists. It sat in a row of grey buttons and
+ * read as one more piece of chrome. Gold, with a highlight that travels across
+ * it every few seconds: enough to catch the eye on a page where nothing else
+ * moves, brief enough not to nag.
+ */
+.btn-discover {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-color: color-mix(in srgb, #c8a24a 55%, transparent);
+  background-image: linear-gradient(135deg, #f6e6b8 0%, #e2c069 38%, #c8a24a 62%, #eddba0 100%);
+  color: #3d2f10;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%), inset 0 1px 0 rgb(255 255 255 / 45%);
+}
+:root[data-theme='dark'] .btn-discover,
+.dark .btn-discover {
+  color: #2b2007;
+}
+/* The glass reflection. A separate layer so the gradient underneath stays put. */
+.btn-discover::after {
+  content: '';
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(
+    100deg,
+    transparent 42%,
+    rgb(255 255 255 / 78%) 50%,
+    transparent 58%
+  );
+  transform: translateX(-120%);
+  animation: discover-sheen 9s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-discover:hover {
+  filter: brightness(1.04);
+}
+
+@keyframes discover-sheen {
+  /* Most of the cycle is spent off-screen: the sweep is the event, not the
+     resting state. */
+  /* The sweep itself is slow, and most of the cycle is spent waiting: the
+     movement should read as a catch of light, not as a loading bar. */
+  0%,
+  74% {
+    transform: translateX(-120%);
+  }
+  92%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* Someone who has asked for less motion gets the gold without the sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .btn-discover::after {
+    animation: none;
+    opacity: 0.35;
+    transform: translateX(0);
+  }
+}

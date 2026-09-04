@@ -1,0 +1,12 @@
+# Everything the image does not need. Without this the build context is the
+# whole repository including node_modules and the Rust target directory.
+node_modules
+**/node_modules
+rust/target
+apps/web/.next
+apps/web/.next-build
+data/raw
+data/work
+.git
+*.log
+.test-session-*.json

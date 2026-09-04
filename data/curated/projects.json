@@ -1,0 +1,886 @@
+{
+ "version": "2026-09",
+ "note": "Offiziell geplante und politisch vorgeschlagene Vorhaben. Stationsnamen und Reihenfolge sind kuratiert; die Koordinaten werden aus den OSM-Daten dieses Datenstands aufgelöst. Kosten- und Terminangaben sind veröffentlichte Projektangaben und dienen als Vergleichsmaßstab — sie werden vom Modell nicht als Ergebnis übernommen.",
+ "projects": [
+  {
+   "id": "u5-ost",
+   "label": "U5",
+   "name": "U5 Ost: Bramfeld – City Nord",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "under_construction",
+   "infrastructure": "deep_tunnel",
+   "color": "#8B5CF6",
+   "openingYear": 2032,
+   "officialCostEur": 2600000000,
+   "anchor": [
+    10.093,
+    53.612
+   ],
+   "note": "Erste Baustufe. Fahrgastbetrieb Sengelmannstraße – City Nord ab 2029 geplant; TVM-Vortrieb östlich Sengelmannstraße ab 2027.",
+   "sources": [
+    "HOCHBAHN U5-Projektkommunikation 2024–2026"
+   ],
+   "stations": [
+    {
+     "name": "Bramfeld",
+     "new": true
+    },
+    {
+     "name": "Steilshoop",
+     "new": true
+    },
+    {
+     "name": "Barmbek-Nord",
+     "new": true,
+     "alias": "Habichtstraße"
+    },
+    {
+     "name": "Sengelmannstraße",
+     "new": false
+    },
+    {
+     "name": "City Nord",
+     "new": true,
+     "alias": "Überseering"
+    }
+   ],
+   "constructionStartYear": 2022
+  },
+  {
+   "id": "u5-city-nord-jarrestrasse",
+   "label": "U5",
+   "name": "U5: City Nord – Jarrestraße",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "to_build",
+   "infrastructure": "deep_tunnel",
+   "color": "#8B5CF6",
+   "openingYear": 2035,
+   "officialCostEur": 1500000000,
+   "anchor": [
+    10.018,
+    53.601
+   ],
+   "note": "Rund 2,6 km, vorgestellt mit rund 1,5 Mrd. €. Borgweg um 2033, Jarrestraße um 2035.",
+   "sources": [
+    "HOCHBAHN / Behörde für Verkehr und Mobilitätswende, 2025"
+   ],
+   "stations": [
+    {
+     "name": "City Nord",
+     "new": true,
+     "alias": "Überseering"
+    },
+    {
+     "name": "Borgweg",
+     "new": false
+    },
+    {
+     "name": "Jarrestraße",
+     "new": true
+    }
+   ]
+  },
+  {
+   "id": "u5-jarrestrasse-st-georg",
+   "label": "U5",
+   "name": "U5: Jarrestraße – Hauptbahnhof/St. Georg",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "to_build",
+   "infrastructure": "deep_tunnel",
+   "color": "#8B5CF6",
+   "openingYear": 2038,
+   "anchor": [
+    10.0175,
+    53.583
+   ],
+   "note": "Planung läuft; Anbindung an den Hauptbahnhof im Bereich St. Georg.",
+   "sources": [
+    "HOCHBAHN U5-Planungsstand 2026"
+   ],
+   "stations": [
+    {
+     "name": "Jarrestraße",
+     "new": true
+    },
+    {
+     "name": "Uhlenhorst",
+     "new": true,
+     "alias": "Winterhuder Weg"
+    },
+    {
+     "name": "Mundsburg",
+     "new": false
+    },
+    {
+     "name": "Hauptbahnhof",
+     "new": false,
+     "alias": "St. Georg"
+    }
+   ]
+  },
+  {
+   "id": "u5-mitte",
+   "label": "U5",
+   "name": "U5 Mitte: Hauptbahnhof – Siemersplatz",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "to_build",
+   "infrastructure": "deep_tunnel",
+   "color": "#8B5CF6",
+   "openingYear": 2041,
+   "anchor": [
+    10.0069,
+    53.5527
+   ],
+   "note": "Mittelabschnitt durch Grindel und Eimsbüttel. Abschnitt Gärtnerstraße – Hagenbecks Tierpark ist Teil der weiteren Planung.",
+   "sources": [
+    "HOCHBAHN U5-Planungsstand 2026"
+   ],
+   "stations": [
+    {
+     "name": "Hauptbahnhof",
+     "new": false,
+     "alias": "St. Georg"
+    },
+    {
+     "name": "Universität Hamburg",
+     "new": true,
+     "alias": "Grindelberg"
+    },
+    {
+     "name": "Hoheluftbrücke",
+     "new": false
+    },
+    {
+     "name": "Gärtnerstraße",
+     "new": true
+    },
+    {
+     "name": "Siemersplatz",
+     "new": true
+    }
+   ]
+  },
+  {
+   "id": "u5-west",
+   "label": "U5",
+   "name": "U5 West: Siemersplatz – Osdorfer Born",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "to_build",
+   "infrastructure": "deep_tunnel",
+   "color": "#8B5CF6",
+   "openingYear": 2045,
+   "anchor": [
+    9.9366,
+    53.6003
+   ],
+   "note": "Im Mai 2026 wurde die Vorzugsvariante Richtung Lurup/Osdorf ausgewählt; Zielhorizont etwa 2040er Jahre.",
+   "sources": [
+    "Senatsentscheidung Vorzugsvariante U5 West, Mai 2026"
+   ],
+   "stations": [
+    {
+     "name": "Siemersplatz",
+     "new": true
+    },
+    {
+     "name": "Hagenbecks Tierpark",
+     "new": false
+    },
+    {
+     "name": "Stellingen",
+     "new": false
+    },
+    {
+     "name": "Volksparkstadion",
+     "new": true,
+     "alias": "Arenen"
+    },
+    {
+     "name": "Lurup",
+     "new": true
+    },
+    {
+     "name": "Osdorfer Born",
+     "new": true
+    }
+   ]
+  },
+  {
+   "id": "u4-horner-geest",
+   "label": "U4",
+   "name": "U4: Horner Rennbahn – Horner Geest",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "under_construction",
+   "infrastructure": "deep_tunnel",
+   "color": "#00A5A8",
+   "openingYear": 2027,
+   "officialCostEur": 465000000,
+   "anchor": [
+    10.0806,
+    53.5555
+   ],
+   "note": "Verlängerung der U4 in die Horner Geest, im Bau. Die Haltestelle Horner Rennbahn ist seit Mai 2024 in Betrieb; Stoltenstraße und Horner Geest sollen im Herbst 2027 folgen. Die 465 Mio. € für Planung und Bau nennt die HOCHBAHN in einem Beitrag vom 13. März 2018 und ohne ausdrücklichen Preisstand; die aktuelle Projektseite nennt überhaupt keine Kosten mehr. Die Angabe ist deshalb als Preisstand 2018 geführt — acht Jahre Baupreissteigerung liegen zwischen ihr und der Modellrechnung.",
+   "sources": [
+    "HOCHBAHN Dialog, „Das kostet die U4-Verlängerung auf die Horner Geest“, 13.03.2018",
+    "HOCHBAHN Projektseite U4 Horner Geest (Inbetriebnahme Herbst 2027; ohne Kostenangabe)"
+   ],
+   "stations": [
+    {
+     "name": "Horner Rennbahn",
+     "new": false
+    },
+    {
+     "name": "Stoltenstraße",
+     "new": true
+    },
+    {
+     "name": "Horner Geest",
+     "new": true,
+     "alias": "Dannerallee"
+    }
+   ],
+   "priceBaseYear": 2018,
+   "constructionStartYear": 2021
+  },
+  {
+   "id": "u4-grasbrook",
+   "label": "U4",
+   "name": "U4: Elbbrücken – Grasbrook",
+   "mode": "ubahn",
+   "source": "planned",
+   "status": "to_build",
+   "infrastructure": "deep_tunnel",
+   "color": "#00A5A8",
+   "openingYear": 2035,
+   "anchor": [
+    10.0245,
+    53.535
+   ],
+   "note": "Erschließung des neuen Stadtteils Grasbrook, in OSM als geplante Trasse erfasst.",
+   "sources": [
+    "Freie und Hansestadt Hamburg, Stadtentwicklung Grasbrook"
+   ],
+   "stations": [
+    {
+     "name": "Elbbrücken",
+     "new": false
+    },
+    {
+     "name": "Moldauhafen",
+     "new": true,
+     "alias": "Grasbrook"
+    }
+   ]
+  },
+  {
+   "id": "s4-ost",
+   "label": "S4",
+   "name": "S4: Hauptbahnhof – Ahrensburg – Bad Oldesloe",
+   "mode": "sbahn",
+   "source": "planned",
+   "status": "under_construction",
+   "infrastructure": "surface",
+   "color": "#00A0DE",
+   "openingYear": 2032,
+   "officialCostEur": 2100000000,
+   "anchor": [
+    10.0245,
+    53.562
+   ],
+   "note": "Viergleisiger Ausbau der Strecke nach Bad Oldesloe mit neuen S-Bahn-Gleisen; erste Abschnitte im Bau. Modelliert als neuer oberirdischer Bahnkörper im Bestandskorridor.",
+   "sources": [
+    "Deutsche Bahn / NAH.SH Projekt S4 (Ost)"
+   ],
+   "stations": [
+    {
+     "name": "Hauptbahnhof",
+     "new": false
+    },
+    {
+     "name": "Hasselbrook",
+     "new": false
+    },
+    {
+     "name": "Landwehr",
+     "new": false
+    },
+    {
+     "name": "Bovestraße",
+     "new": true
+    },
+    {
+     "name": "Wandsbek",
+     "new": true,
+     "alias": "Claudiusstraße"
+    },
+    {
+     "name": "Tonndorf",
+     "new": false
+    },
+    {
+     "name": "Rahlstedt",
+     "new": false
+    },
+    {
+     "name": "Ahrensburg West",
+     "new": true
+    },
+    {
+     "name": "Ahrensburg",
+     "new": false
+    },
+    {
+     "name": "Ahrensburg Gartenholz",
+     "new": false
+    },
+    {
+     "name": "Bargteheide",
+     "new": false
+    },
+    {
+     "name": "Bad Oldesloe",
+     "new": false
+    }
+   ],
+   "constructionStartYear": 2023
+  }
+ ],
+ "proposals": [
+  {
+   "id": "tram-linke-2026",
+   "name": "Straßenbahn-Alternative (Die Linke, August 2026)",
+   "source": "proposal",
+   "note": "Rekonstruktion auf Basis der veröffentlichten Eckdaten des Konzepts: rund vier Linien, etwa 44 km, 91 Haltestellen, angegebene Kosten rund 1,5 Mrd. € gegenüber rund 16,5 Mrd. € für das U5-Konzept. Die genaue Trassenführung des Konzepts liegt nicht maschinenlesbar vor; die hier gezeigten Korridore sind eine schematische Annäherung und keine Wiedergabe der Originalplanung.",
+   "sources": [
+    "Pressemitteilung Die Linke Hamburg, August 2026"
+   ],
+   "claimedCostEur": 1500000000,
+   "claimedLengthKm": 44,
+   "claimedStops": 91,
+   "comparisonCostEur": 16500000000,
+   "lines": [
+    {
+     "id": "tram-1",
+     "label": "T1",
+     "name": "T1: Altona – Hauptbahnhof – Wandsbek Markt",
+     "color": "#D2382C",
+     "anchor": [
+      9.935,
+      53.5525
+     ],
+     "stations": [
+      {
+       "name": "Altona"
+      },
+      {
+       "name": "Holstenstraße"
+      },
+      {
+       "name": "Neuer Pferdemarkt"
+      },
+      {
+       "name": "Feldstraße"
+      },
+      {
+       "name": "Millerntorplatz"
+      },
+      {
+       "name": "Rödingsmarkt"
+      },
+      {
+       "name": "Rathausmarkt"
+      },
+      {
+       "name": "Mönckebergstraße"
+      },
+      {
+       "name": "Hauptbahnhof"
+      },
+      {
+       "name": "Berliner Tor"
+      },
+      {
+       "name": "Wartenau"
+      },
+      {
+       "name": "Wandsbeker Chaussee"
+      },
+      {
+       "name": "Wandsbek Markt"
+      }
+     ]
+    },
+    {
+     "id": "tram-2",
+     "label": "T2",
+     "name": "T2: Bramfeld – Barmbek – Eppendorf – Eimsbüttel",
+     "color": "#E8A33D",
+     "anchor": [
+      10.093,
+      53.612
+     ],
+     "stations": [
+      {
+       "name": "Bramfeld"
+      },
+      {
+       "name": "Steilshoop"
+      },
+      {
+       "name": "Barmbek"
+      },
+      {
+       "name": "Dehnhaide"
+      },
+      {
+       "name": "Mundsburg"
+      },
+      {
+       "name": "Winterhuder Marktplatz"
+      },
+      {
+       "name": "Sierichstraße"
+      },
+      {
+       "name": "Eppendorfer Baum"
+      },
+      {
+       "name": "Hoheluftbrücke"
+      },
+      {
+       "name": "Osterstraße"
+      }
+     ]
+    },
+    {
+     "id": "tram-3",
+     "label": "T3",
+     "name": "T3: Osdorfer Born – Lurup – Stellingen – Schlump",
+     "color": "#2E8B57",
+     "anchor": [
+      9.86,
+      53.579
+     ],
+     "stations": [
+      {
+       "name": "Osdorfer Born"
+      },
+      {
+       "name": "Lurup"
+      },
+      {
+       "name": "Elbgaustraße"
+      },
+      {
+       "name": "Eidelstedt"
+      },
+      {
+       "name": "Stellingen"
+      },
+      {
+       "name": "Hagenbecks Tierpark"
+      }
+     ]
+    },
+    {
+     "id": "tram-4",
+     "label": "T4",
+     "name": "T4: Steilshoop – City Nord – Winterhude – Hauptbahnhof",
+     "color": "#7B5AA6",
+     "anchor": [
+      10.07,
+      53.618
+     ],
+     "stations": [
+      {
+       "name": "Steilshoop"
+      },
+      {
+       "name": "Alsterdorf"
+      },
+      {
+       "name": "Sengelmannstraße"
+      },
+      {
+       "name": "City Nord"
+      },
+      {
+       "name": "Borgweg"
+      },
+      {
+       "name": "Jarrestraße"
+      },
+      {
+       "name": "Uhlenhorst"
+      },
+      {
+       "name": "Lübecker Straße"
+      },
+      {
+       "name": "Hauptbahnhof"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sbahn-region-2026",
+   "name": "Regional-S-Bahn ins Umland (Modellvorschlag)",
+   "source": "proposal",
+   "note": "Kein politischer Vorschlag, sondern das Ergebnis einer Modellrechnung: von mehreren Varianten je Korridor die mit dem besten Nutzen-Kosten-Verhältnis. Die Trasse folgt der bestehenden Bahnstrecke, die Halte liegen an den heutigen Bahnhöfen. Beides ist schematisch abgegriffen und keine Planung.",
+   "sources": [
+    "Eigene Modellrechnung auf OpenStreetMap-Streckengeometrie"
+   ],
+   "lines": [
+    {
+     "id": "sbahn-lueneburg",
+     "label": "S5",
+     "name": "S5: Harburg – Winsen – Lüneburg",
+     "color": "#0075BF",
+     "anchor": [
+      9.99167,
+      53.45702
+     ],
+     "mode": "sbahn",
+     "autoStations": true,
+     "stations": [
+      {
+       "name": "Harburg",
+       "lon": 9.9913,
+       "lat": 53.4569,
+       "isNew": true
+      },
+      {
+       "name": "Meckelfeld",
+       "lon": 10.0291,
+       "lat": 53.4249,
+       "isNew": true
+      },
+      {
+       "name": "Maschen",
+       "lon": 10.0663,
+       "lat": 53.4034,
+       "isNew": true
+      },
+      {
+       "name": "Stelle",
+       "lon": 10.1095,
+       "lat": 53.3875,
+       "isNew": true
+      },
+      {
+       "name": "Ashausen",
+       "lon": 10.1453,
+       "lat": 53.3688,
+       "isNew": true
+      },
+      {
+       "name": "Winsen (Luhe)",
+       "lon": 10.2087,
+       "lat": 53.3534,
+       "isNew": true
+      },
+      {
+       "name": "Radbruch",
+       "lon": 10.2892,
+       "lat": 53.318,
+       "isNew": true
+      },
+      {
+       "name": "Bardowick",
+       "lon": 10.3722,
+       "lat": 53.2904,
+       "isNew": true
+      },
+      {
+       "name": "Lüneburg",
+       "lon": 10.4198,
+       "lat": 53.2498,
+       "isNew": true
+      }
+     ],
+     "note": "Verlängerung über die bestehende Strecke Hamburg–Hannover. Von den gerechneten Varianten — alle Halte, Express, nur bis Winsen — hat der volle Weg bis Lüneburg das beste Nutzen-Kosten-Verhältnis: der Zugewinn wächst schneller als die Kosten.",
+     "sources": [
+      "Eigene Modellrechnung"
+     ],
+     "corridor": [
+      [
+       9.99167,
+       53.45702
+      ],
+      [
+       9.99328,
+       53.45358
+      ],
+      [
+       10.00268,
+       53.44696
+      ],
+      [
+       10.00434,
+       53.44592
+      ],
+      [
+       10.03237,
+       53.4226
+      ],
+      [
+       10.05068,
+       53.41326
+      ],
+      [
+       10.06995,
+       53.40136
+      ],
+      [
+       10.0814,
+       53.39638
+      ],
+      [
+       10.10754,
+       53.3883
+      ],
+      [
+       10.12697,
+       53.37633
+      ],
+      [
+       10.1391,
+       53.37075
+      ],
+      [
+       10.15016,
+       53.36749
+      ],
+      [
+       10.20407,
+       53.35504
+      ],
+      [
+       10.21929,
+       53.34925
+      ],
+      [
+       10.27008,
+       53.32443
+      ],
+      [
+       10.37762,
+       53.28836
+      ],
+      [
+       10.41541,
+       53.26538
+      ],
+      [
+       10.41891,
+       53.26213
+      ],
+      [
+       10.42076,
+       53.25792
+      ],
+      [
+       10.41977,
+       53.24761
+      ]
+     ]
+    },
+    {
+     "id": "sbahn-luebeck",
+     "label": "S6",
+     "name": "S6: Bad Oldesloe – Reinfeld – Lübeck",
+     "color": "#008B3C",
+     "anchor": [
+      10.38035,
+      53.80306
+     ],
+     "mode": "sbahn",
+     "autoStations": true,
+     "stations": [
+      {
+       "name": "Bad Oldesloe",
+       "lon": 10.38224,
+       "lat": 53.80527,
+       "isNew": true
+      },
+      {
+       "name": "Reinfeld (Holstein)",
+       "lon": 10.4939,
+       "lat": 53.8302,
+       "isNew": true
+      },
+      {
+       "name": "Lübeck-Moisling",
+       "lon": 10.6321,
+       "lat": 53.837,
+       "isNew": true
+      },
+      {
+       "name": "Lübeck Hauptbahnhof",
+       "lon": 10.6699,
+       "lat": 53.8676,
+       "isNew": true
+      }
+     ],
+     "note": "Verlängerung über die bestehende Strecke Hamburg–Lübeck ab Bad Oldesloe, wo das heutige Netz endet. Auch hier schneidet der volle Weg besser ab als ein Halt in Reinfeld, das Verhältnis bleibt aber deutlich unter dem Korridor nach Lüneburg.",
+     "sources": [
+      "Eigene Modellrechnung"
+     ],
+     "corridor": [
+      [
+       10.38035,
+       53.80306
+      ],
+      [
+       10.37914,
+       53.80179
+      ],
+      [
+       10.35232,
+       53.77632
+      ],
+      [
+       10.38802,
+       53.8093
+      ],
+      [
+       10.39322,
+       53.81101
+      ],
+      [
+       10.4204,
+       53.81604
+      ],
+      [
+       10.43407,
+       53.82056
+      ],
+      [
+       10.48589,
+       53.82706
+      ],
+      [
+       10.50755,
+       53.83699
+      ],
+      [
+       10.51621,
+       53.83915
+      ],
+      [
+       10.52954,
+       53.83834
+      ],
+      [
+       10.55489,
+       53.8318
+      ],
+      [
+       10.56634,
+       53.83068
+      ],
+      [
+       10.65286,
+       53.83945
+      ],
+      [
+       10.65653,
+       53.84294
+      ],
+      [
+       10.65407,
+       53.85769
+      ],
+      [
+       10.65511,
+       53.8617
+      ],
+      [
+       10.65728,
+       53.86342
+      ],
+      [
+       10.6732,
+       53.86951
+      ],
+      [
+       10.68016,
+       53.87607
+      ],
+      [
+       10.67245,
+       53.86869
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "scenarios": [
+  {
+   "id": "u5-vollausbau",
+   "title": "U5 im Vollausbau",
+   "summary": "Bestand plus die U5 von Bramfeld bis Osdorfer Born, ohne weitere Projekte.",
+   "description": "Isoliert die U5, um ihre Kosten und Wirkungen sichtbar zu machen.",
+   "tags": [
+    "U5"
+   ],
+   "sources": [
+    "HOCHBAHN U5-Planungsstand 2026"
+   ],
+   "planned": [
+    "u5"
+   ],
+   "proposals": false
+  },
+  {
+   "id": "strassenbahn",
+   "title": "Straßenbahn statt U5",
+   "summary": "Bestand plus das Straßenbahnkonzept, ohne die weiteren U5-Abschnitte.",
+   "description": "Rekonstruktion der im August 2026 vorgestellten Alternative: rund vier Linien statt weiterer U-Bahn-Tunnel. Die Trassenführung ist eine schematische Annäherung an die veröffentlichten Eckdaten.",
+   "tags": [
+    "Alternative",
+    "Straßenbahn"
+   ],
+   "sources": [
+    "Pressemitteilung Die Linke Hamburg, August 2026"
+   ],
+   "planned": [
+    "u5-ost",
+    "u4",
+    "s4"
+   ],
+   "proposalIds": [
+    "tram-linke-2026"
+   ]
+  },
+  {
+   "id": "regional-sbahn",
+   "title": "S-Bahn ins Umland",
+   "summary": "Bestand plus Regional-S-Bahn nach Lüneburg und nach Lübeck.",
+   "description": "Zwei Verlängerungen entlang bestehender Bahnstrecken, je Korridor die Variante mit dem besten Nutzen-Kosten-Verhältnis aus der Modellrechnung. Zeigt, was das Modell von einer Erschließung des Umlands hält — und wie unterschiedlich die beiden Richtungen abschneiden.",
+   "tags": [
+    "Region",
+    "S-Bahn"
+   ],
+   "sources": [
+    "Eigene Modellrechnung auf OpenStreetMap-Streckengeometrie"
+   ],
+   "planned": [
+    "u5-ost",
+    "u4",
+    "s4"
+   ],
+   "proposalIds": [
+    "sbahn-region-2026"
+   ]
+  }
+ ]
+}

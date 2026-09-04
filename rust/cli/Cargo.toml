@@ -1,0 +1,16 @@
+[package]
+name = "hh-cli"
+description = "Data import, calibration and benchmarking for the Hamburg Transit Network Designer."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "hh"
+path = "src/main.rs"
+
+[dependencies]
+hh-core = { path = "../core", features = ["testing"] }
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -1,0 +1,65 @@
+{
+  "id": "berlin",
+  "name": "Berlin",
+  "adjective": "Berliner",
+  "center": {
+    "lat": 52.5208,
+    "lon": 13.4095
+  },
+  "projectionOrigin": {
+    "lat": 52.52083,
+    "lon": 13.40945
+  },
+  "bbox": "52.31,13.03,52.71,13.79",
+  "regionBbox": "51.60,11.60,53.45,15.10",
+  "stationBbox": "51.60,11.60,53.45,15.10",
+  "transitOperators": [
+    "BVG",
+    "S-Bahn Berlin"
+  ],
+  "networkQuery": {
+    "routeMaster": [
+      "subway",
+      "light_rail",
+      "tram"
+    ],
+    "networkNames": "VBB|Verkehrsverbund Berlin-Brandenburg"
+  },
+  "boundary": {
+    "adminLevel": 4,
+    "name": "Berlin"
+  },
+  "districts": {
+    "kind": "osm-admin",
+    "adminLevel": 10,
+    "note": "Ortsteile Berlins als OSM-Grenzrelationen"
+  },
+  "statistics": {
+    "kind": "osm-population",
+    "note": "Einwohnerzahlen aus den population-Tags der Ortsteil-Relationen in OpenStreetMap",
+    "licence": "ODbL 1.0",
+    "label": "OpenStreetMap-Ortsteildaten"
+  },
+  "jobs": {
+    "total": 1690000,
+    "centreBoostFactor": 1.6,
+    "centreBoostRadiusM": 3400
+  },
+  "colors": {
+    "ubahn": "#115dad",
+    "sbahn": "#008e4f",
+    "tram": "#e2001a"
+  },
+  "modelParams": {
+    "fiscal": {
+      "vatCityShare": 0.0465
+    },
+    "cost": {
+      "groundConditionsFactor": 1.05
+    },
+    "calibratedOn": "Hamburg"
+  },
+  "modelParamsNote": "Berlin: 3,9 Mio. Einwohner, entsprechend gut doppelt so hoher Einwohnerschlüssel. Baugrund: Berliner Sande über weitgehend flachem Grundwasser — schwierig, aber ohne die Hamburger Kleimarsch.",
+  "districtTerm": "Ortsteile",
+  "majorWater": "(spree|havel|dahme|müggel|wannsee|tegeler see|langer see|seddin|hafen|schifffahrtskanal|teltowkanal)"
+}
