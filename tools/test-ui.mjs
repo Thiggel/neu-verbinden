@@ -336,23 +336,23 @@ check('die Planansicht zeigt nur, was gebaut würde', () => {
       // of it is not.
       {
         id: 1, label: 'U1', name: '', mode: 'ubahn', color: '#000', source: 'existing',
-        included: true, stations: [1], segments: [seg(11, 'in_service'), seg(12, 'to_build')],
+        included: true, extends: null, stations: [1], segments: [seg(11, 'in_service'), seg(12, 'to_build')],
       },
       // Untouched existing line: nothing of it belongs to the plan.
       {
         id: 2, label: 'S1', name: '', mode: 'sbahn', color: '#000', source: 'existing',
-        included: true, stations: [2], segments: [seg(21, 'in_service')],
+        included: true, extends: null, stations: [2], segments: [seg(21, 'in_service')],
       },
       // The author's own line, drawn partly over track that already carries
       // trains. Dropping that part would break the route into fragments.
       {
         id: 3, label: 'U6', name: '', mode: 'ubahn', color: '#000', source: 'user',
-        included: true, stations: [3, 4], segments: [seg(31, 'to_build'), seg(32, 'in_service')],
+        included: true, extends: null, stations: [3, 4], segments: [seg(31, 'to_build'), seg(32, 'in_service')],
       },
       // Switched off: not in the plan at all, in either view.
       {
         id: 4, label: 'X', name: '', mode: 'tram', color: '#000', source: 'user',
-        included: false, stations: [9], segments: [seg(41, 'to_build')],
+        included: false, extends: null, stations: [9], segments: [seg(41, 'to_build')],
       },
     ],
   };
@@ -361,6 +361,30 @@ check('die Planansicht zeigt nur, was gebaut würde', () => {
 
   assert(ids(false).join() === '11,12,21,31,32', `die volle Ansicht zeigt ${ids(false)}`);
   assert(ids(true).join() === '12,31,32', `die Planansicht zeigt ${ids(true)}`);
+
+  // A line that something extends is drawn whole, so the extension does not
+  // begin in mid-air. Here: nothing extends anything, so nothing extra appears.
+  const withExtension = {
+    stations: [stop(1), stop(2), stop(3), stop(4), stop(5)],
+    lines: [
+      // The U4, untouched but continued by the plan below.
+      { id: 5, label: 'U4', name: '', mode: 'ubahn', color: '#000', source: 'existing',
+        included: true, extends: null, stations: [5], segments: [seg(51, 'in_service')] },
+      { id: 6, label: 'U4', name: 'U4-Verlängerung', mode: 'ubahn', color: '#000', source: 'user',
+        included: true, extends: 5, stations: [5], segments: [seg(61, 'to_build')] },
+    ],
+  };
+  const extended = transitSources(withExtension, true).lines.features.map((f) => f.properties.id);
+  assert(
+    extended.includes(51) && extended.includes(61),
+    `die fortgesetzte Linie fehlt in der Planansicht: ${extended}`
+  );
+  // Switched off, it is nobody's context either.
+  const off = { ...withExtension, lines: [withExtension.lines[0], { ...withExtension.lines[1], included: false }] };
+  assert(
+    !transitSources(off, true).lines.features.map((f) => f.properties.id).includes(51),
+    'die Linie wird auch ohne eingeschaltete Verlängerung mitgezeichnet'
+  );
 
   // Stations followed their lines, or several hundred coloured dots stayed on
   // the map with nothing under them.

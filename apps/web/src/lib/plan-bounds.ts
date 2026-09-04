@@ -21,6 +21,9 @@ export function planBounds(render: RenderState): [[number, number], [number, num
   for (const l of render.lines) {
     if (!l.included) continue;
     for (const seg of l.segments) {
+      // Only what would be built frames the view: a line that is merely drawn
+      // for context, such as the route an extension continues, must not pull
+      // the frame across the region with it.
       // Only track that would actually be built.
       //
       // The map draws a proposed line whole, existing rails included, so the

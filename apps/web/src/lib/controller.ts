@@ -550,6 +550,12 @@ export class EditorController {
     // Stations of lines that survived the filter; see `transitSources`, which
     // seeds the same two sources from the style and has to agree with this.
     const shown = new Set<number>();
+    // See `transitSources`: a line that something extends is drawn whole, or the
+    // extension starts nowhere.
+    const extended = new Set<number>();
+    for (const l of render.lines) {
+      if (l.included && l.extends != null) extended.add(l.extends);
+    }
     for (const l of render.lines) {
       if (!l.included) continue;
       // Reading somebody else's plan, the whole existing network drawn at full
@@ -557,7 +563,7 @@ export class EditorController {
       // keeps what would be built, plus the rest of any line the author drew, so
       // a route that runs partly on existing track still reads as one route
       // rather than as disconnected fragments.
-      const ownLine = l.source !== 'existing';
+      const ownLine = l.source !== 'existing' || extended.has(l.id);
       const weight = lineWeight(l.mode);
       let drew = false;
       for (const seg of l.segments) {

@@ -85,12 +85,21 @@ export function transitSources(render?: RenderState | null, focusNew = false) {
   const stations: GeoJSON.Feature[] = [];
   /** Stations on a line that survived the filter. */
   const shown = new Set<number>();
+  // A line somebody extended is drawn whole, even in the focused view.
+  //
+  // An extension on its own is a piece of track starting nowhere: the U4 goes
+  // to Horner Geest and the plan carries it onward, and without the U4 the
+  // reader sees a fragment in the suburbs with no idea what it continues.
+  const extended = new Set<number>();
+  for (const l of render?.lines ?? []) {
+    if (l.included && l.extends != null) extended.add(l.extends);
+  }
   for (const l of render?.lines ?? []) {
     if (!l.included) continue;
     // Same rule the controller applies. The style seeds these sources on
     // creation and again on every theme change, so without it the full network
     // reappeared behind the reader's back the moment they switched to dark.
-    const ownLine = l.source !== 'existing';
+    const ownLine = l.source !== 'existing' || extended.has(l.id);
     const weight = lineWeight(l.mode);
     let drew = false;
     for (const seg of l.segments) {

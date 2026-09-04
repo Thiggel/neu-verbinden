@@ -1,38 +1,61 @@
 'use client';
 
-// § 5 DDG wants the operator's details "leicht erkennbar, unmittelbar
-// erreichbar und ständig verfügbar" — findable, one step away, and on every
-// page. A link in the footer of every view is the settled way to do that, and
-// the reason this is a component rather than a line on one page.
+// The bar along the bottom of every view.
+//
+// § 5 DDG wants the operator's details findable, one step away and available at
+// all times, which is why this is a component and not a line on one page — the
+// editor included, where it is the only route to them.
+//
+// It sits outside the scrolling area rather than at the end of the document.
+// Ending the document was the obvious way and the wrong one: the plan pages have
+// a sticky analysis panel a full viewport tall, and at the bottom of the page it
+// covered the footer completely. Measured: footer at 487–539, panel at 56–876.
+// A bar that is never in the scroll flow cannot be overlapped by anything in it.
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { openFeedback } from '@/components/Feedback';
+import { OPERATOR } from '@/lib/impressum';
+
+const LEGAL = [
+  ['/rechtliches#impressum', 'Impressum'],
+  ['/rechtliches#datenschutz', 'Datenschutz'],
+  ['/rechtliches#nutzung', 'Nutzung'],
+  ['/rechtliches#daten', 'Daten'],
+  ['/konto', 'Konto'],
+];
 
 export function SiteFooter() {
-  const path = usePathname();
-  // The editor fills the window and manages its own scrolling; a footer there
-  // would either be unreachable or push the map out of view.
-  if (path === '/') return null;
   return (
-    <footer className="border-t border-line bg-surface">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-4 text-[12.5px] text-muted">
-        <Link className="hover:text-ink hover:underline" href="/rechtliches#impressum">
-          Impressum
-        </Link>
-        <Link className="hover:text-ink hover:underline" href="/rechtliches#datenschutz">
-          Datenschutz
-        </Link>
-        <Link className="hover:text-ink hover:underline" href="/rechtliches#nutzung">
-          Nutzungsbedingungen
-        </Link>
-        <Link className="hover:text-ink hover:underline" href="/rechtliches#daten">
-          Daten und Lizenzen
-        </Link>
-        <Link className="hover:text-ink hover:underline" href="/konto">
-          Konto und Daten
-        </Link>
-        <span className="ml-auto">
-          Kein amtliches Angebot. Alle Zahlen sind Modellschätzungen.
+    <footer className="shrink-0 border-t border-line bg-surface">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-[12px] text-muted">
+        <span className="font-medium text-ink">Von {OPERATOR.name}</span>
+        <a className="hover:text-ink hover:underline" href={`mailto:${OPERATOR.email}`}>
+          kontaktiere mich
+        </a>
+        <a
+          className="hover:text-ink hover:underline"
+          href="https://buymeacoffee.com/filipelaitenberger"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          kauf mir einen Kaffee
+        </a>
+        <button
+          onClick={() => openFeedback()}
+          className="rounded-full border border-line px-2.5 py-0.5 font-medium text-ink transition-colors hover:bg-subtle"
+        >
+          Feedback
+        </button>
+
+        <span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+          {LEGAL.map(([href, label]) => (
+            <Link key={href} className="hover:text-ink hover:underline" href={href}>
+              {label}
+            </Link>
+          ))}
+          <span className="hidden text-muted/70 xl:inline">
+            Kein amtliches Angebot · alle Zahlen sind Modellschätzungen
+          </span>
         </span>
       </div>
     </footer>

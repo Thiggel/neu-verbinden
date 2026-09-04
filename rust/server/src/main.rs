@@ -7,6 +7,7 @@
 
 mod auth;
 mod error;
+mod feedback;
 mod preflight;
 mod scenarios;
 mod state;
@@ -243,6 +244,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/auth/login", post(auth::login))
         .route("/api/auth/me", get(auth::me).delete(auth::delete_account))
         .route("/api/auth/export", get(auth::export))
+        .route("/api/feedback/challenge", get(feedback::challenge))
+        .route("/api/feedback", post(feedback::submit))
         .route(
             "/api/scenarios",
             get(scenarios::list).post(scenarios::create),

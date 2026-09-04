@@ -93,6 +93,17 @@ npm run server            # http://localhost:8080, legt seine Tabellen selbst an
 Die Weboberfläche spricht die API unter `http://localhost:8080` an; eine andere
 Adresse über `NEXT_PUBLIC_API_URL` beim Bauen setzen.
 
+### Die Beispiele auf der Entdecken-Seite
+
+```bash
+HH_SEED_PASSWORD=… npm run examples:seed
+```
+
+Veröffentlicht die vier Beispielentwürfe unter einem eigenen Konto und ersetzt
+dabei, was dasselbe Konto vorher veröffentlicht hat. Jeder enthält genau die
+eigenen Linien und das bestehende Netz, sonst nichts: ein Entwurf, der fremde
+Vorhaben mitführt, weist deren Kilometer und Kosten als seine eigenen aus.
+
 ### Die Daten neu bauen
 
 Nur nötig, wenn die Datensätze aktualisiert werden sollen. Der Bezug dauert
