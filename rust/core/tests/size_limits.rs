@@ -74,6 +74,7 @@ fn chain(n: usize) -> Network {
             service: ServicePattern::default_for(Mode::Ubahn),
             source: Source::User,
             included: true,
+            extends: None,
             note: String::new(),
             official_opening_year: None,
         construction_started_year: None,

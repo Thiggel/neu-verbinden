@@ -866,6 +866,7 @@ impl Editor {
                 edges,
                 service: ServicePattern::default_for(mode),
                 included: true,
+                extends: None,
                 note: String::new(),
                 official_opening_year: None,
                 official_cost_eur: None,
@@ -913,6 +914,32 @@ impl Editor {
             End::Start => start,
             End::Finish => finish,
         };
+
+        // Continuing an end that already has an extension.
+        //
+        // The parent keeps its own endpoints when an extension is split off, so
+        // this end still looks free. Pointing at it a second time would hang a
+        // second extension off the same node: a fork where the user meant to
+        // carry on, and two entries in the list for one stretch of track.
+        if self.network.line(line).map(|l| l.source) != Some(Source::User) {
+            let parent = self.network.line(line).and_then(|l| l.extends).unwrap_or(line);
+            let existing = self.network.lines.values().find_map(|c| {
+                if c.extends != Some(parent) || c.id == line {
+                    return None;
+                }
+                let (a, b) = self.network.line_endpoints(c.id)?;
+                if a == anchor {
+                    Some((c.id, End::Finish))
+                } else if b == anchor {
+                    Some((c.id, End::Start))
+                } else {
+                    None
+                }
+            });
+            if let Some((continued, far)) = existing {
+                return self.extend_line(continued, far, points, auto_stations, anchors);
+            }
+        }
         let anchor_geo = self
             .network
             .nodes
@@ -936,22 +963,95 @@ impl Editor {
             &anchors,
         )?;
 
-        let l = self
-            .network
-            .lines
-            .get_mut(&line)
-            .ok_or(EditError::UnknownLine(line))?;
-        match end {
-            End::Start => {
-                let mut e = new_edges;
-                e.reverse();
-                e.extend(l.edges.iter().copied());
-                l.edges = e;
+        // Growing your own line, or continuing somebody else's?
+        //
+        // Your own simply grows: that is what drawing more of it means, and a
+        // chain of separate objects for one line nobody else has touched would
+        // be bookkeeping for its own sake.
+        //
+        // An existing line is different. Appending to it made the new track
+        // part of the Bestand — indistinguishable from what already runs, not
+        // listed among the things you drew, and impossible to switch off to see
+        // what it was worth. So it becomes a line of its own that continues the
+        // parent, which is also what it is in the world: the same service, one
+        // stretch of it not built yet.
+        if self.network.line(line).map(|l| l.source) == Some(Source::User) {
+            let l = self
+                .network
+                .lines
+                .get_mut(&line)
+                .ok_or(EditError::UnknownLine(line))?;
+            match end {
+                End::Start => {
+                    let mut e = new_edges;
+                    e.reverse();
+                    e.extend(l.edges.iter().copied());
+                    l.edges = e;
+                }
+                End::Finish => l.edges.extend(new_edges),
             }
-            End::Finish => l.edges.extend(new_edges),
+            diff.lines_changed.push(line);
+            self.rename_line_from_endpoints(line);
+            return Ok(diff.dedup());
         }
-        diff.lines_changed.push(line);
-        self.rename_line_from_endpoints(line);
+
+        // An extension of an extension keeps the same parent, so a route stays
+        // one service however many times it is continued.
+        let parent = l.extends.unwrap_or(line);
+        let mut edges = new_edges;
+        if matches!(end, End::Start) {
+            edges.reverse();
+        }
+        let id = LineId(self.network.fresh_id());
+        let parent_label = self
+            .network
+            .line(parent)
+            .map(|p| p.label.clone())
+            .unwrap_or_else(|| l.label.clone());
+        self.network.lines.insert(
+            id,
+            Line {
+                construction_started_year: None,
+                id,
+                // Named below, once the line exists and its far end can be
+                // asked for rather than guessed at.
+                name: format!("{parent_label}-Verlängerung"),
+                // The parent's designation and colour, because on the map this
+                // is that line continuing, not a new one beside it.
+                label: parent_label,
+                mode: l.mode,
+                color: l.color.clone(),
+                source: Source::User,
+                edges,
+                service: l.service.clone(),
+                included: true,
+                extends: Some(parent),
+                note: String::new(),
+                official_opening_year: None,
+                official_cost_eur: None,
+                external_id: None,
+            },
+        );
+        // Where it goes, taken from the finished line.
+        //
+        // Reading it off the last edge's `to` was wrong: edges are undirected,
+        // and one stored as (far, anchor) named the extension after the station
+        // it starts from. "U3-Verlängerung nach Wandsbek-Gartenstadt" for a line
+        // that leaves Wandsbek-Gartenstadt is worse than no name at all.
+        let terminus = self
+            .network
+            .line_endpoints(id)
+            .map(|(a, b)| if a == anchor { b } else { a })
+            .and_then(|n| self.network.nodes.get(&n))
+            .map(|n| n.name.clone())
+            .filter(|n| !n.trim().is_empty());
+        if let Some(terminus) = terminus {
+            if let Some(l) = self.network.lines.get_mut(&id) {
+                l.name = format!("{}-Verlängerung nach {terminus}", l.label);
+            }
+        }
+
+        diff.lines_changed.push(id);
         Ok(diff.dedup())
     }
 
@@ -1834,29 +1934,54 @@ mod tests {
     }
 
     #[test]
-    fn extending_twice_keeps_growing_the_same_line() {
+    fn extending_twice_keeps_growing_the_same_extension() {
         let mut ed = editor();
         let line = *ed.network.lines.keys().next().unwrap();
-        let start_len = ed.network.line_nodes(line).len();
+        let before = ed.network.lines.len();
+        // Both times pointing at the same end of the same existing line, which
+        // is what someone does who is drawing one route outwards. The parent
+        // keeps its own endpoints, so that end still looks free; without the
+        // check for an extension already hanging there, the second click made a
+        // fork and a second entry in the list for one stretch of track.
         for step in 1..=2 {
             let (_, finish) = ed.network.line_endpoints(line).unwrap();
             let end = ed.network.nodes[&finish].geo.to_metric();
             ed.apply(Command::ExtendLine {
                 line,
                 end: End::Finish,
-                points: pts(&[(end.x + 3000.0, end.y + 1200.0)]),
+                points: pts(&[(end.x + 3000.0 * step as f64, end.y + 1200.0 * step as f64)]),
                 auto_stations: true,
                 anchors: None,
             })
             .unwrap_or_else(|e| panic!("extension {step} failed: {e}"));
-            let nodes = ed.network.line_nodes(line);
+            assert_eq!(
+                ed.network.lines.len(),
+                before + 1,
+                "extension {step} produced a second line instead of continuing the first"
+            );
+            let ext = ed
+                .network
+                .lines
+                .values()
+                .find(|l| l.extends == Some(line))
+                .expect("no extension");
+            let nodes = ed.network.line_nodes(ext.id);
             assert_eq!(
                 nodes.len(),
-                ed.network.lines[&line].edges.len() + 1,
+                ext.edges.len() + 1,
                 "the path broke after extension {step}"
             );
         }
-        assert!(ed.network.line_nodes(line).len() > start_len + 1);
+        let ext = ed
+            .network
+            .lines
+            .values()
+            .find(|l| l.extends == Some(line))
+            .unwrap();
+        assert!(
+            ext.edges.len() >= 2,
+            "the second extension did not lengthen the first"
+        );
     }
 
     #[test]
@@ -1952,11 +2077,21 @@ mod tests {
             anchors: None,
         })
         .unwrap();
-        let l = &ed.network.lines[&line];
-        assert!(l.edges.len() > before);
-        let nodes = ed.network.line_nodes(line);
-        assert_eq!(nodes.len(), l.edges.len() + 1);
-        for (i, eid) in l.edges.iter().enumerate() {
+        // The existing line is left alone; the new track is a line of its own.
+        assert_eq!(ed.network.lines[&line].edges.len(), before);
+        let ext = ed
+            .network
+            .lines
+            .values()
+            .find(|l| l.extends == Some(line))
+            .expect("no extension was created");
+        assert_eq!(ext.source, Source::User, "an extension is the author's work");
+        assert!(ext.included, "an extension arrives switched on");
+
+        // It has to be a path, and it has to start where the parent stopped.
+        let nodes = ed.network.line_nodes(ext.id);
+        assert_eq!(nodes.len(), ext.edges.len() + 1);
+        for (i, eid) in ext.edges.iter().enumerate() {
             let e = &ed.network.edges[eid];
             let (a, b) = (nodes[i], nodes[i + 1]);
             assert!(
@@ -1964,6 +2099,76 @@ mod tests {
                 "break at edge {i}"
             );
         }
+        assert!(
+            nodes.first() == Some(&finish) || nodes.last() == Some(&finish),
+            "the extension does not touch the line it continues"
+        );
+
+        // Named after where it goes, not where it leaves from. Edges are
+        // undirected, and reading the terminus off the last edge's `to` once
+        // produced "U3-Verlängerung nach Wandsbek-Gartenstadt" for a line that
+        // starts at Wandsbek-Gartenstadt.
+        let far = if nodes.first() == Some(&finish) {
+            *nodes.last().unwrap()
+        } else {
+            *nodes.first().unwrap()
+        };
+        let far_name = ed.network.nodes[&far].name.clone();
+        let anchor_name = ed.network.nodes[&finish].name.clone();
+        assert!(
+            ext.name.contains(&far_name),
+            "the extension is called \"{}\" but ends at {far_name}",
+            ext.name
+        );
+        assert!(
+            anchor_name == far_name || !ext.name.contains(&anchor_name),
+            "the extension is named after {anchor_name}, which is where it starts"
+        );
+    }
+
+    #[test]
+    fn an_extension_is_not_a_change_of_train() {
+        use crate::travel::{TravelGraph, TRANSFER_PENALTY_MIN};
+        let mut ed = editor();
+        let line = *ed.network.lines.keys().next().unwrap();
+        let (start, finish) = ed.network.line_endpoints(line).unwrap();
+        let end = ed.network.nodes[&finish].geo.to_metric();
+        ed.apply(Command::ExtendLine {
+            line,
+            end: End::Finish,
+            points: pts(&[(end.x + 4000.0, end.y)]),
+            auto_stations: true,
+            anchors: None,
+        })
+        .unwrap();
+        let ext = ed
+            .network
+            .lines
+            .values()
+            .find(|l| l.extends == Some(line))
+            .expect("no extension");
+        let far = {
+            let nodes = ed.network.line_nodes(ext.id);
+            if nodes.first() == Some(&finish) { *nodes.last().unwrap() } else { *nodes.first().unwrap() }
+        };
+
+        let ops = crate::params::Params::default().operations;
+        let graph = TravelGraph::build(&ed.network, &ops, false);
+        let through = *graph.times_from(start).get(&far).expect("no route through");
+
+        // The same journey, with the extension made into an unrelated line.
+        let mut apart = ed.network.clone();
+        apart.lines.get_mut(&ext.id).unwrap().extends = None;
+        let split = *TravelGraph::build(&apart, &ops, false)
+            .times_from(start)
+            .get(&far)
+            .expect("no route when split");
+
+        assert!(
+            split - through > TRANSFER_PENALTY_MIN - 0.001,
+            "riding onto the extension costs {through:.1} min through and {split:.1} min split; \
+             the join is not being treated as the same service"
+        );
     }
 
     #[test]
@@ -1980,13 +2185,23 @@ mod tests {
             anchors: None,
         })
         .unwrap();
-        let nodes = ed.network.line_nodes(line);
-        assert_eq!(nodes.len(), ed.network.lines[&line].edges.len() + 1);
-        let new_start = ed.network.nodes[nodes.first().unwrap()].geo.to_metric();
+        let ext = ed
+            .network
+            .lines
+            .values()
+            .find(|l| l.extends == Some(line))
+            .expect("no extension was created");
+        let nodes = ed.network.line_nodes(ext.id);
+        assert_eq!(nodes.len(), ext.edges.len() + 1);
         assert!(
-            new_start.x < p.x - 1000.0,
-            "the line should now start further west"
+            nodes.contains(&start),
+            "the extension does not start at the line's old terminus"
         );
+        let reach = nodes
+            .iter()
+            .map(|n| ed.network.nodes[n].geo.to_metric().x)
+            .fold(f64::INFINITY, f64::min);
+        assert!(reach < p.x - 1000.0, "the network should now reach further west");
     }
 
     #[test]

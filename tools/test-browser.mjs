@@ -625,6 +625,85 @@ await check('die Sprungmarken bringen die Tastatur an die Karte', async () => {
   await context.close();
 });
 
+// ------------------------------------------------------- Weiterbauen --
+
+// Extending an existing line used to append the new track to that line. It then
+// belonged to the Bestand: not listed among the things the author had drawn, and
+// impossible to switch off to see what it was worth on its own.
+await check('eine Verlängerung ist ein eigener, abschaltbarer Eintrag', async () => {
+  const { page, context, errors } = await open();
+  await start(page);
+  const before = await state(page);
+
+  // Driven through the tool, not through the engine: the point of this check is
+  // that pointing at the end of an existing line and drawing onwards produces
+  // something the reader can find and switch off.
+  const target = await page.evaluate(() => {
+    const r = window.__engine.renderState();
+    // A line that ends somewhere on screen, so the clicks land on it.
+    const m = window.__map;
+    const b = m.getBounds();
+    const inView = (s) =>
+      s.lon > b.getWest() + 0.02 &&
+      s.lon < b.getEast() - 0.08 &&
+      s.lat > b.getSouth() + 0.02 &&
+      s.lat < b.getNorth() - 0.06;
+    for (const line of r.lines) {
+      if (line.source !== 'existing' || !line.included || line.stations.length < 3) continue;
+      for (const end of [line.stations[0], line.stations[line.stations.length - 1]]) {
+        const st = r.stations.find((s) => s.id === end);
+        if (st && inView(st)) {
+          const p = m.project([st.lon, st.lat]);
+          return { label: line.label, name: st.name, x: p.x, y: p.y };
+        }
+      }
+    }
+    return null;
+  });
+  if (!target) skip('kein Linienende im sichtbaren Ausschnitt');
+
+  const box = await page.locator('canvas.maplibregl-canvas').boundingBox();
+  await page.keyboard.press('e');
+  // First click picks the end to continue, the second draws the new terminus.
+  await page.mouse.click(box.x + target.x, box.y + target.y);
+  await page.waitForTimeout(400);
+  await page.mouse.click(box.x + target.x + 90, box.y + target.y - 70);
+  await page.waitForFunction(
+    (n) => window.__engine.renderState().lines.filter((l) => l.source === 'user').length > n,
+    before.lines,
+    { timeout: 20_000 }
+  );
+
+  const ext = await page.evaluate(() =>
+    window.__engine
+      .renderState()
+      .lines.filter((l) => l.source === 'user' && l.extends != null)
+      .map((l) => ({ id: l.id, label: l.label, name: l.name, included: l.included }))[0]
+  );
+  assert(ext, 'die Verlängerung steht nicht unter den eigenen Linien');
+  assert(ext.label === target.label, `die Verlängerung heißt ${ext.label} statt ${target.label}`);
+  assert(/Verlängerung/.test(ext.name), `der Name sagt es nicht: ${ext.name}`);
+  assert(ext.included, 'die Verlängerung kommt abgeschaltet zur Welt');
+
+  // It appears in the panel under the author's own work, where it can be found.
+  const listed = await page.evaluate(() => document.body.innerText);
+  assert(listed.includes('Eigener Entwurf'), 'die Gruppe „Eigener Entwurf" fehlt');
+  assert(listed.includes('Verlängerung'), 'die Verlängerung steht nicht in der Liste');
+
+  // And switching it off puts the figures back exactly where they were, which
+  // is the whole reason it is a separate entry.
+  const drawn = await state(page);
+  assert(drawn.newKm > before.newKm, 'die Verlängerung zählt nicht als Neubau');
+  await page.getByRole('checkbox', { name: new RegExp('Verlängerung') }).first().click();
+  await page.waitForFunction(
+    (km) => +window.__engine.quickEstimate().newKm.toFixed(3) === km,
+    before.newKm,
+    { timeout: 20_000 }
+  );
+  assert(errors.length === 0, `Fehler in der Konsole: ${errors.slice(0, 2).join(' | ')}`);
+  await context.close();
+});
+
 // ------------------------------------------------------------ Pflichten --
 
 // § 5 DDG wants the operator's details reachable from anywhere, at all times.

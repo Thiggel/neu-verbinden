@@ -56,6 +56,10 @@ struct LineGeometry {
     color: String,
     source: String,
     included: bool,
+    /// The line this one continues, where it is an extension of an existing
+    /// route. The interface uses it to say so; the model uses it so the join
+    /// does not read as a change of train.
+    extends: Option<u32>,
     /// [lon, lat] pairs.
     geo: Vec<[f64; 2]>,
     /// Metric schematic coordinates.
@@ -175,6 +179,7 @@ fn build_render_state(net: &Network) -> RenderState {
             color: l.color.clone(),
             source: source_key(l.source),
             included: l.included,
+            extends: l.extends.map(|p| p.0),
             geo,
             schematic,
             length_km: net.line_length_m(l.id) / 1000.0,

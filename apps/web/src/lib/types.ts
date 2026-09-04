@@ -22,6 +22,8 @@ export interface LineGeometry {
   color: string;
   source: SourceKind;
   included: boolean;
+  /** The line this one continues, when it is an extension of an existing route. */
+  extends: number | null;
   geo: [number, number][];
   schematic: [number, number][];
   lengthKm: number;
