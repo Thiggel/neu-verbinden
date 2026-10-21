@@ -139,6 +139,25 @@ export interface LoadProgress {
 }
 
 /**
+ * Just enough to draw a map: the base map and the manifest, no engine.
+ *
+ * The wish map renders an aggregate the server computed; it calculates nothing
+ * itself, so it has no use for the engine, the network or the five megabyte
+ * population grid. Loading all of it would cost a visitor twelve megabytes to
+ * look at one picture.
+ */
+export async function loadBasemapOnly(
+  cityId?: string
+): Promise<{ basemap: BaseMap; city: CityEntry; cities: CityEntry[] }> {
+  const manifest = await fetchJson<Manifest>(`/data/manifest.json?t=${Date.now()}`);
+  const cities = Object.values(manifest.cities ?? {});
+  const city = manifest.cities?.[cityId ?? manifest.defaultCity] ?? cities[0];
+  const files = city?.files ?? manifest.files;
+  const basemap = JSON.parse(await fetchText(`/data/${files.basemap}`)) as BaseMap;
+  return { basemap, city, cities };
+}
+
+/**
  * Load the datasets and construct the engine. Idempotent: repeated calls share
  * the same promise, so React strict mode double-invocation is harmless.
  */

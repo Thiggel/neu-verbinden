@@ -164,6 +164,15 @@ export const api = {
     }),
   me: (token: string) =>
     call<{ handle: string; display_name: string; bio: string; role: string }>('/api/auth/me', { token }),
+  /** Where published plans draw new track, aggregated per city. */
+  wishes: (city: string, minVotes = 0) =>
+    call<{
+      city: string;
+      scenarios: number;
+      maxWeight: number;
+      cells: [number, number, number][];
+      themes: { label: string; count: number; km: number }[];
+    }>(`/api/wuensche/${encodeURIComponent(city)}?minVotes=${minVotes}`),
   /** Everything stored about this account (Art. 15 and 20 DSGVO). */
   exportAccount: (token: string) => call<Record<string, unknown>>('/api/auth/export', { token }),
   /** Erases the account and everything attached to it (Art. 17 DSGVO). */

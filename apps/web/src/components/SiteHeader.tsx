@@ -9,6 +9,7 @@ import { ask, toast } from '@/components/Dialog';
 const NAV = [
   { href: '/', label: 'Editor' },
   { href: '/entdecken', label: 'Entdecken' },
+  { href: '/wuensche', label: 'Wünsche' },
   { href: '/vergleich', label: 'Vergleich' },
 ];
 

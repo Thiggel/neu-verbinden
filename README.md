@@ -34,6 +34,11 @@ kommentiert.
   Abschnitt.
 * Speichern als Datei, Veröffentlichen, Forken, Abstimmen, Kommentieren,
   Vergleichen und Ranglisten.
+* Eine **Wunschkarte** je Stadt: alle veröffentlichten Entwürfe
+  übereinandergelegt, als Hitzekarte dessen, was gebaut werden müsste. Sie
+  zeigt, wo unabhängig voneinander dieselbe Lücke gezeichnet wird — eine
+  Aussage, die kein einzelner Entwurf macht. Das bestehende Netz zählt nicht
+  mit, Stimmen und Forks nur logarithmisch.
 
 ### Was das Modell reproduziert
 

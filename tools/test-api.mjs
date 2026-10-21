@@ -382,6 +382,59 @@ await check('Fremde können einen Entwurf nicht löschen', async () => {
   assert(r.status === 403, `Status ${r.status}`);
 });
 
+// The wish map is an aggregate over everything published, so the thing to check
+// is what it leaves out: the network that already exists, and other people's
+// projects carried along inside a plan. Counting those would draw a heat map of
+// the railway Hamburg already has.
+await check('die Wunschkarte zählt nur, was gebaut würde', async () => {
+  const w = await call('/api/wuensche/hamburg');
+  assert(typeof w.scenarios === 'number', 'keine Anzahl der Entwürfe');
+  assert(Array.isArray(w.cells), 'keine Zellen');
+  assert(w.cells.length > 0, 'die Karte ist leer, obwohl Entwürfe veröffentlicht sind');
+  assert(w.maxWeight > 0, `maxWeight ist ${w.maxWeight}`);
+
+  // Every cell is [lon, lat, weight] and lies in the city's corner of the world.
+  for (const [lon, lat, weight] of w.cells) {
+    assert(lon > 8 && lon < 12, `Zelle bei Länge ${lon}`);
+    assert(lat > 52.5 && lat < 55, `Zelle bei Breite ${lat}`);
+    assert(weight > 0, `Zelle mit Gewicht ${weight}`);
+  }
+
+  // The sharp test for "only what would be built" is not a count, which grows
+  // with every plan published, but a place. The existing S-Bahn runs out to
+  // Stade, Aumühle and Wedel; no sample plan goes near them. If the Bestand
+  // were being counted, those termini would be warm. Counting cells instead
+  // caught nothing: with the filter removed the map went from 486 cells to
+  // 1296, and a threshold loose enough to be safe was loose enough to pass.
+  const far = [
+    ['Stade', 9.4758, 53.6025],
+    ['Aumühle', 10.3133, 53.5283],
+    ['Wedel', 9.7044, 53.5817],
+  ];
+  for (const [name, lon, lat] of far) {
+    const near = w.cells.filter(
+      (c) => Math.abs(c[0] - lon) * 66 < 2 && Math.abs(c[1] - lat) * 111 < 2
+    );
+    assert(
+      near.length === 0,
+      `${near.length} Zellen bei ${name} — dort fährt die S-Bahn längst, da zeichnet niemand`
+    );
+  }
+
+  // The busiest corridor has to be hotter than the median, or nothing is being
+  // aggregated and every cell carries one plan.
+  const weights = w.cells.map((c) => c[2]).sort((a, b) => a - b);
+  const median = weights[Math.floor(weights.length / 2)];
+  assert(w.maxWeight > median * 2, `Maximum ${w.maxWeight} gegen Median ${median}`);
+});
+
+await check('eine Stadt ohne Veröffentlichungen liefert eine leere Karte, keinen Fehler', async () => {
+  const w = await call('/api/wuensche/gibtesnicht');
+  assert(w.scenarios === 0, `${w.scenarios} Entwürfe für eine erfundene Stadt`);
+  assert(w.cells.length === 0, 'Zellen für eine erfundene Stadt');
+  assert(w.maxWeight === 0, 'Gewicht für eine erfundene Stadt');
+});
+
 await check('Aufräumen: eigene Entwürfe lassen sich löschen', async () => {
   for (const s of [forkSlug, slug]) {
     const r = await call(`/api/scenarios/${s}`, { method: 'DELETE', token });
