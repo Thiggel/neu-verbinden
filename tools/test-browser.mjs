@@ -625,6 +625,62 @@ await check('die Sprungmarken bringen die Tastatur an die Karte', async () => {
   await context.close();
 });
 
+// ----------------------------------------------------------- Wünsche --
+
+await check('die Wunschkarte zeigt eine Hitzekarte und wechselt die Stadt', async () => {
+  const { page, context, errors } = await open('/wuensche');
+  await page.getByRole('heading', { name: 'Wo Verbindungen fehlen' }).waitFor({ timeout: 30_000 });
+  // The map has to carry data, not just exist: a heat layer over an empty
+  // source is a grey rectangle that looks like a working map.
+  await page.waitForFunction(
+    () => {
+      const m = window.__map ?? null;
+      void m;
+      const canvas = document.querySelector('canvas.maplibregl-canvas');
+      return !!canvas && document.body.innerText.includes('Entwürfe');
+    },
+    null,
+    { timeout: READY }
+  );
+  const basis = await page.evaluate(() => document.body.innerText);
+  assert(/\d+\s+Entwürfe|1\s+Entwurf/.test(basis), 'die Grundlage nennt keine Zahl');
+  assert(basis.includes('Am häufigsten gezeichnet'.toUpperCase()) || basis.includes('häufigsten'),
+    'die Liste der meistgezeichneten Linien fehlt');
+
+  // Switching the city reloads both the base map and the aggregate.
+  const cityButtons = page.locator('aside button[aria-pressed]');
+  if ((await cityButtons.count()) > 1) {
+    const before = await page.evaluate(() => document.body.innerText);
+    await cityButtons.filter({ hasText: 'Berlin' }).first().click();
+    await page.waitForFunction(
+      (prev) => document.body.innerText !== prev,
+      before,
+      { timeout: READY }
+    );
+    const after = await page.evaluate(() => document.body.innerText);
+    assert(after !== before, 'der Städtewechsel ändert nichts');
+  }
+  assert(errors.length === 0, `Fehler in der Konsole: ${errors.slice(0, 2).join(' | ')}`);
+  await context.close();
+});
+
+// The wish map renders an aggregate; it computes nothing, so it must not drag
+// the engine and the population grid down the wire to draw one picture.
+await check('die Wunschkarte lädt den Rechenkern nicht mit', async () => {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  const heavy = [];
+  page.on('request', (r) => {
+    const u = r.url();
+    if (/hh_wasm_bg.*\.wasm|\/data\/city-|\/data\/berlin\/city-/.test(u)) heavy.push(u.slice(-40));
+  });
+  await page.goto(`${WEB}/wuensche`, { waitUntil: 'domcontentloaded', timeout: READY });
+  await page.getByRole('heading', { name: 'Wo Verbindungen fehlen' }).waitFor({ timeout: 30_000 });
+  await page.waitForTimeout(4000);
+  assert(heavy.length === 0, `unnötig geladen: ${heavy.join(', ')}`);
+  await context.close();
+});
+
 // ------------------------------------------------------- Weiterbauen --
 
 // Extending an existing line used to append the new track to that line. It then

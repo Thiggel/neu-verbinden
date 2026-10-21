@@ -183,6 +183,15 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 ## Erledigt
 
+* **[+]** Wunschkarte (`/wuensche`, `GET /api/wuensche/:city`). Alle
+  veröffentlichten Entwürfe einer Stadt übereinandergelegt, gerastert auf 300 m,
+  gewichtet mit `1 + ln(1 + Stimmen + Forks)`. Gezählt wird nur, was gebaut
+  würde: ein Entwurf trägt das Bestandsnetz mit sich, und das mitzuzählen ergäbe
+  eine Hitzekarte der Bahn, die längst fährt. Die Seite lädt bewusst nur die
+  Grundkarte, nicht den Rechenkern und nicht das Einwohnerraster, weil sie
+  nichts rechnet.
+
+
 * **[F]** Eine Verlängerung einer bestehenden Linie hängte die neuen Abschnitte
   an diese Linie an. Damit gehörte sie zum Bestand: sie stand nicht unter
   „Eigener Entwurf", und sie ließ sich nicht abschalten, um zu sehen, was sie

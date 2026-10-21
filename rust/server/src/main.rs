@@ -8,6 +8,7 @@
 mod auth;
 mod error;
 mod feedback;
+mod heatmap;
 mod preflight;
 mod scenarios;
 mod state;
@@ -272,6 +273,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/api/comments/:id", delete(scenarios::hide_comment))
         .route("/api/leaderboards", get(scenarios::leaderboards))
+        .route("/api/wuensche/:city", get(heatmap::heatmap))
         .route("/api/compare", get(scenarios::compare))
         .layer(DefaultBodyLimit::max(8 * 1024 * 1024))
         .layer(CompressionLayer::new())
