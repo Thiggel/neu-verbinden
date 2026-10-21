@@ -428,11 +428,41 @@ await check('die Wunschkarte zählt nur, was gebaut würde', async () => {
   assert(w.maxWeight > median * 2, `Maximum ${w.maxWeight} gegen Median ${median}`);
 });
 
-await check('eine Stadt ohne Veröffentlichungen liefert eine leere Karte, keinen Fehler', async () => {
-  const w = await call('/api/wuensche/gibtesnicht');
-  assert(w.scenarios === 0, `${w.scenarios} Entwürfe für eine erfundene Stadt`);
-  assert(w.cells.length === 0, 'Zellen für eine erfundene Stadt');
-  assert(w.maxWeight === 0, 'Gewicht für eine erfundene Stadt');
+// Every Hamburg plan carries the U5 as to_build, because it is being built.
+// Counted as a wish, each of its stations collected every plan at full station
+// weight, so the hottest spots on the map were the ones nobody had drawn.
+await check('die geplante U5 zählt nicht als Wunsch', async () => {
+  const w = await call('/api/wuensche/hamburg');
+  const floor = w.scenarios * 2.5;
+  const u5 = [
+    ['Universität Hamburg', 9.9847, 53.5663],
+    ['Siemersplatz', 9.9637, 53.5997],
+    ['Moldauhafen', 10.0171, 53.5296],
+    ['Volksparkstadion', 9.8987, 53.5872],
+  ];
+  for (const [name, lon, lat] of u5) {
+    const near = w.cells.filter(
+      (c) => Math.abs(c[0] - lon) * 66 < 0.5 && Math.abs(c[1] - lat) * 111 < 0.5
+    );
+    const heat = Math.max(0, ...near.map((c) => c[2]));
+    assert(heat < floor, `${name} trägt ${heat}, als hätte jeder Entwurf die U5 gezeichnet`);
+  }
+});
+
+await check('eine erfundene Stadt wird abgelehnt, nicht leer gerechnet', async () => {
+  const r = await call('/api/wuensche/gibtesnicht', { raw: true });
+  assert(r.status === 400, `Status ${r.status}`);
+});
+
+// The checkbox on the wish map sends minVotes. When the server read min_votes
+// instead, the box did nothing and nobody noticed, because an unfiltered map
+// looks just as plausible as a filtered one.
+await check('der Stimmenfilter der Wunschkarte filtert wirklich', async () => {
+  const all = await call('/api/wuensche/hamburg');
+  const voted = await call('/api/wuensche/hamburg?minVotes=1000');
+  assert(all.scenarios > 0, 'keine Entwürfe ohne Filter');
+  assert(voted.scenarios === 0, `${voted.scenarios} Entwürfe mit mindestens 1000 Stimmen`);
+  assert(voted.cells.length === 0, `${voted.cells.length} Zellen trotz Filter`);
 });
 
 await check('Aufräumen: eigene Entwürfe lassen sich löschen', async () => {

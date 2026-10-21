@@ -55,16 +55,28 @@ export default function WishesPage() {
 
   useEffect(() => {
     if (!base) return;
-    setWishes(null);
+    // A slow answer for the previous city or filter must not land on top of
+    // the current one.
+    let gone = false;
     api
       .wishes(base.city.id, onlyPopular ? 1 : 0)
-      .then(setWishes)
-      .catch((e) =>
-        setError(e instanceof ApiUnavailable ? 'Der Server ist gerade nicht erreichbar.' : (e as Error).message)
-      );
+      .then((w) => {
+        if (!gone) setWishes(w);
+      })
+      .catch((e) => {
+        if (!gone)
+          setError(e instanceof ApiUnavailable ? 'Der Server ist gerade nicht erreichbar.' : (e as Error).message);
+      });
+    return () => {
+      gone = true;
+    };
   }, [base, onlyPopular]);
 
-  const empty = wishes && wishes.cells.length === 0;
+  // Only the answer for the city on screen. Switching city keeps the previous
+  // figures until the new ones arrive, and handing those to the new city's map
+  // would frame it on the old city's heat.
+  const shown = wishes && base && wishes.city === base.city.id ? wishes : null;
+  const empty = shown && shown.cells.length === 0;
 
   return (
     <div className="flex h-full flex-col bg-paper">
@@ -79,12 +91,14 @@ export default function WishesPage() {
           </p>
 
           <div className="relative mt-4 min-h-[380px] flex-1 overflow-hidden rounded-2xl border border-line">
-            {base && wishes ? (
+            {base && shown ? (
               <WishMap
+                // One map per city: the style is the city's base map, built once.
+                key={base.city.id}
                 basemap={base.basemap}
                 city={base.city}
-                cells={wishes.cells}
-                maxWeight={wishes.maxWeight}
+                cells={shown.cells}
+                maxWeight={shown.maxWeight}
                 dark={dark}
               />
             ) : (
@@ -95,8 +109,9 @@ export default function WishesPage() {
             {empty && (
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
                 <p className="max-w-sm rounded-xl border border-line bg-surface/95 p-4 text-center text-[13px] leading-relaxed shadow-sm backdrop-blur">
-                  Für {base?.city.name} ist noch nichts veröffentlicht, das gebaut werden müsste.
-                  Sobald jemand etwas zeichnet und veröffentlicht, steht es hier.
+                  {onlyPopular
+                    ? `Für ${base?.city.name} hat noch kein Entwurf mit Stimmen etwas Neues gezeichnet.`
+                    : `Für ${base?.city.name} ist noch nichts veröffentlicht, das gebaut werden müsste. Sobald jemand etwas zeichnet und veröffentlicht, steht es hier.`}
                 </p>
               </div>
             )}
@@ -124,9 +139,9 @@ export default function WishesPage() {
           <section className="rounded-2xl border border-line bg-surface p-4">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Grundlage</p>
             <p className="mt-1 text-[19px] font-semibold tabular-nums">
-              {wishes ? count(wishes.scenarios) : '–'}{' '}
+              {shown ? count(shown.scenarios) : '–'}{' '}
               <span className="text-[14px] font-normal text-muted">
-                {wishes?.scenarios === 1 ? 'Entwurf' : 'Entwürfe'}
+                {shown?.scenarios === 1 ? 'Entwurf' : 'Entwürfe'}
               </span>
             </p>
             <label className="mt-3 flex items-start gap-2 text-[13px] leading-snug">
@@ -153,9 +168,9 @@ export default function WishesPage() {
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
               Am häufigsten gezeichnet
             </p>
-            {wishes?.themes.length ? (
+            {shown?.themes.length ? (
               <ol className="mt-2 space-y-1.5">
-                {wishes.themes.slice(0, 8).map((t, i) => (
+                {shown.themes.slice(0, 8).map((t, i) => (
                   <li key={t.label} className="flex items-baseline gap-2 text-[13px]">
                     <span
                       className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold tabular-nums ${
