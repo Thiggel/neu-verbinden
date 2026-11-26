@@ -6,7 +6,7 @@
 // pointer move asks the engine to snap, writes two GeoJSON sources and moves
 // one DOM node. No React render, no allocation storm (plan §55, §83).
 
-import type { Map as MlMap, MapMouseEvent, MapTouchEvent } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MlMap, MapMouseEvent, MapTouchEvent } from 'maplibre-gl';
 import { cmd, type WasmEngine } from './engine';
 import { lineWeight } from './basemap';
 import type { Diff, Mode, RenderState, SnapResult, StationPreview } from './types';
@@ -466,7 +466,7 @@ export class EditorController {
     // timer, where nothing catches it.
     if (this.destroyed || !this.map) return;
     const src = this.map.getSource(id);
-    if (src && 'setData' in src) (src as maplibregl.GeoJSONSource).setData(data);
+    if (src && 'setData' in src) (src as GeoJSONSource).setData(data);
   }
 
 

@@ -5,7 +5,7 @@
 // roads, district outlines) so the transit network is the only thing with
 // visual weight, and it means the whole app can run offline.
 
-import type maplibregl from 'maplibre-gl';
+import type * as maplibregl from 'maplibre-gl';
 import type { StyleSpecification } from 'maplibre-gl';
 import type { BaseMap, RenderState } from './types';
 

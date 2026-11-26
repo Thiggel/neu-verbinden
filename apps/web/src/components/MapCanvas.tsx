@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import maplibregl, { Map as MlMap } from 'maplibre-gl';
+import { maplibregl } from '@/lib/maplibre';
+import type { Map as MlMap } from 'maplibre-gl';
 import { buildStyle, DARK, LIGHT } from '@/lib/basemap';
 import { EditorController, type DrawEstimate } from '@/lib/controller';
 import type { Tool } from '@/lib/store';
