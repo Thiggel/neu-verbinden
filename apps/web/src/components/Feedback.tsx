@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { API_BASE, session } from '@/lib/api';
+import { API_BASE } from '@/lib/api';
 
 type Kind = 'fehler' | 'wunsch' | 'sonstiges';
 
@@ -98,12 +98,10 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
       });
       const { done } = solve(c.challenge, c.difficulty, () => {});
       const nonce = await done;
-      const token = session.get();
       const res = await fetch(`${API_BASE}/api/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           kind,
@@ -220,7 +218,7 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
             <div className="mt-3 flex items-center gap-2">
               <button
                 className="btn btn-primary flex-1"
-                disabled={message.trim().length < 5 || state === 'sendet'}
+                disabled={[...message.trim()].length < 5 || state === 'sendet'}
                 onClick={send}
               >
                 {state === 'sendet' ? 'Wird geprüft und gesendet …' : 'Absenden'}

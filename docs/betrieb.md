@@ -30,11 +30,11 @@ monatelang falsch zu laufen (`rust/server/src/preflight.rs`).
 | `HH_JWT_SECRET` | ja | Signiert die Anmeldungen. Mindestens 32 Zeichen, zufällig. Ohne feste Angabe erfindet der Server bei jedem Start ein neues und meldet alle ab |
 | `HH_ALLOWED_ORIGIN` | ja | Die Adresse der Oberfläche, mit `https://`. `*` wird im Betrieb abgelehnt |
 | `DATABASE_URL` | ja | Postgres |
-| `HH_TRUST_PROXY` | hinter jedem Proxy | Ohne dies sieht der Server nur die Adresse des Proxys. Alle Aufrufer teilen sich dann **ein** Limit, und der erste, der es erreicht, sperrt alle übrigen aus. Mit dies gesetzt und *ohne* Proxy davor kann jeder sein eigenes Limit durch einen erfundenen Kopfzeileneintrag zurücksetzen, also genau dann setzen, wenn wirklich einer davor steht |
+| `HH_TRUST_PROXY` | hinter jedem Proxy | Ohne dies sieht der Server nur die Adresse des Proxys. Alle Aufrufer teilen sich dann **ein** Limit, und der erste, der es erreicht, sperrt alle übrigen aus. Mit dies gesetzt und *ohne* Proxy davor kann jeder sein eigenes Limit durch einen erfundenen Kopfzeileneintrag zurücksetzen, also genau dann setzen, wenn wirklich einer davor steht. Der Wert ist die Zahl der eigenen Proxys hintereinander (`1` für einen einzelnen, `2` etwa für CDN plus Load Balancer); gezählt wird von rechts in `X-Forwarded-For`, denn nur diese Einträge hat ein eigener Proxy geschrieben |
 | `HH_WORKER_IDLE_SECS` | bei schlafender Datenbank | Wie lange der Arbeiter wartet, wenn nichts zu tun ist (Vorgabe 60 s) |
 | `HH_DB_IDLE_SECS` | bei schlafender Datenbank | Wann ungenutzte Verbindungen geschlossen werden (Vorgabe 120 s) |
 | `HH_CITIES`, `HH_DATA_DIR`, `HH_DATA_VERSION` | nein | Welche Städte, woher, welcher Stand |
-| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | für Rückmeldungen | Programm und Empfänger für das Feedback-Fenster. Ohne beides bleibt die Rückmeldung in der Tabelle `feedback` stehen, statt verloren zu gehen |
+| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | für Rückmeldungen | Programm und Empfänger für das Feedback-Fenster. Aufgerufen wird `HH_SENDMAIL -i -- HH_FEEDBACK_TO`, die Nachricht kommt auf der Standardeingabe; der Empfänger steht also nie in den Kopfzeilen, die ein Absender beeinflussen kann. Ohne beides bleibt die Rückmeldung in der Tabelle `feedback` stehen, statt verloren zu gehen. Gespeicherte Rückmeldungen löscht der Aufräumjob nach zwölf Monaten |
 
 Für die Oberfläche zur *Bauzeit*: `NEXT_PUBLIC_API_URL=https://…`, die Adresse
 der API. Sie steht danach im ausgelieferten JavaScript und lässt sich ohne

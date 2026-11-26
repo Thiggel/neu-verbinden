@@ -125,7 +125,7 @@ export default function AccountPage() {
               <h2 className="text-[15px] font-semibold">Angemeldet als {user.handle}</h2>
               <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
                 Zu diesem Konto gehören ein Nutzername, ein Anzeigename, eine Selbstbeschreibung und
-                ein Passwort-Hash. Eine E-Mail-Adresse wird nicht erhoben.
+                ein Passwort-Hash. Für das Konto wird keine E-Mail-Adresse erhoben.
               </p>
             </section>
 
