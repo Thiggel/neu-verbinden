@@ -565,14 +565,14 @@ pub fn calculate(
     }
 
     let mut notes = vec![
-        "Modellschätzung, keine offizielle Kostenberechnung.".to_string(),
+        "Die Kosten sind eine Modellschätzung und keine offizielle Kostenberechnung.".to_string(),
         format!(
-            "Preisstand {}, Kennwerte kalibriert an veröffentlichten Projektkosten aus {}.",
+            "Gerechnet wird in Preisen von {}, wobei die Kennwerte an veröffentlichten Projektkosten aus {} ausgerichtet sind.",
             params.price_base_year, params.calibrated_on
         ),
     ];
     if tunnel_km > 0.0 {
-        notes.push("Tunnelkosten reagieren stark auf Baugrund und Bestandsbebauung; die Spanne ist entsprechend breit.".into());
+        notes.push("Weil Tunnelkosten stark vom Baugrund und von der Bebauung abhängen, ist die Spanne entsprechend breit.".into());
     }
 
     segments.sort_by(|a, b| b.amount_eur.partial_cmp(&a.amount_eur).unwrap());

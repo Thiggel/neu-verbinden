@@ -72,7 +72,9 @@ OGC-API der Freien und Hansestadt Hamburg. Lizenz **dl-de/by-2-0**.
 Verwendet wird der aktuellste Jahrgang (2025) für 99 Stadtteile:
 Einwohner nach Altersgruppen, Haushalte, sozialversicherungspflichtig
 Beschäftigte am Wohnort, Wohnungen, Pkw-Bestand, Fläche.
-Summe: **1 975 790 Einwohner** auf 747 km².
+Summe: **1 975 790 Einwohner** auf 747 km². Das Melderegister weist für ganz
+Hamburg 1 980 285 Einwohner aus; die Differenz entfällt auf Personen, die
+keinem Stadtteil zugeordnet sind.
 
 ### Das Bevölkerungsraster
 
@@ -93,16 +95,17 @@ Rastersumme entspricht exakt 1 975 790.
 ### Die Arbeitsplätze
 
 Die amtliche Statistik weist Beschäftigte am **Wohnort** aus; für
-Erreichbarkeit braucht es den **Arbeitsort**. Deshalb werden 1 280 000
-Erwerbstätige (Hamburg, Arbeitsort) stadtweit nach Nichtwohn-Geschossfläche
+Erreichbarkeit braucht es den **Arbeitsort**. Deshalb werden 1 370 200
+Erwerbstätige am Arbeitsort (Hamburg 2025, Arbeitskreis Erwerbstätigenrechnung) stadtweit nach Nichtwohn-Geschossfläche
 verteilt, mit einem Innenstadtfaktor
 `1 + 1,9 · exp(−d/2600 m)`, der die im Gebäudebestand unterrepräsentierte
 Bürodichte der City ausgleicht.
 
 Das ist ausdrücklich eine **Modellierung**, nicht amtlich. Sie wird in der
 Anwendung als solche ausgewiesen. Die daraus abgeleiteten Beschäftigungszentren
-sind plausibel: Rathaus 130 k, Berliner Tor 53 k, Diebsteich/Altona 31 k,
-City Nord 25 k, Barmbek 23 k, Reeperbahn 21 k, Harburg 17 k, Waltershof 17 k.
+sind plausibel: Rathaus 140 k, Berliner Tor 57 k, Diebsteich 33 k, Veddel 29 k,
+Sengelmannstraße (City Nord) 27 k, Dehnhaide 24 k, Reeperbahn 22 k, Harburg 19 k,
+Waltershof 18 k.
 
 ## 2b. Die Region — Lüneburg, Lauenburg, Kiel, Rostock
 
@@ -151,18 +154,26 @@ Die Trassenführung folgt, wo vorhanden, den in OSM erfassten geplanten Gleisen
 Straßenbahnvorschläge wird über einen Graphen aus 67 424 Straßenwegen und
 366 161 Knoten geroutet — sonst liefen die Linien quer über die Alster.
 
-Kontrollwerte: U5 Ost 5,8 km (HOCHBAHN: rund 5,9 km), U5 City Nord –
-Jarrestraße 2,5 km (rund 2,6 km).
+Kontrollwerte: U5 Ost 5,5 km (HOCHBAHN: rund 5,8 km), U5 City Nord –
+Jarrestraße 2,4 km (rund 2,6 km).
 
-### Das Straßenbahnkonzept
+### Das Straßenbahnnetz der Studie
 
-Vom im August 2026 vorgestellten Konzept sind die Eckdaten öffentlich
-(vier Linien, rund 44 km, 91 Haltestellen, rund 1,5 Mrd. €), nicht aber eine
-maschinenlesbare Trassenführung. Die Anwendung zeigt daher eine **schematische
-Rekonstruktion** entlang plausibler Korridore und weist das an jeder Stelle
-aus. Sie kommt auf 55,6 km und 92 Haltestellen — die Haltestellenzahl setzt
-dabei nicht die Vorlage, sondern die automatische Stationsfindung der
-Anwendung.
+Die Studie „Alternativen für eine Fortsetzung der U5 ab Borgweg“ (Dieter Doege
+und Jens Ode im Auftrag der Fraktion Die Linke in der Hamburgischen
+Bürgerschaft, Stand Juli 2026, vorgestellt am 12.08.2026) beschreibt vier
+Korridore A bis D mit zusammen 43,732 km und 91 Haltestellen, für die sie
+höchstens 1,5 Mrd. € ansetzt. Ihre Karten nennen jede Haltestelle beim Namen.
+
+Die Anwendung übernimmt diese Haltestellen und verortet sie an den
+gleichnamigen Bushaltestellen in OpenStreetMap; fünf Namen, zu denen es dort
+keine Haltestelle gibt, sind an der gleichnamigen Straße verortet. Zwischen
+zwei Haltestellen folgt die Linie dem Straßennetz, sofern der Weg höchstens
+ein Viertel länger ist als die Luftlinie, und sonst der Luftlinie. So kommt
+die Anwendung auf 44,3 km gegenüber 43,7 km in der Studie. Der Korridor C ist
+als zwei Linien abgelegt, weil er sich im Westen in eine Schleife über den
+Osdorfer Born teilt, und im Korridor A beschriftet die Karte der Studie nur 21
+der 22 genannten Haltestellen.
 
 ## 3b. Berlin
 
@@ -170,23 +181,21 @@ Dieselbe Pipeline, andere Konfiguration (`data/cities/berlin.json`).
 
 | Datensatz | Quelle | Umfang |
 | --- | --- | --- |
-| Linienrelationen U-Bahn, S-Bahn, Straßenbahn | OpenStreetMap | 73 Linien, 647 Stationen, 737 km |
+| Linienrelationen U-Bahn, S-Bahn, Straßenbahn | OpenStreetMap | 68 Linien, 651 Stationen, 719 km |
 | Stationsobjekte der Region | OpenStreetMap | 13 576 benannte Objekte |
-| Ortsteilgrenzen | OSM-Grenzrelationen (`admin_level=10`, `ref:DE-BE:OT`) | 98 Ortsteile |
-| Einwohner je Ortsteil | **Wikidata (P1082)**, CC0 | 97 Ortsteile, 3 639 138 Einwohner |
-| Gebäude mit Geschosszahl | OpenStreetMap | 207 331 ausgewertet |
+| Ortsteilgrenzen | OSM-Grenzrelationen (`admin_level=10`, `ref:DE-BE:OT`) | 97 Ortsteile |
+| Einwohner je Ortsteil | **Amt für Statistik Berlin-Brandenburg**, Einwohnerregisterstatistik zum 31.12.2025, CC BY 3.0 DE | 97 Ortsteile, 3 913 644 Einwohner |
+| Gebäude mit Geschosszahl | OpenStreetMap | 208 092 ausgewertet |
 
-Der Umweg über Wikidata hat einen Grund: OpenStreetMap führt für **fünf** der
-98 Berliner Ortsteile eine `population`, für Berlin also praktisch nicht.
-Wikidata hat sie für alle, mit Datum und Beleg, und die OSM-Relationen tragen
-die Wikidata-Id bereits — die Verknüpfung braucht also keinen Namensabgleich.
-Ursprung der Zahlen ist das Amt für Statistik Berlin-Brandenburg.
+Die Einwohnerzahlen stammen aus dem Statistischen Bericht A I 5 – hj 2/25, der
+in `data/curated/berlin-ortsteile-2025.json` abgelegt ist und über die
+Ortsteilnummer (`ref:DE-BE:OT`) mit den OSM-Grenzen verknüpft wird. Ortsteile,
+deren Grenze in OpenStreetMap aus mehreren Flächen besteht, werden dabei zu
+einer Fläche zusammengeführt, damit ihre Einwohner nicht doppelt gezählt werden.
 
-Wer es amtlich direkt will: das Amt veröffentlicht die
-Einwohnerregisterstatistik je Ortsteil und je LOR-Planungsraum als offene
-Daten (`daten.berlin.de`, ebenfalls dl-de/by-2-0). Sie liegt nicht als eine
-Abfrage-Schnittstelle vor, sondern als Tabellen je Stichtag; der Importer
-erwartet nur Ortsteilnummer und Einwohnerzahl und ließe sich darauf umstellen.
+Die 2 196 500 Arbeitsplätze sind die Erwerbstätigen am Arbeitsort 2025 nach dem
+Arbeitskreis Erwerbstätigenrechnung; sie werden wie in Hamburg nach
+Nichtwohn-Geschossfläche verteilt.
 
 ## 4. Was fehlt
 

@@ -12,6 +12,7 @@
   },
   "bbox": "53.32,9.60,53.80,10.40",
   "regionBbox": "53.00,9.10,54.55,12.55",
+  "regionLabel": "zwischen Lüneburg, Kiel und Rostock",
   "stationBbox": "53.00,9.10,54.55,12.55",
   "transitOperators": [
     "Hamburger Hochbahn",
@@ -43,7 +44,7 @@
     "label": "Statistikamt Nord"
   },
   "jobs": {
-    "total": 1280000,
+    "total": 1370200,
     "centreBoostFactor": 1.9,
     "centreBoostRadiusM": 2600
   },
@@ -54,11 +55,11 @@
   },
   "modelParams": {
     "fiscal": {
-      "vatCityShare": 0.0245
+      "vatCityShare": 0.0224
     },
     "calibratedOn": "Hamburg"
   },
-  "modelParamsNote": "Hamburg: 1,9 Mio. Einwohner, Anteil am Umsatzsteuer-Länderanteil nach Einwohnerschlüssel.",
+  "modelParamsNote": "Hamburg hat 1,98 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 2,24 % des Umsatzsteueraufkommens der Länder zustehen. Die Einsteigerraten und Betriebskosten des Modells sind auf die für 2025 veröffentlichten Zahlen von HOCHBAHN und S-Bahn Hamburg kalibriert.",
   "districtTerm": "Stadtteile",
   "majorWater": "(elbe|alster|bille|köhlbrand|hafen|este|dove|gose|norderelbe|süderelbe)"
 }

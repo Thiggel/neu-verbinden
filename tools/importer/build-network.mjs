@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { ROOT, indexElements, writeJson } from './overpass.mjs';
 import { loadCity } from './lib/city.mjs';
 import {
-  haversine, projectOnLine, cutLine, simplify, stitchLines, roundLine, round, lineLength, setOrigin,
+  haversine, projectOnLine, projectAllOnLine, cutLine, simplify, stitchLines, roundLine, round, lineLength, setOrigin,
 } from './lib/geo.mjs';
 
 /** Point halfway along a polyline by length, robust to differing vertex counts. */
@@ -351,11 +351,28 @@ for (const ref of sortedRefs) {
     // line so the map shows no kink.
     let droppedStops = 0;
     const droppedNames = [];
+    // A route that calls at the same station twice — a ring that closes on
+    // itself — has two stops of one name and passes the place twice. Each call
+    // belongs to its own pass; see `projectAllOnLine`.
+    const placeKey = (n) => baseName(resolveName(n) || '').toLowerCase();
+    const calls = new Map();
+    for (const n of v.stops) calls.set(placeKey(n), (calls.get(placeKey(n)) ?? 0) + 1);
+    const seen = new Map();
     const projected = v.stops
       .map((n) => {
         const canon = canonicalStation(n);
         const anchor = canon ? [canon.lon, canon.lat] : [n.lon, n.lat];
         let pr = projectOnLine(anchor, v.geometry);
+        const key = placeKey(n);
+        if (key && calls.get(key) > 1) {
+          const nth = seen.get(key) ?? 0;
+          seen.set(key, nth + 1);
+          // Passes more than a station's length apart, or they are one pass.
+          const passes = projectAllOnLine(anchor, v.geometry, 150).filter(
+            (c, i, all) => i === 0 || c.along - all[i - 1].along > 500
+          );
+          if (passes.length > 1 && nth < passes.length) pr = passes[nth];
+        }
         if (!pr || pr.distance > 400) pr = projectOnLine([n.lon, n.lat], v.geometry);
         if (!pr || pr.distance > 400) {
           droppedStops++;

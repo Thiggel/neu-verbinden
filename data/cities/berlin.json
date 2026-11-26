@@ -12,6 +12,7 @@
   },
   "bbox": "52.31,13.03,52.71,13.79",
   "regionBbox": "51.60,11.60,53.45,15.10",
+  "regionLabel": "zwischen Magdeburg, Prenzlau, Cottbus und Frankfurt (Oder)",
   "stationBbox": "51.60,11.60,53.45,15.10",
   "transitOperators": [
     "BVG",
@@ -35,13 +36,16 @@
     "note": "Ortsteile Berlins als OSM-Grenzrelationen"
   },
   "statistics": {
-    "kind": "osm-population",
-    "note": "Einwohnerzahlen aus den population-Tags der Ortsteil-Relationen in OpenStreetMap",
-    "licence": "ODbL 1.0",
-    "label": "OpenStreetMap-Ortsteildaten"
+    "kind": "afs-register",
+    "file": "data/curated/berlin-ortsteile-2025.json",
+    "source": "Amt für Statistik Berlin-Brandenburg — Einwohnerregisterstatistik der Berliner Ortsteile",
+    "url": "https://download.statistik-berlin-brandenburg.de/b50a3a074782ec0e/e0095590e436/SB_A01-05-00_2025h02_BE.pdf",
+    "note": "Einwohner mit Hauptwohnsitz je Ortsteil, Stand 31.12.2025 (Statistischer Bericht A I 5 – hj 2/25)",
+    "licence": "CC BY 3.0 DE",
+    "label": "Amt für Statistik Berlin-Brandenburg"
   },
   "jobs": {
-    "total": 1690000,
+    "total": 2196500,
     "centreBoostFactor": 1.6,
     "centreBoostRadiusM": 3400
   },
@@ -52,14 +56,22 @@
   },
   "modelParams": {
     "fiscal": {
-      "vatCityShare": 0.0465
+      "vatCityShare": 0.0443
     },
     "cost": {
       "groundConditionsFactor": 1.05
     },
-    "calibratedOn": "Hamburg"
+    "calibratedOn": "Hamburg",
+    "demand": {
+      "boardingsPerCatchment": {
+        "ubahn": 0.65,
+        "sbahn": 0.52,
+        "tram": 0.34,
+        "regional": 0.17
+      }
+    }
   },
-  "modelParamsNote": "Berlin: 3,9 Mio. Einwohner, entsprechend gut doppelt so hoher Einwohnerschlüssel. Baugrund: Berliner Sande über weitgehend flachem Grundwasser — schwierig, aber ohne die Hamburger Kleimarsch.",
+  "modelParamsNote": "Berlin hat 3,9 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 4,43 % des Umsatzsteueraufkommens der Länder zustehen. Der Baugrund aus Sand mit hoch anstehendem Grundwasser ist anspruchsvoll, aber leichter als die Hamburger Marsch. Die Einsteigerraten sind so gewählt, dass das heutige Netz die für 2025 veröffentlichten Fahrgastzahlen von BVG und S-Bahn Berlin ergibt.",
   "districtTerm": "Ortsteile",
   "majorWater": "(spree|havel|dahme|müggel|wannsee|tegeler see|langer see|seddin|hafen|schifffahrtskanal|teltowkanal)"
 }

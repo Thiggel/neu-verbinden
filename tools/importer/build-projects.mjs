@@ -7,7 +7,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, writeJson } from './overpass.mjs';
-import { haversine, projectOnLine, simplify, stitchLines, roundLine, round, lineLength } from './lib/geo.mjs';
+import { haversine, projectOnLine, cutLine, simplify, stitchLines, roundLine, round, lineLength } from './lib/geo.mjs';
 import { buildStreetGraph } from './lib/streetgraph.mjs';
 import { loadCity, rawName, distName } from './lib/city.mjs';
 import { readdir } from 'node:fs/promises';
@@ -242,14 +242,25 @@ function corridorPath(a, b, pool = corridors, tol = 260) {
 // out in disconnected pieces.
 const placed = new Map();
 
-function resolveStations(list, anchor, minSeparation = 500) {
+//
+// `scope` keeps two networks apart that merely share a name. The tram study
+// has a stop "Siemersplatz" at the bus stop on the street, and the U5 a
+// station "Siemersplatz" underneath it; resolving both to one point would turn
+// a kerbside tram stop into a deep underground station.
+function resolveStations(list, anchor, minSeparation = 500, scope = '') {
   const out = [];
   let near = anchor;
   let previous = null;
   for (const s of list) {
-    const key = norm(s.name);
-    const names = [s.name, s.alias].filter(Boolean);
-    const hit = placed.get(key) ?? geocode(names, near, { minFrom: previous, minSeparation });
+    const key = scope + norm(s.name);
+    const names = [s.name, s.alias, ...(s.aliases ?? [])].filter(Boolean);
+    // A stop that brings its own coordinates is where its source says it is.
+    const given =
+      Number.isFinite(s.lon) && Number.isFinite(s.lat)
+        ? { lon: s.lon, lat: s.lat, source: 'kuratiert', matched: s.name, distance: 0 }
+        : null;
+    const hit =
+      placed.get(key) ?? given ?? geocode(names, near, { minFrom: previous, minSeparation });
     if (!hit) {
       console.warn(`    ! "${s.name}" konnte nicht verortet werden (Anker ${near})`);
       continue;
@@ -273,7 +284,7 @@ function resolveStations(list, anchor, minSeparation = 500) {
   return out;
 }
 
-function buildSegments(stations, { rail = false, street = false, smooth = 12 } = {}) {
+function buildSegments(stations, { rail = false, street = false, smooth = 12, tight = false } = {}) {
   const segs = [];
   for (let i = 0; i < stations.length - 1; i++) {
     const a = [stations[i].lon, stations[i].lat];
@@ -283,7 +294,13 @@ function buildSegments(stations, { rail = false, street = false, smooth = 12 } =
     // in it. Following a corridor is only worth it while it stays roughly on
     // the way.
     const direct = haversine(a, b);
-    const sane = (p) => p && lineLength(p) <= Math.max(direct * 1.8, direct + 600);
+    // Between two named stops a few hundred metres apart, a route much longer
+    // than the straight line is the router finding its way round a one-way
+    // street, not the tram's alignment — the stops themselves fix the course.
+    const sane = (p) =>
+      p &&
+      lineLength(p) <=
+        (tight ? Math.max(direct * 1.25, direct + 60) : Math.max(direct * 1.8, direct + 600));
 
     let via = 'gerade';
     let path = corridorPath(a, b);
@@ -391,6 +408,36 @@ for (const pr of curated.proposals) {
         geo[0] = [round(ends[0].lon, 5), round(ends[0].lat, 5)];
         geo[geo.length - 1] = [round(ends[ends.length - 1].lon, 5), round(ends[ends.length - 1].lat, 5)];
       }
+      if (l.namedStops) {
+        // The line stops at its named stations and nowhere else, so the
+        // alignment is cut at them: one section per pair, built like a planned
+        // project. Left to the engine, the gaps were filled with stops at
+        // regular spacing, named after whatever street was nearest — a halt
+        // "Claudiusstraße" on a line described as calling at today's stations.
+        const stops = (l.stations ?? []).map((st) => ({
+          name: st.name,
+          lon: st.lon,
+          lat: st.lat,
+          isNew: st.new !== false,
+        }));
+        const along = stops.map((st) => projectOnLine([st.lon, st.lat], geo).along);
+        const pieces = cutLine(geo, along.slice(1, -1));
+        const segments = pieces.map((piece, i) => ({
+          from: stops[i].name,
+          to: stops[i + 1].name,
+          geo: roundLine(piece),
+          lengthM: Math.round(lineLength(piece)),
+          viaCorridor: true,
+          via: 'schiene',
+        }));
+        return {
+          ...l,
+          stations: stops,
+          segments,
+          lengthKm: round(lineLength(geo) / 1000, 2),
+          autoStations: false,
+        };
+      }
       const lengthM = lineLength(geo);
       return {
         ...l,
@@ -403,9 +450,20 @@ for (const pr of curated.proposals) {
         autoStations: true,
       };
     }
-    const stations = resolveStations(l.stations.map((s) => ({ ...s, new: true })), l.anchor, 250);
-    const segments = buildSegments(stations, { street: true });
+    const stations = resolveStations(
+      // A proposal that names its stops may say which of them exist already.
+      l.stations.map((s) => ({ ...s, new: l.namedStops ? s.new !== false : true })),
+      l.anchor,
+      l.namedStops ? 150 : 250,
+      l.namedStops ? 'tram ' : ''
+    );
+    const segments = buildSegments(stations, { street: true, tight: !!l.namedStops });
     const km = segments.reduce((s, x) => s + x.lengthM, 0) / 1000;
+    if (l.namedStops) {
+      // Every stop is named by the source, so nothing is left for the engine
+      // to space out.
+      return { ...l, stations, segments, lengthKm: round(km, 2), autoStations: false };
+    }
     // The published concept states stop counts, not stop names: the listed
     // points are corridor anchors and the engine fills in the tram-spaced
     // stops between them.
@@ -417,7 +475,7 @@ for (const pr of curated.proposals) {
   const viaStreet = lines.flatMap((l) => l.segments).filter((s) => s.via === 'strasse').length;
   const straight = lines.flatMap((l) => l.segments).filter((s) => s.via === 'gerade').length;
   console.log(
-    `  ${pr.id}: ${lines.length} Linien, ${totalKm.toFixed(1)} km, ${stops} Ankerpunkte ` +
+    `  ${pr.id}: ${lines.length} Linien, ${totalKm.toFixed(1)} km, ${stops} Halte ` +
       `(angegeben: ${pr.claimedLengthKm} km / ${pr.claimedStops}); ${viaStreet} Abschnitte im Straßennetz, ${straight} gerade`
   );
 }
@@ -429,7 +487,7 @@ const problems = [];
 const seen = new Map();
 for (const p of [...projects, ...proposals.flatMap((pr) => pr.lines)]) {
   for (const st of p.stations ?? []) {
-    const key = norm(st.name);
+    const key = (p.namedStops ? 'tram ' : '') + norm(st.name);
     const prev = seen.get(key);
     if (prev && (prev.lon !== st.lon || prev.lat !== st.lat)) {
       problems.push(`"${st.name}" liegt in ${prev.id} und ${p.id} an verschiedenen Stellen`);
@@ -443,7 +501,8 @@ for (const p of [...projects, ...proposals.flatMap((pr) => pr.lines)]) {
     // warning that always fires for a correct case teaches people to ignore
     // warnings.
     if (sg.via === 'schiene' && !sg.from && !sg.to) continue;
-    if (sg.lengthM < 250) {
+    // Tram stops stand closer together than railway stations do.
+    if (sg.lengthM < (p.namedStops ? 120 : 250)) {
       problems.push(`${p.id}: ${sg.from} → ${sg.to} ist nur ${sg.lengthM} m lang`);
     }
     const longLimit = p.mode === 'sbahn' || p.mode === 'regional' ? 15000 : 9000;

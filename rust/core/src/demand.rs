@@ -97,8 +97,19 @@ fn station_boardings(
 /// the property the measure needs.
 const UNREACHABLE_MIN: f64 = 180.0;
 
-pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResult {
-    let d = &params.demand;
+/// Rides per year on whatever the network has switched on, without the
+/// accessibility calculation.
+///
+/// The appraisal needs the operating result of today's network as its
+/// comparison case, and for that only the fare revenue is missing — which is
+/// boardings, not travel times.
+pub fn annual_rides(net: &Network, city: &CityData, params: &Params) -> f64 {
+    station_demand(net, city, params).1 * params.demand.annual_factor
+}
+
+/// Boardings station by station: the list, the total, and the part at stations
+/// that are new or reached over new track.
+fn station_demand(net: &Network, city: &CityData, params: &Params) -> (Vec<StationDemand>, f64, f64) {
     let mut stations = Vec::new();
     let mut total = 0.0;
     let mut new_total = 0.0;
@@ -116,15 +127,24 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
         let Some(n) = net.nodes.get(&nid) else {
             continue;
         };
-        let lines = net.lines_at_node(nid);
-        let mode = lines
+        // The services that call here *in this scenario*, by label.
+        //
+        // This counted line records, switched on or not. Two things followed.
+        // A line stored as several records — the U1 with its two eastern
+        // branches, the S1 to the airport and to Poppenbüttel — made every
+        // station on the shared trunk an interchange with itself, and a
+        // planned or proposed line made one of every station it would touch,
+        // including in a scenario that leaves it out. Both multiplied the
+        // boardings by the interchange factor, so the U1 carried half as much
+        // again as a line that happens to be stored as one record.
+        let services = net.services_at_node(nid);
+        let mode = services
             .iter()
-            .filter_map(|l| net.lines.get(l))
-            .map(|l| l.mode)
+            .map(|(_, m)| *m)
             .min()
             .unwrap_or(crate::model::Mode::Ubahn);
         let p = n.geo.to_metric();
-        let interchange = lines.len() > 1;
+        let interchange = services.len() > 1;
         let central = p.distance_to(&centre) < 2500.0;
         let (b, pop, jobs) = station_boardings(p, mode, interchange, central, city, params);
         let is_new = n.status != BuildStatus::InService
@@ -148,6 +168,12 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
             is_new,
         });
     }
+    (stations, total, new_total)
+}
+
+pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResult {
+    let d = &params.demand;
+    let (mut stations, total, new_total) = station_demand(net, city, params);
 
     // ------------------------------------------------------- accessibility --
 
@@ -334,7 +360,7 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
     let car_km_year = car_trips * d.avg_replaced_car_trip_km * d.annual_factor;
 
     let mut notes = vec![
-        "Nachfrage ist modelliert, nicht gezählt: Einzugsbereiche, Umsteigezuschläge und Reisezeiten aus dem Netzgraphen."
+        "Die Nachfrage ist nicht gezählt, sondern aus Einzugsbereichen, Umsteigezuschlägen und den Reisezeiten im Netz berechnet."
             .to_string(),
     ];
     if saved_min <= 0.0 {

@@ -124,12 +124,19 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
   Produktentscheidung.
 
 ### Berlin
-* **[P]** Die kuratierte Berliner Vorhabenliste umfasst erst drei Projekte
-  (`data/curated/projects-berlin.json`). Weiter zu erheben, je Vorhaben mit
-  Quelle und Preisstand: U7 Rudow–BER (ca. 700 Mio. €, Stationsfolge nicht
-  belegt), U7 Richtung Heerstraße, Straßenbahn Turmstraße–Jungfernheide,
-  Nahverkehrstangente, weitere i2030-Vorhaben. Für „Wesendorfer Straße" (U8)
-  fehlt eine Quelle, die den Halt eindeutig verortet.
+* **[P]** Die kuratierte Berliner Vorhabenliste umfasst vier Projekte
+  (`data/curated/projects-berlin.json`). Mit Quelle belegt und noch nicht
+  aufgenommen: Straßenbahn Turmstraße–Jungfernheide (3,8 km, 2031), Pankow–
+  Pasedagplatz (5,1 km, 2031), Blankenburger Süden (3,2 km, 2032), Ausbau
+  Mahlsdorf (1,6 km) und der zweite Abschnitt der S21. U7 Rudow–BER und U7
+  Heerstraße Nord sind Studien ohne Beschluss. Der U8-Bahnhof „Wesendorfer
+  Straße" ist belegt, lässt sich aus den Straßendaten aber nicht als eigener
+  Standort auflösen.
+* **[P]** Das Hamburger Netz enthält die S7, die es nur bis zum 12.12.2026
+  gibt. Mit dem nächsten Datenstand entfällt sie.
+* **[P]** Die Straßenbahnstudie behält die U5 bis Borgweg bei; im Szenario
+  endet sie an der City Nord, weil der Abschnitt City Nord–Jarrestraße nur als
+  Ganzes vorliegt. Er ließe sich am Borgweg teilen.
 * **[P]** Der Berliner **U6** fehlen die fünf nördlichen Stationen von
   Alt-Tegel bis Scharnweberstraße: 24 statt 29 Halte. Nachgeprüft und
   eingegrenzt:
@@ -182,6 +189,55 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 
 ## Erledigt
+
+* **[F]** 2026-11-26 Faktenprüfung aller Eingangsdaten gegen Primärquellen,
+  Modell 0.16.0. Was sich geändert hat:
+  * **Einwohner Berlin** kommen jetzt aus der Einwohnerregisterstatistik des
+    Amts für Statistik (97 Ortsteile, 3 913 644 zum 31.12.2025) statt aus
+    Wikidata (3 639 138). Ortsteile mit mehreren Flächen in OSM wurden doppelt
+    gezählt (98 statt 97).
+  * **Arbeitsplätze** sind die Erwerbstätigen am Arbeitsort 2025: Hamburg
+    1 370 200 (vorher 1 280 000), Berlin 2 196 500 (vorher 1 690 000, was den
+    sozialversicherungspflichtig Beschäftigten entsprach).
+  * **Umsatzsteuerschlüssel** 2,24 % und 4,43 % statt 2,45 % und 4,65 %.
+  * **Wertansätze** aus der Standardisierten Bewertung 2016+, auf Preise von
+    2026 umgerechnet: Zeitwert 8,64 €/h (vorher 11,20), CO₂ 877 €/t (vorher
+    300), Unfälle 0,111 €/Pkw-km (vorher 0,033), 168 g CO₂ je Pkw-km (vorher
+    145).
+  * **Nachfrage** war auf „1,3 bis 1,5 Mio. Einsteiger je Werktag“ geeicht,
+    wofür es keine Quelle gibt. Veröffentlicht sind Jahreswerte: Hamburg 571
+    Mio. (U-Bahn 291, S-Bahn rund 280), Berlin 1 249 Mio. (U-Bahn 556,
+    Straßenbahn 211, S-Bahn rund 482). Darauf sind die Raten jetzt je Stadt
+    kalibriert; das Modell lag vorher 36 % (Hamburg) und 23 % (Berlin) darunter.
+  * **Betriebskosten** sind auf den Kostendeckungsgrad der HOCHBAHN (75 %,
+    2025) kalibriert; der Erlös von 1,05 € je Einsteiger hat sich am
+    Lagebericht bestätigt (1,08 €).
+  * **Bewertung:** Einem Vorhaben wurde das Betriebsdefizit des *gesamten*
+    Netzes angelastet, also auch das der Linien, die heute schon fahren. Jetzt
+    zählt nur die Veränderung gegenüber dem heutigen Netz. Berlins Vorhaben
+    kamen dadurch auf 0,13 statt 0,86.
+  * **`hh simulate`, `audit` und `bench`** rechneten jede Stadt mit Hamburgs
+    Parametern; nur der Import nahm die der Stadt.
+  * **Hamburger Vorhaben:** U5 Ost 2,86 Mrd. € und 2033 (vorher 2,6 Mrd., 2032);
+    Stationsfolge der U5 nach aktuellem Stand ohne Jungfernstieg und Mundsburg,
+    mit Beethovenstraße, St. Georg, Stephansplatz, Grindelberg, UKE,
+    Sportplatzring und Lurup Mitte; Barmbek Nord lag an der U3-Haltestelle
+    Habichtstraße, 1,2 km neben dem geplanten Standort. U4 Horner Geest 561
+    Mio. € (vorher 465 mit Preisstand 2018). U4 zum Moldauhafen Ende 2031
+    (vorher 2035) und als Brücke und Viadukt statt als Tunnel. S4 mit allen 16
+    Halten ab Hauptbahnhof, 1,847 Mrd. € (vorher 2,1), Baubeginn 2021 (vorher
+    2023).
+  * **Straßenbahn:** Die gezeigten vier Linien waren eine freie Rekonstruktion,
+    die mit der Studie nur die Eckdaten gemein hatte. Jetzt sind es die vier
+    Korridore der Studie mit ihren Haltestellen (44,3 km gegen 43,7 km).
+  * **S6 nach Lübeck:** Die Trasse lief bei Bad Oldesloe 3,5 km zurück und über
+    Lübeck Hbf hinaus, 9 km zu viel; dazu fünf erfundene Zwischenhalte.
+  * **Berliner Vorhaben:** Siemensbahn ist nicht im Bau, sondern in
+    vorgezogenen Maßnahmen; U8-Kosten als Medienangabe gekennzeichnet; das
+    Zitat „nicht valide vorhersagbar“ zur Straßenbahn Ostkreuz war nicht
+    belegbar und ist entfernt; U3 zum Mexikoplatz ergänzt.
+  * **Browsertests** lasen ein privates Feld von MapLibre, dessen Form sich mit
+    Version 6 geändert hat, und liefen deshalb alle in die Zeitüberschreitung.
 
 * **[+]** Wunschkarte (`/wuensche`, `GET /api/wuensche/:city`). Alle
   veröffentlichten Entwürfe einer Stadt übereinandergelegt, gerastert auf 300 m,

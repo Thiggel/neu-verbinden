@@ -1,9 +1,11 @@
 // Everything Berlin needs, in one pass.
 //
 // Hamburg's import is split across several scripts because its population data
-// comes from a separate official API. Berlin's comes from OpenStreetMap like
-// the rest, so one script covers it: network, stations, geography, districts
-// with their population, and the surrounding region.
+// comes from a separate official API. Everything Berlin needs from the network
+// comes from OpenStreetMap, so one script covers it: network, stations,
+// geography, district boundaries and the surrounding region. The population
+// per Ortsteil is the official register count, kept in data/curated because
+// the Amt für Statistik publishes it as a report rather than an open endpoint.
 //
 //   node tools/importer/fetch-berlin.mjs
 
@@ -125,15 +127,11 @@ for (const [name, query] of Object.entries(GEO)) {
 
 // ------------------------------------------------------------- the districts --
 
-// Berlin's 96 Ortsteile, with the population figures OSM carries for them.
-// Hamburg gets its numbers from the statistical office; Berlin's equivalent is
-// not available as a single open endpoint in the same shape, so the OSM tags —
-// themselves sourced from the Amt für Statistik Berlin-Brandenburg — are what
-// is used, and the app says so.
-// A bounding box rather than an `area[]` lookup: resolving the Berlin area and
-// then intersecting a hundred detailed boundaries against it makes Overpass
-// time out. `ref:DE-BE:OT` — the official Ortsteil number — is what marks a
-// Berlin Ortsteil, and keeps Brandenburg's own out.
+// Berlin's 97 Ortsteile as boundary relations. A bounding box rather than an
+// `area[]` lookup: resolving the Berlin area and then intersecting a hundred
+// detailed boundaries against it makes Overpass time out. `ref:DE-BE:OT`, the
+// official Ortsteil number, marks a Berlin Ortsteil, keeps Brandenburg's own
+// out, and is the key the importer joins the official population on.
 const districts = await overpass(
   'berlin-districts',
   `[out:json][timeout:900];
@@ -141,57 +139,6 @@ relation["boundary"="administrative"]["admin_level"="${city.districts.adminLevel
 out geom;`
 );
 console.log(`  Ortsteile: ${districts.elements.length}`);
-
-// Their populations. OpenStreetMap carries the figure for only five of them,
-// so it is not a usable source here; Wikidata has it for all of them, sourced
-// from the Amt für Statistik Berlin-Brandenburg, and the OSM relations already
-// carry the Wikidata id, so the join needs no name matching.
-const population = await wikidataPopulation(
-  districts.elements.map((e) => e.tags?.wikidata).filter(Boolean)
-);
-await writeJson('data/raw/berlin-district-population.json', population);
-const known = districts.elements.filter((e) => population.values[e.tags?.wikidata]);
-console.log(
-  `  Einwohnerzahlen (Wikidata): ${known.length} von ${districts.elements.length}, ` +
-    `${Object.values(population.values)
-      .reduce((s, v) => s + v.population, 0)
-      .toLocaleString('de-DE')} Einwohner`
-);
-
-async function wikidataPopulation(ids) {
-  const values = {};
-  for (let i = 0; i < ids.length; i += 50) {
-    const batch = ids.slice(i, i + 50).join('|');
-    const url =
-      'https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&props=claims' +
-      `&ids=${batch}`;
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'hamburg-transit-designer/0.1 (versioned data import)' },
-    });
-    if (!res.ok) throw new Error(`Wikidata antwortete mit ${res.status}`);
-    const data = await res.json();
-    for (const [id, entity] of Object.entries(data.entities ?? {})) {
-      const claims = entity.claims?.P1082 ?? [];
-      // The most recent figure wins; each statement carries its date in P585.
-      const best = claims
-        .map((c) => ({
-          population: Math.abs(parseInt(c.mainsnak?.datavalue?.value?.amount ?? '0', 10)) || 0,
-          at: c.qualifiers?.P585?.[0]?.datavalue?.value?.time ?? '',
-        }))
-        .filter((c) => c.population > 0)
-        .sort((a, b) => b.at.localeCompare(a.at))[0];
-      if (best) values[id] = best;
-    }
-    process.stdout.write(`  [wikidata] ${Object.keys(values).length}/${ids.length}\r`);
-  }
-  console.log();
-  return {
-    source: 'Wikidata (P1082), Ursprung Amt für Statistik Berlin-Brandenburg',
-    licence: 'CC0 1.0',
-    retrieved: new Date().toISOString().slice(0, 10),
-    values,
-  };
-}
 
 // ---------------------------------------------------------------- the region --
 

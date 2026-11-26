@@ -22,6 +22,20 @@ use serde::{Deserialize, Serialize};
 
 /// Bump this whenever a change moves the numbers.
 ///
+/// 0.16.0: the valuation and calibration figures are re-based on published
+/// sources. The value of time (6.60 €/h), accident cost (8.5 ct/car-km), car
+/// emissions (168 g/km) and the price of CO2 (670 €/t) now come from the
+/// Standardisierte Bewertung 2016+ and are scaled from 2016 to 2026 prices with
+/// the consumer price index; before, the value of time was 11.20 €/h and CO2
+/// was priced at 300 €/t. Boardings per catchment are calibrated on the rides
+/// the operators report for 2025 (Hamburg 571 M, Berlin 1 249 M a year) instead
+/// of on a weekday range that turned out to be a third too low, and the
+/// operating cost rates on HOCHBAHN's published cost recovery of 75 %. Both
+/// cities' VAT shares follow the current population key (2.24 % and 4.43 %).
+/// And the appraisal charges a project only with the *change* in the operating
+/// result against today's network; it used to charge the deficit of the whole
+/// network, existing lines included, to whatever was built.
+///
 /// 0.15.0: the comparison case is today's network, and losses count.
 ///
 /// Two faults that flattered any scenario built on a cleared map. The "without
@@ -82,7 +96,7 @@ use serde::{Deserialize, Serialize};
 /// construction stages of one line no longer count as an interchange or buy
 /// their own fleet; planning phases are scaled by the share not already under
 /// construction; corners are filleted, so alignments are slightly shorter.
-pub const CALCULATION_VERSION: &str = "0.15.0";
+pub const CALCULATION_VERSION: &str = "0.16.0";
 
 /// Reference price level of all monetary parameters.
 pub const PRICE_BASE_YEAR: i32 = 2026;
@@ -632,11 +646,17 @@ impl Default for DemandParams {
             },
             catchment_decay: 1.6,
             job_weight: 1.35,
+            // Calibrated on published ridership, so that the present-day
+            // network of Hamburg carries what its operators report: 291 M
+            // rides on the U-Bahn (HOCHBAHN 2025) and about 280 M on the S-Bahn.
+            // The tram rate comes from Berlin, the only one of the two cities
+            // that has a tram to observe. Berlin overrides the U- and S-Bahn
+            // rates in `data/cities/berlin.json`, calibrated the same way.
             boardings_per_catchment: ModeValues {
-                ubahn: 0.50,
-                sbahn: 0.40,
-                tram: 0.26,
-                regional: 0.13,
+                ubahn: 0.78,
+                sbahn: 0.63,
+                tram: 0.34,
+                regional: 0.20,
             },
             interchange_factor: 1.55,
             centrality_factor: 1.35,
@@ -653,7 +673,10 @@ impl Default for DemandParams {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct EconomicsParams {
-    /// Value of travel time, €/hour, weighted across trip purposes.
+    /// Value of travel time, €/hour. The Standardisierte Bewertung 2016+
+    /// values a saved hour at 6.60 € in 2016 prices; the model works in 2026
+    /// prices, so the figure is scaled with the consumer price index
+    /// (2016 = 95.0, 2025 = 121.9, 2026 projected at +2 %): × 1.309.
     pub value_of_time_eur_h: f64,
     /// Value of time for newly induced trips (rule of a half).
     pub induced_trip_share_of_benefit: f64,
@@ -665,15 +688,18 @@ pub struct EconomicsParams {
     pub gva_per_worker_eur: f64,
     /// External congestion cost avoided, €/car-km.
     pub congestion_eur_per_car_km: f64,
-    /// External accident cost avoided, €/car-km.
+    /// Accident cost avoided, €/car-km (Standardisierte Bewertung 2016+:
+    /// 8.5 ct in 2016 prices, scaled like the value of time).
     pub accident_eur_per_car_km: f64,
     /// Air pollution and noise avoided, €/car-km.
     pub air_noise_eur_per_car_km: f64,
-    /// CO2 emitted per car-km, kg.
+    /// CO2 emitted per car-km, kg: 127 g direct plus 41 g upstream, as in the
+    /// Standardisierte Bewertung 2016+.
     pub co2_kg_per_car_km: f64,
     /// CO2 emitted per passenger-km of rail (German electricity mix), kg.
     pub co2_kg_per_rail_pkm: f64,
-    /// Climate damage cost, €/kg CO2.
+    /// Climate damage cost, €/kg CO2 (Standardisierte Bewertung 2016+: 670 €/t
+    /// in 2016 prices, scaled like the value of time).
     pub co2_eur_per_kg: f64,
     /// Health benefit of the walking stage, €/boarding.
     pub health_eur_per_boarding: f64,
@@ -696,17 +722,17 @@ pub struct EconomicsParams {
 impl Default for EconomicsParams {
     fn default() -> Self {
         Self {
-            value_of_time_eur_h: 11.20,
+            value_of_time_eur_h: 8.64,
             induced_trip_share_of_benefit: 0.5,
             agglomeration_elasticity: 0.04,
             employment_rate: 0.52,
             gva_per_worker_eur: 92_000.0,
             congestion_eur_per_car_km: 0.108,
-            accident_eur_per_car_km: 0.033,
+            accident_eur_per_car_km: 0.111,
             air_noise_eur_per_car_km: 0.019,
-            co2_kg_per_car_km: 0.145,
+            co2_kg_per_car_km: 0.168,
             co2_kg_per_rail_pkm: 0.028,
-            co2_eur_per_kg: 0.30,
+            co2_eur_per_kg: 0.877,
             health_eur_per_boarding: 0.015,
             land_value_uplift_share: 0.045,
             property_value_per_resident_eur: 145_000.0,
@@ -739,8 +765,8 @@ pub struct FiscalParams {
     pub consumption_share: f64,
     /// Länder share of VAT.
     pub vat_laender_share: f64,
-    /// The city's share of the Länder VAT pot (population key). Hamburg 2,45 %,
-    /// Berlin 4,65 % — the figure follows the city, so it is set per city in
+    /// The city's share of the Länder VAT pot (population key). Hamburg 2.24 %,
+    /// Berlin 4.43 % — the figure follows the city, so it is set per city in
     /// `data/cities/<id>.json` rather than being a constant of the model.
     #[serde(alias = "vatHamburgShare", alias = "vat_hamburg_share")]
     pub vat_city_share: f64,
@@ -767,7 +793,7 @@ impl Default for FiscalParams {
             vat_rate: 0.19,
             consumption_share: 0.48,
             vat_laender_share: 0.459,
-            vat_city_share: 0.0245,
+            vat_city_share: 0.0224,
             property_tax_rate: 0.0035,
             transfer_tax_rate: 0.055,
             annual_property_turnover: 0.035,
@@ -802,11 +828,15 @@ pub struct OperationsParams {
 impl Default for OperationsParams {
     fn default() -> Self {
         Self {
+            // The three cost rates below are scaled together so that the
+            // present-day Hamburg network, at its observed ridership, recovers
+            // 75 % of its cost from fares — the figure HOCHBAHN reports for
+            // 2025 (Kostendeckungsgrad 75.3 %).
             cost_per_train_km_eur: ModeValues {
-                ubahn: 9.6,
-                sbahn: 12.4,
-                tram: 7.2,
-                regional: 14.0,
+                ubahn: 15.2,
+                sbahn: 19.6,
+                tram: 11.4,
+                regional: 22.1,
             },
             commercial_speed_kmh: ModeValues {
                 ubahn: 32.0,
@@ -815,21 +845,21 @@ impl Default for OperationsParams {
                 regional: 60.0,
             },
             maintenance_per_km_eur: InfrastructureValues {
-                deep_tunnel: 420_000.0,
-                cut_and_cover: 380_000.0,
-                elevated: 260_000.0,
-                surface: 175_000.0,
-                existing_rail: 120_000.0,
-                tram_reserved: 115_000.0,
-                tram_mixed: 95_000.0,
-                bridge: 320_000.0,
+                deep_tunnel: 660_000.0,
+                cut_and_cover: 600_000.0,
+                elevated: 410_000.0,
+                surface: 275_000.0,
+                existing_rail: 190_000.0,
+                tram_reserved: 180_000.0,
+                tram_mixed: 150_000.0,
+                bridge: 505_000.0,
             },
             station_opex_eur: DepthValues {
-                stop: 22_000.0,
-                surface: 85_000.0,
-                elevated: 130_000.0,
-                shallow: 240_000.0,
-                deep: 310_000.0,
+                stop: 35_000.0,
+                surface: 135_000.0,
+                elevated: 205_000.0,
+                shallow: 380_000.0,
+                deep: 490_000.0,
             },
             revenue_per_boarding_eur: 1.05,
             capacity_per_car: ModeValues {

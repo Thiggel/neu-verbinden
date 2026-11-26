@@ -169,8 +169,19 @@ Einsteiger = k(Modus) × (Einwohner + 1,35 × Arbeitsplätze)
 ```
 
 Radien: U-Bahn 800 m, S-Bahn 1 000 m, Straßenbahn 500 m. `k` ist so
-kalibriert, dass das heutige Netz 1,39 Mio. Einsteiger je Werktag ergibt —
-beobachtet werden 1,3 bis 1,5 Mio.
+kalibriert, dass das heutige Netz die Fahrgastzahlen ergibt, die die
+Verkehrsunternehmen für 2025 veröffentlicht haben. Weil diese als Jahreswerte
+vorliegen, wird mit den 305 Werktagsäquivalenten des Modells umgerechnet:
+
+| | veröffentlicht | Modell | `k` U-Bahn / S-Bahn / Straßenbahn |
+| --- | ---: | ---: | --- |
+| Hamburg | 571 Mio. (U-Bahn 291 Mio., S-Bahn rund 280 Mio.) | 572 Mio. | 0,78 / 0,63 / 0,34 |
+| Berlin | 1 249 Mio. (U-Bahn 556 Mio., Straßenbahn 211 Mio., S-Bahn rund 482 Mio.) | 1 244 Mio. | 0,65 / 0,52 / 0,34 |
+
+Die Raten für U- und S-Bahn sind je Stadt bestimmt, während die Rate der
+Straßenbahn aus Berlin stammt, weil nur dort eine Straßenbahn zu beobachten
+ist. Quellen: HOCHBAHN, Lagebericht 2025; S-Bahn Hamburg, Daten und Fakten;
+BVG in Zahlen 2025; S-Bahn Berlin, Unternehmensprofil.
 
 **Erreichbarkeit** kommt aus dem Netzgraphen, nicht aus einer Annahme. Für
 jede der 14 Beschäftigungszentren wird per Dijkstra über das Szenarionetz
@@ -195,14 +206,21 @@ Sieben Posten, jeder mit ausgewiesener Grundlage:
 
 | Posten | Rechnung |
 | --- | --- |
-| Reisezeit | eingesparte Personenstunden × 11,20 €/h, neue Fahrten nur zur Hälfte |
+| Reisezeit | eingesparte Personenstunden × 8,64 €/h, neue Fahrten nur zur Hälfte |
 | Produktivität | Elastizität 0,04 auf die *relative Wegeverkürzung* der Erwerbstätigen im Einzugsbereich |
 | Straßenentlastung | vermiedene Pkw-km × 0,108 €/km |
-| Unfälle | × 0,033 €/km |
+| Unfälle | × 0,111 €/km |
 | Luft und Lärm | × 0,019 €/km |
-| Klima | (0,145 kg/Pkw-km − Bahnstrom) × 300 €/t |
+| Klima | (0,168 kg/Pkw-km − Bahnstrom) × 877 €/t |
 | Gesundheit | 0,015 € je Einsteiger für den Fußweg |
 | Standort | 4,5 % Bodenwertzuwachs, annuisiert |
+
+Zeitwert (6,60 €/h), Unfallkosten (8,5 ct/Pkw-km), CO₂-Ausstoß (127 g direkt
+und 41 g Vorkette je Pkw-km) und CO₂-Preis (670 €/t) stammen aus der
+Standardisierten Bewertung 2016+, Preisstand 2016. Weil das Modell in Preisen von
+2026 rechnet, werden sie mit dem Verbraucherpreisindex umgerechnet (2016 = 95,0,
+2025 = 121,9, 2026 mit 2 % fortgeschrieben): Faktor 1,309. Stau, Luft und Lärm
+sowie Gesundheit und Standort sind eigene Ansätze.
 
 Ausgewiesene Unsicherheit: ±35 %.
 
@@ -218,25 +236,36 @@ Die Sonderrolle als Stadtstaat ist berücksichtigt — sie gilt für beide Städ
 Sie erhalten den Landesanteil (42,5 %) **und** den Gemeindeanteil (15 %) der
 Einkommensteuer, die Gewerbesteuer vollständig ohne Umlage, und über den
 Länderanteil der
-Umsatzsteuer den Einwohnerschlüssel des jeweiligen Landes — Hamburg 2,45 %,
-Berlin 4,65 % des Länderaufkommens, denn Berlin hat gut doppelt so viele
+Umsatzsteuer den Einwohnerschlüssel des jeweiligen Landes — Hamburg 2,24 %,
+Berlin 4,43 % des Länderaufkommens, denn Berlin hat knapp doppelt so viele
 Einwohner. Der Schlüssel steht deshalb je Stadt unter `modelParams` in
 `data/cities/<id>.json`, nicht als Konstante im Modell. Dazu Grundsteuer auf den
 Bodenwertzuwachs und Grunderwerbsteuer auf den jährlich umgeschlagenen Anteil.
 
 Die Förderfähigkeit nach GVFG-Bundesprogramm wird an ein Nutzen-Kosten-
-Verhältnis über 1,0 geknüpft und mit 75 % Bundesanteil ausgewiesen.
+Verhältnis über 1,0 geknüpft und mit 75 % Bundesanteil ausgewiesen, dem
+Höchstsatz für Neu- und Ausbau. Für Reaktivierungen wie die Siemensbahn sieht
+das Gesetz bis zu 90 % vor, was das Modell nicht unterscheidet.
 
 ---
 
 ## 8. Betrieb
 
 Zug-Kilometer aus Taktfolge, Betriebszeit und Linienlänge; Kosten je Zug-km
-7,20 € (Straßenbahn) bis 12,40 € (S-Bahn); Infrastrukturunterhalt je km nach
+11,40 € (Straßenbahn) bis 19,60 € (S-Bahn); Infrastrukturunterhalt je km nach
 Bauweise; Stationsbetrieb nach Lage; Erlöse aus Fahrten × 1,05 €.
 
-Das heutige Netz erreicht damit 65 % Kostendeckung bei −231 Mio. € im Jahr.
-Ein negatives Betriebsergebnis ist im deutschen ÖPNV der Normalfall.
+Der Erlös je Einsteiger folgt dem Lagebericht 2025 der HOCHBAHN (596 Mio. €
+Erlöse aus dem Personennahverkehr bei 552 Mio. Fahrgästen, also 1,08 €). Die
+drei Kostensätze sind gemeinsam so skaliert, dass das heutige Hamburger Netz
+bei den beobachteten Fahrgastzahlen den Kostendeckungsgrad erreicht, den die
+HOCHBAHN für 2025 ausweist (75,3 %): das Modell kommt auf 76 % bei
+−189 Mio. € im Jahr. Für Berlin ergeben dieselben Sätze 62 %.
+
+Ein negatives Betriebsergebnis ist im deutschen ÖPNV der Normalfall. In die
+Barwertrechnung geht nur ein, um wie viel sich das Betriebsergebnis gegenüber
+dem heutigen Netz verändert, denn das Defizit der bestehenden Linien entsteht
+unabhängig davon, ob etwas gebaut wird.
 
 ---
 
@@ -253,7 +282,7 @@ Barwert des laufenden Betriebs.
 
 ## 10. Versionierung
 
-Jedes Szenario speichert `calculationVersion` (derzeit 0.15.0), einen
+Jedes Szenario speichert `calculationVersion` (derzeit 0.16.0), einen
 `parameterFingerprint` über die tatsächlichen Kennwerte und
 `dataVersion` (2026-09). Ändern sich die Modelle, bleiben veröffentlichte
 Ergebnisse unverändert; die Neuberechnung ist ein ausdrücklicher Schritt, und

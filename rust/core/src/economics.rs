@@ -178,9 +178,9 @@ pub fn benefits(
         items,
         co2_saved_t_per_year: co2_saved_kg / 1000.0,
         notes: vec![
-            "Modellschätzung, keine standardisierte Bewertung und keine Nutzen-Kosten-Untersuchung nach BVWP oder Stand. Bew."
+            "Der Nutzen ist eine Modellschätzung und weder eine Standardisierte Bewertung noch eine Nutzen-Kosten-Untersuchung nach dem Bundesverkehrswegeplan."
                 .to_string(),
-            "Nutzen und Fiskaleffekt sind unterschiedliche Größen und dürfen nicht addiert werden.".to_string(),
+            "Nutzen und Fiskaleffekt beschreiben dieselbe Wirkung aus zwei Blickwinkeln, weshalb sie nicht addiert werden dürfen.".to_string(),
         ],
     }
 }
@@ -327,10 +327,10 @@ pub fn fiscal(
         federal_funding_eligible: eligible,
         notes: vec![
             format!(
-                "Bundesförderung nach GVFG setzt unter anderem ein Nutzen-Kosten-Verhältnis über {:.1} voraus; hier liegt es bei {:.2}.",
+                "Eine Bundesförderung nach dem GVFG setzt unter anderem ein Nutzen-Kosten-Verhältnis über {:.1} voraus, während es hier bei {:.2} liegt.",
                 f.federal_funding_min_bcr, benefit_cost_ratio
             ),
-            "Fiskaleffekte sind Rückflüsse an öffentliche Haushalte, nicht der volkswirtschaftliche Nutzen.".to_string(),
+            "Fiskaleffekte sind Rückflüsse an öffentliche Haushalte und damit etwas anderes als der volkswirtschaftliche Nutzen.".to_string(),
         ],
     }
 }
@@ -345,11 +345,22 @@ pub struct OperationsResult {
     pub annual_result_eur: f64,
     pub cost_recovery_ratio: f64,
     pub train_km_per_year: f64,
+    /// How the operating result differs from that of today's network. This,
+    /// and not the result of the whole network, is what a project is charged
+    /// with in the appraisal: the deficit of the lines that already run is not
+    /// caused by building another one.
+    #[serde(default)]
+    pub annual_change_eur: f64,
     pub items: Vec<BenefitItem>,
     pub notes: Vec<String>,
 }
 
 pub fn operations(net: &Network, demand: &DemandResult, params: &Params) -> OperationsResult {
+    operations_for_rides(net, demand.annual_rides, params)
+}
+
+/// The operating result of a network that carries the given rides a year.
+pub fn operations_for_rides(net: &Network, annual_rides: f64, params: &Params) -> OperationsResult {
     let o = &params.operations;
     let mut train_km = 0.0;
     let mut vehicle_cost = 0.0;
@@ -385,7 +396,7 @@ pub fn operations(net: &Network, demand: &DemandResult, params: &Params) -> Oper
             .get(net.effective_depth_with(nid, &active_set));
     }
 
-    let revenue = demand.annual_rides * o.revenue_per_boarding_eur;
+    let revenue = annual_rides * o.revenue_per_boarding_eur;
     let cost = vehicle_cost + infra_cost + station_cost;
 
     let items = vec![
@@ -395,7 +406,7 @@ pub fn operations(net: &Network, demand: &DemandResult, params: &Params) -> Oper
             amount_eur_per_year: revenue,
             basis: format!(
                 "{:.0} Mio. Fahrten × {:.2} € Durchschnittserlös",
-                demand.annual_rides / 1e6,
+                annual_rides / 1e6,
                 o.revenue_per_boarding_eur
             ),
         },
@@ -425,9 +436,10 @@ pub fn operations(net: &Network, demand: &DemandResult, params: &Params) -> Oper
         annual_result_eur: revenue - cost,
         cost_recovery_ratio: if cost > 0.0 { revenue / cost } else { 0.0 },
         train_km_per_year: train_km,
+        annual_change_eur: 0.0,
         items,
         notes: vec![
-            "Betriebsergebnis des gesamten Szenarionetzes, nicht nur der neuen Abschnitte.".to_string(),
+            "Das Betriebsergebnis gilt für das gesamte Szenarionetz und nicht nur für die neuen Abschnitte, während in die Bewertung nur eingeht, um wie viel es sich gegenüber dem heutigen Netz verändert.".to_string(),
             "Ein negatives Betriebsergebnis ist im deutschen ÖPNV der Normalfall und wird über Ausgleichszahlungen finanziert."
                 .to_string(),
         ],
@@ -527,7 +539,7 @@ pub fn appraise(
                 e.discount_rate * 100.0,
                 e.appraisal_period_years
             ),
-            "Kein Ersatz für eine Standardisierte Bewertung; die Kennzahlen dienen dem Vergleich von Entwürfen untereinander."
+            "Die Kennzahlen ersetzen keine Standardisierte Bewertung, sondern dienen dazu, Entwürfe untereinander zu vergleichen."
                 .to_string(),
         ],
     }

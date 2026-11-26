@@ -301,16 +301,16 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
     let opening = cursor;
     let spread = (opening - start as f64) * t.schedule_uncertainty;
 
-    let mut notes = vec!["Modellschätzung, kein Terminplan eines Vorhabenträgers.".to_string()];
+    let mut notes = vec!["Der Termin ist eine Modellschätzung und kein Terminplan eines Vorhabenträgers.".to_string()];
     if started_share > 0.01 {
         notes.push(format!(
-            "{:.0} % der Strecke ist im Bau; Planung und Genehmigung werden nur für den Rest angesetzt.",
+            "Weil {:.0} % der Strecke bereits im Bau sind, werden Planung und Genehmigung nur für den Rest angesetzt.",
             started_share * 100.0
         ));
     }
     if construction_years > 10.0 {
         notes.push(
-            "Sehr lange Bauzeiten werden in der Praxis meist in Teilabschnitten eröffnet.".into(),
+            "Vorhaben mit sehr langer Bauzeit werden in der Praxis meist abschnittsweise eröffnet.".into(),
         );
     }
 

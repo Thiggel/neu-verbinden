@@ -15,13 +15,14 @@ kommentiert.
 ## Was es kann
 
 * Zwei echte Netze, importiert aus OpenStreetMap und im Editor umschaltbar:
-  **Hamburg** (U-Bahn, S-Bahn, AKN — 14 Linien, 276 km) und **Berlin**
-  (U-Bahn, S-Bahn, Straßenbahn — 73 Linien, 742 km). Jede Linie einzeln ein-
+  **Hamburg** (U-Bahn, S-Bahn, AKN — 13 Linien, 273 km) und **Berlin**
+  (U-Bahn, S-Bahn, Straßenbahn — 68 Linien, 719 km). Jede Linie einzeln ein-
   und ausschaltbar.
 * Die offiziell geplanten Vorhaben als eigene, umschaltbare Ebenen — für
   Hamburg die U5 in fünf Baustufen, U4 Horner Geest, U4 Grasbrook und die S4,
-  dazu das im August 2026 vorgestellte Straßenbahnkonzept; für Berlin die
-  Siemensbahn, die U8 ins Märkische Viertel und die Straßenbahn zum Ostkreuz.
+  dazu die vier Straßenbahnkorridore der im August 2026 vorgestellten Studie
+  für die Linksfraktion; für Berlin die Siemensbahn, die U8 ins Märkische
+  Viertel, die U3 zum Mexikoplatz und die Straßenbahn zum Ostkreuz.
 * Zeichnen statt GIS: jeder Klick setzt eine Station, dazwischen ergänzt die
   App weitere; Kurven werden ausgerundet, Winkel rasten nur ein, wenn sie schon
   nahe an einer Vorzugsrichtung liegen, und ein Anschluss an eine bestehende
@@ -47,14 +48,18 @@ Hamburger Projektangaben:
 
 | Referenz | Modell | veröffentlicht | Abweichung |
 | --- | ---: | ---: | ---: |
-| U5 City Nord – Jarrestraße | 1,48 Mrd. € | 1,50 Mrd. € | −1 % |
-| S4 Ost | 1,78 Mrd. € | 2,10 Mrd. € | −15 % |
-| U5 Ost (Bramfeld – City Nord) | 2,08 Mrd. € | 2,60 Mrd. € | −20 % |
-| U4 Horner Geest | 929 Mio. € | 620 Mio. € | +50 % |
-| Einsteiger je Werktag, Bestandsnetz | 1,35 Mio. | 1,3–1,5 Mio. | im Rahmen |
+| U5 City Nord – Jarrestraße | 1,42 Mrd. € | 1,50 Mrd. € | −5 % |
+| S4 | 1,70 Mrd. € | 1,85 Mrd. € | −8 % |
+| U5 Ost (Bramfeld – City Nord) | 1,96 Mrd. € | 2,86 Mrd. € | −31 % |
+| U4 Horner Geest | 779 Mio. € | 561 Mio. € | +39 % |
+| Straßenbahnnetz der Studie, Länge | 43,0 km | 43,7 km | −2 % |
+| Fahrten im Jahr, Bestandsnetz | 572 Mio. | 571 Mio. | +0 % |
+| Kostendeckung, Bestandsnetz | 76 % | 75 % (HOCHBAHN) | im Rahmen |
 
-Alle Projektreferenzen liegen innerhalb der ausgewiesenen Unsicherheitsspanne
-von ±20 bis ±32 %. `hh audit <projekt>` zeigt die Herleitung Position für
+Die veröffentlichten Kosten sind die jüngsten Angaben der Vorhabenträger,
+die künftige Preissteigerungen teils einrechnen. Die Fahrgastzahlen stammen
+aus dem Lagebericht 2025 der HOCHBAHN (U-Bahn 291 Mio.) und von der S-Bahn
+Hamburg (rund 280 Mio.); auf sie sind die Einsteigerraten kalibriert. `hh audit <projekt>` zeigt die Herleitung Position für
 Position, damit sich die Rechnung von Hand nachprüfen lässt.
 
 ---
@@ -268,15 +273,15 @@ gleichzeitig und rechnet jedes Szenario in der Ebene seiner eigenen Stadt.
 
 | | Hamburg | Berlin |
 | --- | ---: | ---: |
-| Netz | 276 km, 164 Stationen | 737 km, 647 Stationen |
+| Netz | 273 km, 164 Stationen | 719 km, 651 Stationen |
 | Verkehrsmittel | U-Bahn, S-Bahn, AKN | U-Bahn, S-Bahn, Straßenbahn |
-| Einwohner im Raster | 1 975 790 (amtlich, Stadtteile) | 3 678 322 (Ortsteile, Wikidata/Amt für Statistik) |
-| Einsteiger je Werktag (Modell) | 1,39 Mio. | 2,89 Mio. |
-| Kuratierte Vorhaben | U5, U4, S4, Straßenbahnkonzept | noch keine |
+| Einwohner im Raster | 1 975 790 (Statistikamt Nord, 99 Stadtteile) | 3 913 644 (Amt für Statistik Berlin-Brandenburg, 97 Ortsteile, Stand 31.12.2025) |
+| Arbeitsplätze im Raster | 1 370 200 (Erwerbstätige am Arbeitsort 2025) | 2 196 500 (Erwerbstätige am Arbeitsort 2025) |
+| Fahrten im Jahr (Modell / veröffentlicht) | 572 Mio. / 571 Mio. | 1 244 Mio. / 1 249 Mio. |
+| Kuratierte Vorhaben | U5, U4, S4, Straßenbahnstudie | Siemensbahn, U8, U3, Straßenbahn Ostkreuz |
 
-Berlin hat noch keine kuratierten Vorhaben: die Zahlen zu U-Bahn-Verlängerungen
-und i2030 sind öffentlich, aber ihre Erfassung mit Quelle und Preisstand steht
-noch aus. Bis dahin startet Berlin im Bestand.
+Die Berliner Vorhaben sind mit Quelle erfasst; wo eine Angabe wie Kosten oder
+Eröffnungsjahr nicht amtlich veröffentlicht ist, bleibt sie leer.
 
 ---
 
@@ -288,7 +293,7 @@ Siehe `docs/daten.md` für die vollständige Herkunft. Kurz:
 | --- | --- | --- |
 | Netzgeometrie, Stationen, Gewässer, Grün, Straßen, Gebäude, Landmarken | OpenStreetMap über Overpass | ODbL 1.0 |
 | Einwohner, Haushalte, Beschäftigte, Pkw je Stadtteil (Hamburg) | Statistikamt Nord, Regionalstatistische Daten der Stadtteile | dl-de/by-2-0 |
-| Einwohner je Ortsteil (Berlin) | `population`-Tags der OSM-Ortsteilrelationen — **nicht amtlich**, und die Anwendung nennt sie auch nicht so | ODbL 1.0 |
+| Einwohner je Ortsteil (Berlin) | Amt für Statistik Berlin-Brandenburg, Einwohnerregisterstatistik zum 31.12.2025 (Statistischer Bericht A I 5 – hj 2/25) | CC BY 3.0 DE |
 | Verteilung der Arbeitsplätze | eigene Modellierung aus Nichtwohn-Geschossfläche | — |
 | Geplante Vorhaben | kuratiert aus Projektveröffentlichungen, verortet gegen die OSM-Daten desselben Stands | — |
 | Orte und Einwohnerzahlen der Region bis Kiel, Lübeck, Rostock und Lüneburg | OpenStreetMap über Overpass | ODbL 1.0 |
@@ -296,19 +301,19 @@ Siehe `docs/daten.md` für die vollständige Herkunft. Kurz:
 Die Bevölkerungsverteilung ist das analytisch interessanteste Stück: die
 Einwohnerzahlen der Stadt- beziehungsweise Ortsteile werden innerhalb jedes
 Teils nach modellierter Wohn-Geschossfläche auf ein 200-m-Raster verteilt
-(Hamburg 99 Stadtteile und 195 041 Gebäude mit Geschosszahl, Berlin 98
-Ortsteile und 207 331 Gebäude, jeweils ergänzt um Flächennutzung). Die
+(Hamburg 99 Stadtteile und 197 577 Gebäude mit Geschosszahl, Berlin 97
+Ortsteile und 208 092 Gebäude, jeweils ergänzt um Flächennutzung). Die
 Rastersumme entspricht exakt der Ausgangssumme — für Hamburg den amtlichen
 1 975 790 Einwohnern. Woher die Zahlen einer Stadt stammen, steht im
-Datensatz selbst und wird in der Oberfläche genannt; für Berlin sind es
-OSM-Angaben, nicht das Amt für Statistik.
+Datensatz selbst und wird in der Oberfläche genannt; für Berlin sind es die
+3 913 644 Einwohner der Einwohnerregisterstatistik.
 
 Über die Stadt hinaus reicht der Ausschnitt in die Region — für Hamburg bis
 Lüneburg, Lauenburg, Kiel, Lübeck und Rostock, für Berlin ins Brandenburger
 Umland —, damit sich auch Regionalverbindungen entwerfen lassen.
 Dort gibt es keine vergleichbare amtliche Kleinräumigkeit; verwendet wird ein
 1-km-Raster aus den Einwohnerzahlen von 1 243 OSM-Ortsknoten
-(3 863 336 Einwohner), aus dem Zellen innerhalb Hamburgs entfernt sind. Die
+(3 862 753 Einwohner), aus dem Zellen innerhalb Hamburgs entfernt sind. Die
 Genauigkeit ist entsprechend gröber, und die Anwendung sagt das: eine Trasse,
 die nennenswert ins Umland reicht, bekommt in der Baubarkeit den Hinweis, auf
 wie vielen Kilometern die Zahlen auf dem groben Raster beruhen.
@@ -342,12 +347,12 @@ lassen.
 
 | Vorgang | Hamburg | Berlin |
 | --- | --- | --- |
-| Netzumfang | 276 km, 164 Stationen | 742 km, 658 Stationen |
-| Einrasten je Zeigerbewegung | 0,10 ms | 0,11 ms |
-| Schnellschätzung, Bestand | 0,5 ms | 5,2 ms |
-| Schnellschätzung, größtes Szenario | 18,8 ms (410 km) | 5,8 ms |
-| Vollständige Analyse, Bestand | 9,0 ms | 70,9 ms |
-| Szenario serialisieren / laden | 0,7 / 1,0 ms (348 kB) | 1,1 / 1,6 ms (577 kB) |
+| Netzumfang | 273 km, 164 Stationen | 719 km, 651 Stationen |
+| Einrasten je Zeigerbewegung | 0,06 ms | 0,11 ms |
+| Schnellschätzung, Bestand | 0,5 ms | 4,4 ms |
+| Schnellschätzung, größtes Szenario | 4,9 ms (455 km) | 5,2 ms |
+| Vollständige Analyse, Bestand | 9,0 ms | 64,8 ms |
+| Szenario serialisieren / laden | 1,3 / 0,9 ms (271 kB) | 0,9 / 1,5 ms (565 kB) |
 
 Die Datensätze beider Städte wiegen zusammen 16,3 MB, der Rechenkern 1,3 MB.
 
