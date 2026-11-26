@@ -87,11 +87,14 @@ async function start(page, choice = 'Beschlossene Vorhaben') {
   // <option> of the scenario <select> behind it, which is never clickable.
   const sheet = page.locator('div').filter({ has: heading }).last();
   await sheet.getByRole('button', { name: new RegExp(choice) }).first().click();
+  // The features are read through `serialize()`, the public way to get a
+  // source's data. The private `_data` field changed shape with MapLibre 6,
+  // after which every check here waited for a network that was already drawn.
   // Ready means the engine has run and the map has the network, which is true
   // on every screen size. Waiting for the headline instead worked only on a
   // wide one: on a phone the analysis sits behind a tab and is not rendered.
   await page.waitForFunction(
-    () => (window.__map?.getSource?.('transit-lines')?._data?.features?.length ?? 0) > 0,
+    () => (window.__map?.getSource?.('transit-lines')?.serialize?.()?.data?.features?.length ?? 0) > 0,
     null,
     { timeout: READY }
   );
@@ -141,7 +144,7 @@ await check('die App startet und zeigt ein Netz', async () => {
   const drawn = await page.evaluate(() => {
     const m = window.__map;
     if (!m || !m.getSource('transit-lines')) return -1;
-    return m.getSource('transit-lines')._data.features.length;
+    return m.getSource('transit-lines').serialize().data.features.length;
   });
   assert(drawn > 100, `nur ${drawn} Streckenteile auf der Karte`);
   assert(errors.length === 0, `Fehler in der Konsole: ${errors.slice(0, 2).join(' | ')}`);
@@ -156,13 +159,13 @@ await check('die Stadt lässt sich wechseln', async () => {
   await page.selectOption('#city', 'berlin');
   await page.waitForFunction(() => document.body.innerText.includes('Berlin'), null, { timeout: READY });
   await page.waitForFunction(
-    () => (window.__map?.getSource('transit-lines')?._data.features.length ?? 0) > 100,
+    () => (window.__map?.getSource('transit-lines')?.serialize().data.features.length ?? 0) > 100,
     null,
     { timeout: READY }
   );
   const drawn = await page.evaluate(() => {
     const m = window.__map;
-    return m?.getSource('transit-lines')?._data.features.length ?? -1;
+    return m?.getSource('transit-lines')?.serialize().data.features.length ?? -1;
   });
   assert(drawn > 100, `Berlin zeichnet nur ${drawn} Streckenteile`);
   await context.close();
@@ -229,7 +232,7 @@ await check('die Werkzeuge lassen sich mit der Tastatur wählen', async () => {
   await page.mouse.click(box.x + box.width * 0.45, box.y + box.height * 0.45);
   await page.waitForTimeout(500);
   const points = await page.evaluate(
-    () => window.__map?.getSource('preview-stations')?._data.features.length ?? -1
+    () => window.__map?.getSource('preview-stations')?.serialize().data.features.length ?? -1
   );
   assert(points >= 0, 'die Vorschauquelle fehlt');
   await page.keyboard.press('Escape');
@@ -366,7 +369,7 @@ await check('das dunkle Design lässt sich schalten und hält die Karte', async 
   assert(dark, 'das dunkle Design greift nicht');
   // The style is rebuilt on a theme change, and the network has to survive it.
   const drawn = await page.evaluate(
-    () => window.__map?.getSource('transit-lines')?._data.features.length ?? -1
+    () => window.__map?.getSource('transit-lines')?.serialize().data.features.length ?? -1
   );
   assert(drawn > 100, `nach dem Themenwechsel nur ${drawn} Streckenteile`);
   await context.close();
@@ -473,23 +476,23 @@ await check('eine Planseite zeigt nur, was gebaut würde, und lässt den Bestand
   if (!plan) skip('kein veröffentlichter Entwurf baut etwas');
   const { page, context, errors } = await open(`/szenario/${plan.slug}`);
   await page.waitForFunction(
-    () => (window.__map?.getSource('transit-lines')?._data.features.length ?? 0) > 0,
+    () => (window.__map?.getSource('transit-lines')?.serialize().data.features.length ?? 0) > 0,
     null,
     { timeout: 60_000 }
   );
   const focused = await page.evaluate(() => ({
-    lines: window.__map.getSource('transit-lines')._data.features.length,
-    stations: window.__map.getSource('transit-stations')._data.features.length,
+    lines: window.__map.getSource('transit-lines').serialize().data.features.length,
+    stations: window.__map.getSource('transit-stations').serialize().data.features.length,
   }));
   await page.getByRole('button', { name: 'Bestandsnetz einblenden' }).click();
   await page.waitForFunction(
-    (n) => window.__map.getSource('transit-lines')._data.features.length > n,
+    (n) => window.__map.getSource('transit-lines').serialize().data.features.length > n,
     focused.lines,
     { timeout: 20_000 }
   );
   const full = await page.evaluate(() => ({
-    lines: window.__map.getSource('transit-lines')._data.features.length,
-    stations: window.__map.getSource('transit-stations')._data.features.length,
+    lines: window.__map.getSource('transit-lines').serialize().data.features.length,
+    stations: window.__map.getSource('transit-stations').serialize().data.features.length,
   }));
   assert(full.lines > focused.lines, 'der Bestand kommt nicht dazu');
   // Stations follow their lines in both directions; they used to stay behind as
@@ -497,7 +500,7 @@ await check('eine Planseite zeigt nur, was gebaut würde, und lässt den Bestand
   assert(full.stations > focused.stations, 'die Stationen folgen den Strecken nicht');
   await page.getByRole('button', { name: 'Nur die neuen Strecken' }).click();
   await page.waitForFunction(
-    (n) => window.__map.getSource('transit-lines')._data.features.length === n,
+    (n) => window.__map.getSource('transit-lines').serialize().data.features.length === n,
     focused.lines,
     { timeout: 20_000 }
   );
