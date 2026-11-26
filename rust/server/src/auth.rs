@@ -211,21 +211,32 @@ pub fn validate_handle(handle: &str) -> ApiResult<String> {
 ///
 /// `X-Forwarded-For` is only believed when `HH_TRUST_PROXY` says a proxy is in
 /// front — otherwise anyone could spoof the header and reset their own limit.
+///
+/// Even then only the end of it is believed. Each proxy *appends* the address
+/// it saw, so the leftmost entry is whatever the client chose to send and only
+/// the last ones were written by somebody trusted. `HH_TRUST_PROXY` may give the
+/// number of proxies in front (a CDN before a load balancer is two); anything
+/// that is not a number means one.
 pub struct ClientIp(pub String);
+
+fn forwarded_client(header: &str, hops: usize) -> Option<String> {
+    let entries: Vec<&str> = header.split(',').map(str::trim).collect();
+    let i = entries.len().checked_sub(hops.max(1))?;
+    Some(entries[i].to_string()).filter(|v| !v.is_empty())
+}
 
 #[async_trait::async_trait]
 impl<S: Send + Sync> axum::extract::FromRequestParts<S> for ClientIp {
     type Rejection = std::convert::Infallible;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        if std::env::var("HH_TRUST_PROXY").is_ok() {
+        if let Ok(trust) = std::env::var("HH_TRUST_PROXY") {
+            let hops = trust.trim().parse().unwrap_or(1);
             if let Some(fwd) = parts
                 .headers
                 .get("x-forwarded-for")
                 .and_then(|v| v.to_str().ok())
-                .and_then(|v| v.split(',').next())
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty())
+                .and_then(|v| forwarded_client(v, hops))
             {
                 return Ok(ClientIp(fwd));
             }
@@ -428,10 +439,30 @@ pub async fn export(State(state): State<AppState>, Auth(claims): Auth) -> ApiRes
     .bind(id)
     .fetch_all(&state.db)
     .await?;
+    // Reports are kept apart from the rest because they are about somebody
+    // else; what belongs to the caller is that they made one, and why.
+    let reports = sqlx::query(
+        "SELECT r.reason, r.created_at, r.resolved_at, s.slug, c.body AS comment
+           FROM reports r
+           LEFT JOIN scenarios s ON s.id = r.scenario_id
+           LEFT JOIN comments c ON c.id = r.comment_id
+          WHERE r.reporter_id = $1 ORDER BY r.created_at",
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await?;
+    // Feedback is no longer tied to an account, but older messages were.
+    let feedback = sqlx::query(
+        "SELECT kind, message, reply_to, page, created_at FROM feedback
+          WHERE author_id = $1 ORDER BY created_at",
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await?;
 
     Ok(Json(serde_json::json!({
         "exportiert_am": chrono::Utc::now(),
-        "hinweis": "Alles, was dieser Dienst über dieses Konto gespeichert hat.                     Eine E-Mail-Adresse wird nicht erhoben. Das Passwort steht nur als                     Argon2-Hash in der Datenbank und wird hier nicht ausgegeben.",
+        "hinweis": "Alles, was dieser Dienst über dieses Konto gespeichert hat. Für das Konto wird keine E-Mail-Adresse erhoben. Das Passwort steht nur als Argon2-Hash in der Datenbank und wird hier nicht ausgegeben.",
         "konto": {
             "nutzername": user.get::<String, _>("handle"),
             "anzeigename": user.get::<String, _>("display_name"),
@@ -456,6 +487,20 @@ pub async fn export(State(state): State<AppState>, Auth(claims): Auth) -> ApiRes
         })).collect::<Vec<_>>(),
         "stimmen": votes.iter().map(|r| serde_json::json!({
             "entwurf": r.get::<String, _>("slug"),
+            "am": r.get::<DateTime<Utc>, _>("created_at"),
+        })).collect::<Vec<_>>(),
+        "meldungen": reports.iter().map(|r| serde_json::json!({
+            "entwurf": r.get::<Option<String>, _>("slug"),
+            "kommentar": r.get::<Option<String>, _>("comment"),
+            "grund": r.get::<String, _>("reason"),
+            "gemeldet_am": r.get::<DateTime<Utc>, _>("created_at"),
+            "erledigt_am": r.get::<Option<DateTime<Utc>>, _>("resolved_at"),
+        })).collect::<Vec<_>>(),
+        "rueckmeldungen": feedback.iter().map(|r| serde_json::json!({
+            "art": r.get::<String, _>("kind"),
+            "text": r.get::<String, _>("message"),
+            "antwortadresse": r.get::<Option<String>, _>("reply_to"),
+            "seite": r.get::<String, _>("page"),
             "am": r.get::<DateTime<Utc>, _>("created_at"),
         })).collect::<Vec<_>>(),
     })))
@@ -496,6 +541,34 @@ pub async fn delete_account(
     // One transaction: a half-deleted account is worse than none, because the
     // person believes they are gone.
     let mut tx = state.db.begin().await?;
+    // The counters on other people's plans are kept by hand, so what this
+    // account added to them has to be taken back by hand, or a deleted account
+    // keeps voting, commenting and forking in every ranking.
+    sqlx::query(
+        "UPDATE scenarios s SET votes = GREATEST(0, s.votes - 1)
+           FROM votes v WHERE v.scenario_id = s.id AND v.user_id = $1",
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query(
+        "UPDATE scenarios s SET comment_count = GREATEST(0, s.comment_count - c.n)
+           FROM (SELECT scenario_id, count(*)::int AS n FROM comments
+                  WHERE author_id = $1 GROUP BY scenario_id) c
+          WHERE c.scenario_id = s.id",
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query(
+        "UPDATE scenarios p SET forks = GREATEST(0, p.forks - f.n)
+           FROM (SELECT parent_id, count(*)::int AS n FROM scenarios
+                  WHERE author_id = $1 AND parent_id IS NOT NULL GROUP BY parent_id) f
+          WHERE f.parent_id = p.id AND p.author_id IS DISTINCT FROM $1",
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
     sqlx::query("DELETE FROM comments WHERE author_id = $1")
         .bind(id)
         .execute(&mut *tx)
@@ -512,11 +585,23 @@ pub async fn delete_account(
         .bind(id)
         .execute(&mut *tx)
         .await?;
+    // Both would only be detached by their foreign keys, and a report or a
+    // message is the person's own writing as much as a comment is.
+    sqlx::query("DELETE FROM reports WHERE reporter_id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("DELETE FROM feedback WHERE author_id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
     sqlx::query("DELETE FROM users WHERE id = $1")
         .bind(id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
+    state.cache.invalidate_prefix("list:");
+    state.cache.invalidate_prefix("board:");
 
     tracing::info!(entwuerfe = scenarios, "Konto auf Verlangen gelöscht");
     Ok(Json(serde_json::json!({ "geloescht": true, "entwuerfe": scenarios })))
@@ -525,6 +610,16 @@ pub async fn delete_account(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_the_trusted_end_of_x_forwarded_for_counts() {
+        // The client sent "1.1.1.1"; the proxy appended what it actually saw.
+        assert_eq!(forwarded_client("1.1.1.1, 9.9.9.9", 1).as_deref(), Some("9.9.9.9"));
+        assert_eq!(forwarded_client("9.9.9.9", 1).as_deref(), Some("9.9.9.9"));
+        assert_eq!(forwarded_client("1.1.1.1, 9.9.9.9, 10.0.0.2", 2).as_deref(), Some("9.9.9.9"));
+        assert_eq!(forwarded_client("9.9.9.9", 2), None);
+        assert_eq!(forwarded_client("", 1), None);
+    }
 
     #[test]
     fn handles_are_validated() {

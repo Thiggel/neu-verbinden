@@ -129,7 +129,7 @@ SELECT s.slug, s.city, s.title, s.description, s.visibility, s.network_km, s.new
        s.votes, s.views, s.forks, s.comment_count, s.created_at, s.published_at,
        s.calculation_version, s.parameter_fingerprint, s.data_version,
        u.handle AS author_handle, u.display_name AS author_name,
-       p.slug AS parent_slug
+       CASE WHEN p.visibility = 'public' AND p.hidden_at IS NULL THEN p.slug END AS parent_slug
 FROM scenarios s
 LEFT JOIN users u ON u.id = s.author_id
 LEFT JOIN scenarios p ON p.id = s.parent_id
@@ -218,15 +218,23 @@ pub async fn create(
     let description = sanitize_optional(&body.description, 2000);
     let (doc, result) = evaluate(&state, &body.document)?;
 
-    let parent_id: Option<Uuid> = match body.parent.as_deref() {
-        Some(slug) => {
-            sqlx::query_scalar("SELECT id FROM scenarios WHERE slug = $1")
-                .bind(slug)
-                .fetch_optional(&state.db)
-                .await?
-        }
+    // Only a plan the author could have opened may be named as the parent:
+    // otherwise the slug of someone's private or hidden plan would confirm it
+    // exists and earn it a fork. Forking your own plan does not count as one.
+    let parent: Option<(Uuid, Option<Uuid>)> = match body.parent.as_deref() {
+        Some(slug) => sqlx::query(
+            "SELECT id, author_id FROM scenarios
+              WHERE slug = $1
+                AND ((visibility <> 'private' AND hidden_at IS NULL) OR author_id = $2)",
+        )
+        .bind(slug)
+        .bind(user)
+        .fetch_optional(&state.db)
+        .await?
+        .map(|r| (r.get("id"), r.get("author_id"))),
         None => None,
     };
+    let parent_id = parent.map(|(id, _)| id);
 
     let slug = format!("{}-{}", slugify(&title), short_id());
     let h = &result.headline;
@@ -276,11 +284,13 @@ pub async fn create(
     .await?;
     let id: Uuid = row.get("id");
 
-    if let Some(parent) = parent_id {
-        sqlx::query("UPDATE scenarios SET forks = forks + 1 WHERE id = $1")
-            .bind(parent)
-            .execute(&state.db)
-            .await?;
+    if let Some((parent, parent_author)) = parent {
+        if parent_author != Some(user) {
+            sqlx::query("UPDATE scenarios SET forks = forks + 1 WHERE id = $1")
+                .bind(parent)
+                .execute(&state.db)
+                .await?;
+        }
     }
     state.cache.invalidate_prefix("list:");
     state.cache.invalidate_prefix("board:");
@@ -602,6 +612,7 @@ pub async fn update(
                    investment_eur = $9, annual_benefit_eur = $10, annual_fiscal_eur = $11,
                    benefit_cost_ratio = $12, npv_eur = $13, population_served = $14,
                    co2_saved_t = $15, opening_year = $16, population_gain = $17,
+                   city = $18, parameter_fingerprint = $19, data_version = $20,
                    updated_at = now()
                WHERE slug = $1"#,
         )
@@ -622,6 +633,9 @@ pub async fn update(
         .bind(h.co2_saved_t_per_year)
         .bind(h.opening_year)
         .bind(h.population_gain)
+        .bind(&doc.city)
+        .bind(&result.parameter_fingerprint)
+        .bind(&result.data_version)
         .execute(&state.db)
         .await?;
     }
@@ -649,11 +663,25 @@ pub async fn remove(
     if owner != Some(user) && !claims.is_moderator() {
         return Err(ApiError::Forbidden);
     }
+    // The parent counted this plan as a fork when it was made, so it stops
+    // counting it now, under the same rule: your own forks never counted.
+    let mut tx = state.db.begin().await?;
+    sqlx::query(
+        "UPDATE scenarios p SET forks = GREATEST(0, p.forks - 1)
+           FROM scenarios s
+          WHERE s.slug = $1 AND p.id = s.parent_id
+            AND p.author_id IS DISTINCT FROM s.author_id",
+    )
+    .bind(&slug)
+    .execute(&mut *tx)
+    .await?;
     sqlx::query("DELETE FROM scenarios WHERE slug = $1")
         .bind(&slug)
-        .execute(&state.db)
+        .execute(&mut *tx)
         .await?;
+    tx.commit().await?;
     state.cache.invalidate_prefix("list:");
+    state.cache.invalidate_prefix("board:");
     Ok(Json(serde_json::json!({ "deleted": true })))
 }
 

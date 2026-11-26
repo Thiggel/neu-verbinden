@@ -14,7 +14,7 @@
 //! signature means no challenge has to be stored, so a restart forgets nothing
 //! and there is no table to fill up.
 
-use crate::auth::{ClientIp, MaybeAuth};
+use crate::auth::ClientIp;
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
 use axum::extract::State;
@@ -87,10 +87,13 @@ pub async fn challenge(State(state): State<AppState>) -> ApiResult<Json<Challeng
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeedbackBody {
     pub kind: String,
     pub message: String,
-    #[serde(default)]
+    // The form has always sent `replyTo`; without the rename it was dropped on
+    // the floor, and every "Du hörst von mir" was a promise nobody could keep.
+    #[serde(default, alias = "reply_to")]
     pub reply_to: Option<String>,
     #[serde(default)]
     pub page: Option<String>,
@@ -99,7 +102,52 @@ pub struct FeedbackBody {
     pub nonce: String,
 }
 
-fn check_work(state: &AppState, body: &FeedbackBody) -> ApiResult<()> {
+/// Whether a reply address is plainly an address and nothing else.
+///
+/// It ends up in a mail header, so anything that could end a header line or
+/// start a new one has to be out, and with it anything an address does not
+/// need: no spaces, no angle brackets, no second `@`, no display name. That
+/// refuses some addresses the RFC allows, none that a person types.
+fn plain_address(s: &str) -> bool {
+    let Some((local, domain)) = s.split_once('@') else {
+        return false;
+    };
+    let local_ok = !local.is_empty()
+        && local.len() <= 64
+        && local
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || ".!#$%&'*+/=?^_`{|}~-".contains(c));
+    let domain_ok = domain.len() >= 3
+        && domain.contains('.')
+        && !domain.starts_with(['.', '-'])
+        && !domain.ends_with(['.', '-'])
+        && domain
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-');
+    s.len() <= 200 && local_ok && domain_ok
+}
+
+/// A header value outside ASCII, written the way mail headers allow (RFC 2047),
+/// so "Rückmeldung" arrives as itself rather than as whatever the relay makes of
+/// raw UTF-8.
+fn encoded_word(s: &str) -> String {
+    if s.is_ascii() {
+        return s.to_string();
+    }
+    let mut out = String::from("=?utf-8?Q?");
+    for b in s.bytes() {
+        match b {
+            b' ' => out.push('_'),
+            // The only characters RFC 2047 lets stand for themselves here.
+            b if b.is_ascii_alphanumeric() || b"!*+-/".contains(&b) => out.push(b as char),
+            b => out.push_str(&format!("={b:02X}")),
+        }
+    }
+    out.push_str("?=");
+    out
+}
+
+fn check_work(state: &AppState, body: &FeedbackBody) -> ApiResult<u64> {
     if !same(&sign(&state.jwt_secret, &body.challenge), &body.signature) {
         return Err(ApiError::BadRequest(
             "Die Aufgabe stammt nicht von hier.".into(),
@@ -123,7 +171,7 @@ fn check_work(state: &AppState, body: &FeedbackBody) -> ApiResult<()> {
     if leading_zero_bits(&hasher.finalize()) < DIFFICULTY {
         return Err(ApiError::BadRequest("Die Aufgabe ist nicht gelöst.".into()));
     }
-    Ok(())
+    Ok(issued)
 }
 
 #[derive(Debug, Serialize)]
@@ -136,45 +184,82 @@ pub struct Sent {
 
 pub async fn submit(
     State(state): State<AppState>,
-    MaybeAuth(claims): MaybeAuth,
     ClientIp(ip): ClientIp,
     Json(body): Json<FeedbackBody>,
 ) -> ApiResult<Json<Sent>> {
-    // The work is checked before the limit is spent, so a genuine sender whose
-    // browser was slow is not punished for someone else's flood.
-    check_work(&state, &body)?;
-    state.rate_limit(&format!("feedback:{ip}"), 10, 3600).await?;
-
+    // The message is looked at first, so a sentence too short costs the sender
+    // a correction rather than a second round of arithmetic.
     let kind = match body.kind.as_str() {
         "fehler" | "wunsch" | "sonstiges" => body.kind.as_str(),
         _ => "sonstiges",
     };
+    // Counted in characters, as the database counts them: in bytes, four
+    // thousand umlauts were "too long" at two thousand.
     let message = body.message.trim();
-    if message.len() < 5 {
+    let chars = message.chars().count();
+    if chars < 5 {
         return Err(ApiError::BadRequest(
             "Bitte schreib einen Satz mehr, sonst lässt sich nichts damit anfangen.".into(),
         ));
     }
-    if message.len() > 4000 {
+    if chars > 4000 {
         return Err(ApiError::BadRequest("Das ist zu lang.".into()));
     }
     let reply_to = body
         .reply_to
         .as_deref()
         .map(str::trim)
-        .filter(|s| !s.is_empty() && s.len() <= 200)
-        .map(str::to_string);
+        .filter(|s| !s.is_empty());
+    if let Some(r) = reply_to {
+        if !plain_address(r) {
+            return Err(ApiError::BadRequest(
+                "Die Antwortadresse sieht nicht wie eine E-Mail-Adresse aus.".into(),
+            ));
+        }
+    }
+    let reply_to = reply_to.map(str::to_string);
 
-    let author = claims.as_ref().and_then(|c| c.user_id().ok());
+    // The work is checked before the limit is spent, so a genuine sender whose
+    // browser was slow is not punished for someone else's flood.
+    let issued = check_work(&state, &body)?;
+    // A solved challenge is good for one message. The signature means nothing
+    // is stored when it is handed out, so the spending has to be: one row, keyed
+    // on the challenge and dated by its issue, which the hourly cleanup drops
+    // long after the challenge itself has expired.
+    let fresh: Option<i32> = sqlx::query_scalar(
+        "INSERT INTO rate_limits (bucket, window_at, hits) VALUES ($1, to_timestamp($2), 1)
+         ON CONFLICT (bucket, window_at) DO NOTHING RETURNING hits",
+    )
+    .bind(format!("feedback-work:{}", body.challenge))
+    .bind(issued as f64)
+    .fetch_optional(&state.db)
+    .await?;
+    if fresh.is_none() {
+        return Err(ApiError::BadRequest(
+            "Diese Aufgabe wurde schon verwendet. Bitte noch einmal absenden.".into(),
+        ));
+    }
+    state.rate_limit(&format!("feedback:{ip}"), 10, 3600).await?;
+    state
+        .global_limit(
+            "feedback",
+            crate::state::hourly_ceiling("feedback", 300),
+            3600,
+            "Gerade kommen ungewöhnlich viele Rückmeldungen an. Bitte versuch es später noch einmal.",
+        )
+        .await?;
+
+    // No account is attached, even for someone signed in: the form says it
+    // needs none and tells nobody who is writing, and that should be true of
+    // what is stored as well as of what is asked.
     let id: uuid::Uuid = sqlx::query_scalar(
-        "INSERT INTO feedback (kind, message, reply_to, page, author_id)
-         VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        "INSERT INTO feedback (kind, message, reply_to, page)
+         VALUES ($1, $2, $3, $4) RETURNING id",
     )
     .bind(kind)
     .bind(message)
     .bind(&reply_to)
     .bind(body.page.as_deref().unwrap_or("").chars().take(300).collect::<String>())
-    .bind(author)
     .fetch_one(&state.db)
     .await?;
 
@@ -213,8 +298,12 @@ async fn deliver(state: &AppState, kind: &str, message: &str, reply_to: Option<&
         "wunsch" => "Wunsch",
         _ => "Rückmeldung",
     };
+    // Every header value here is either fixed, the operator's own setting, or
+    // an address `plain_address` has already vouched for; the sender's text only
+    // ever goes in the body.
     let mail = format!(
-        "To: {to}\nSubject: [Verkehrsnetz-Designer] {subject}\n{}Content-Type: text/plain; charset=utf-8\n\n{message}\n",
+        "To: {to}\nSubject: {}\n{}MIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\nContent-Transfer-Encoding: 8bit\n\n{message}\n",
+        encoded_word(&format!("[Verkehrsnetz-Designer] {subject}")),
         reply_to
             .map(|r| format!("Reply-To: {r}\n"))
             .unwrap_or_default()
@@ -226,9 +315,14 @@ async fn deliver(state: &AppState, kind: &str, message: &str, reply_to: Option<&
         let Some(bin) = parts.next() else {
             return false;
         };
+        // The recipient is passed as an argument instead of read from the
+        // headers with `-t`, so nothing in the message can add one. `-i` keeps a
+        // line holding a single dot from ending the message early.
         let Ok(mut child) = Command::new(bin)
             .args(parts)
-            .arg("-t")
+            .arg("-i")
+            .arg("--")
+            .arg(&to)
             .stdin(Stdio::piped())
             .spawn()
         else {
@@ -255,6 +349,28 @@ mod tests {
         assert!(same(&sign("geheim", c), &sign("geheim", c)));
         assert!(!same(&sign("geheim", c), &sign("anderes", c)));
         assert!(!same(&sign("geheim", c), &sign("geheim", "1700000000:abcdee")));
+    }
+
+    #[test]
+    fn only_a_plain_address_gets_into_a_header() {
+        assert!(plain_address("anna@example.org"));
+        assert!(plain_address("a.b+tag@sub.example.de"));
+        assert!(!plain_address("anna@example.org\nBcc: x@y.z"));
+        assert!(!plain_address("anna@example.org\r\nBcc: x@y.z"));
+        assert!(!plain_address("Anna <anna@example.org>"));
+        assert!(!plain_address("anna @example.org"));
+        assert!(!plain_address("anna@localhost"));
+        assert!(!plain_address("a@b@example.org"));
+        assert!(!plain_address("@example.org"));
+    }
+
+    #[test]
+    fn a_subject_with_umlauts_is_encoded() {
+        assert_eq!(encoded_word("Wunsch"), "Wunsch");
+        assert_eq!(
+            encoded_word("[V] Rückmeldung"),
+            "=?utf-8?Q?=5BV=5D_R=C3=BCckmeldung?="
+        );
     }
 
     #[test]

@@ -285,12 +285,15 @@ await check('leere Kommentare werden abgelehnt', async () => {
 
 let forkSlug;
 await check('Forken erhält die Abstammung und die Kennzahlen', async () => {
+  const before = (await call(`/api/scenarios/${slug}`)).forks;
   const f = await call(`/api/scenarios/${slug}/fork`, { method: 'POST', token });
   forkSlug = f.slug;
   assert(f.parent_slug === slug, `Elternteil ${f.parent_slug}`);
   assert(Math.abs(f.investment_eur - published.investment_eur) < 1, 'Kennzahlen weichen ab');
+  // A fork is a measure of what others build on; forking your own plan is
+  // just a copy, and would let anyone inflate the count alone.
   const parent = await call(`/api/scenarios/${slug}`);
-  assert(parent.forks >= 1, 'Fork nicht am Original gezählt');
+  assert(parent.forks === before, `der eigene Fork wurde gezählt (${before} → ${parent.forks})`);
 });
 
 await check('ein Fork ist zunächst privat', async () => {

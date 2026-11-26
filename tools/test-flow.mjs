@@ -495,9 +495,12 @@ await stage('Sie kommentiert', async () => {
 let forkSlug;
 await stage('Sie forkt den Entwurf und baut weiter', async () => {
   need(reader?.token, 'Das Konto der zweiten Person');
+  const forksBefore = (await call(`/api/scenarios/${slug}`)).json.forks;
   const r = await call(`/api/scenarios/${slug}/fork`, { method: 'POST', token: reader.token });
   assert(r.status === 200, r.text.slice(0, 160));
   forkSlug = r.json.slug;
+  const forksAfter = (await call(`/api/scenarios/${slug}`)).json.forks;
+  assert(forksAfter === forksBefore + 1, `Fork nicht am Original gezählt (${forksBefore} → ${forksAfter})`);
   const detail = await call(`/api/scenarios/${forkSlug}`, { token: reader.token });
   assert(detail.json.parent_slug === slug, `Elternteil ${detail.json.parent_slug}`);
   // Load the fork into the engine and add to it.

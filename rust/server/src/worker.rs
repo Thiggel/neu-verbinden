@@ -144,7 +144,7 @@ async fn handle(
                     new_km = $5, stations = $6, new_stations = $7, investment_eur = $8,
                     annual_benefit_eur = $9, annual_fiscal_eur = $10, benefit_cost_ratio = $11,
                     npv_eur = $12, population_served = $13, co2_saved_t = $14, opening_year = $15,
-                    parameter_fingerprint = $16
+                    parameter_fingerprint = $16, population_gain = $17, data_version = $18
                  WHERE id = $1",
             )
             .bind(id)
@@ -163,9 +163,12 @@ async fn handle(
             .bind(h.co2_saved_t_per_year)
             .bind(h.opening_year)
             .bind(&result.parameter_fingerprint)
+            .bind(h.population_gain)
+            .bind(&result.data_version)
             .execute(&state.db)
             .await?;
             state.cache.invalidate_prefix("list:");
+            state.cache.invalidate_prefix("board:");
             Ok(())
         }
         // Recompute every stored scenario with the current model. Old published
@@ -227,6 +230,11 @@ async fn handle(
                 .execute(&state.db)
                 .await?;
             sqlx::query("DELETE FROM jobs WHERE status IN ('done','failed') AND finished_at < now() - interval '7 days'")
+                .execute(&state.db)
+                .await?;
+            // Feedback is read and answered within weeks; the Datenschutz page
+            // promises it is gone after a year.
+            sqlx::query("DELETE FROM feedback WHERE created_at < now() - interval '12 months'")
                 .execute(&state.db)
                 .await?;
             Ok(())

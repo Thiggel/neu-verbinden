@@ -41,7 +41,7 @@ export function SiteHeader() {
           name: 'password',
           label: 'Passwort',
           secret: true,
-          hint: mode === 'register' ? 'Mindestens 10 Zeichen' : undefined,
+          hint: mode === 'register' ? 'Mindestens 8 Zeichen' : undefined,
         },
       ],
       confirm: mode === 'login' ? 'Anmelden' : 'Konto anlegen',

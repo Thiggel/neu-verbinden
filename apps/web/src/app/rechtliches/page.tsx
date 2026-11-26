@@ -137,6 +137,16 @@ export default function LegalPage() {
               hält den Entwurf privat.
             </p>
 
+            <h3 className="text-[14px] font-semibold text-ink">Rückmeldungen</h3>
+            <p>
+              Wer über das Rückmeldeformular schreibt, schickt die gewählte Art, den Text, die Seite,
+              auf der das Formular geöffnet wurde, und, nur wenn angegeben, eine Antwortadresse.
+              Die Rückmeldung wird nicht mit einem Konto verknüpft. Sie wird gespeichert und per
+              E-Mail an den Betreiber weitergeleitet, damit sie gelesen und beantwortet werden kann
+              (Art. 6 Abs. 1 lit. f DSGVO); die IP-Adresse dient nur dem Missbrauchszähler oben.
+              Gespeicherte Rückmeldungen werden nach spätestens zwölf Monaten gelöscht.
+            </p>
+
             <h3 className="text-[14px] font-semibold text-ink">Rechte</h3>
             <p>
               Es bestehen die Rechte auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung
@@ -212,7 +222,10 @@ export default function LegalPage() {
               </a>{' '}
               (ODbL). Die daraus aufbereiteten Datensätze dieser Anwendung sind abgeleitete
               Datenbanken und stehen ihrerseits unter der ODbL. Sie liegen unter{' '}
-              <code className="rounded bg-subtle px-1">/data/</code> und können von dort bezogen
+              <a className="underline" href="/data/manifest.json">
+                <code className="rounded bg-subtle px-1">/data/</code>
+              </a>{' '}
+              und können von dort bezogen
               werden.
             </p>
             <p>
