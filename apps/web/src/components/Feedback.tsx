@@ -20,9 +20,9 @@ import { API_BASE } from '@/lib/api';
 type Kind = 'fehler' | 'wunsch' | 'sonstiges';
 
 const KINDS: { id: Kind; label: string; hint: string }[] = [
-  { id: 'fehler', label: 'Etwas ist kaputt', hint: 'Was hast du gemacht, was ist passiert?' },
+  { id: 'fehler', label: 'Etwas ist kaputt', hint: 'Was hast du gemacht, und was ist dann passiert?' },
   { id: 'wunsch', label: 'Etwas fehlt', hint: 'Was soll die App können?' },
-  { id: 'sonstiges', label: 'Etwas anderes', hint: 'Alles, was sonst nicht passt.' },
+  { id: 'sonstiges', label: 'Etwas anderes', hint: 'Alles, was weder ein Fehler noch ein Wunsch ist.' },
 ];
 
 /**
@@ -59,7 +59,7 @@ function solve(challenge: string, difficulty: number, onProgress: (n: number) =>
       if (e.data.nonce !== undefined) resolve(e.data.nonce);
       else onProgress(e.data.tried);
     };
-    worker.onerror = () => reject(new Error('Die Prüfaufgabe ließ sich nicht rechnen.'));
+    worker.onerror = () => reject(new Error('Die Prüfaufgabe konnte nicht berechnet werden.'));
   });
   worker.postMessage({ challenge, difficulty });
   return {
@@ -141,9 +141,9 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
         {state === 'fertig' ? (
           <div className="py-6 text-center">
             <div className="text-[28px]">✓</div>
-            <h2 className="mt-2 text-[16px] font-semibold">Angekommen. Danke.</h2>
+            <h2 className="mt-2 text-[16px] font-semibold">Angekommen, danke.</h2>
             <p className="mt-1 text-[13.5px] text-muted">
-              {replyTo ? 'Du hörst von mir.' : 'Ich lese jede Meldung.'}
+              {replyTo ? 'Ich melde mich bei dir.' : 'Ich lese jede Meldung.'}
             </p>
           </div>
         ) : (
@@ -152,7 +152,7 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
               <div>
                 <h2 className="text-[16px] font-semibold">Rückmeldung</h2>
                 <p className="mt-0.5 text-[13px] text-muted">
-                  Geht direkt an mich. Ohne Konto, ohne Adresse, ohne Google.
+                  Sie geht direkt an mich, ohne dass du ein Konto oder eine Adresse brauchst.
                 </p>
               </div>
               <button
@@ -228,8 +228,8 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
               </button>
             </div>
             <p className="mt-2 text-[11.5px] leading-snug text-muted">
-              Statt eines Captchas rechnet dein Browser kurz eine Aufgabe. Das dauert etwa eine
-              Sekunde, kostet dich keinen Klick und verrät niemandem, wer du bist.
+              Statt eines Captchas löst dein Browser eine Rechenaufgabe, was etwa eine Sekunde
+              dauert, keinen Klick erfordert und niemandem verrät, wer du bist.
             </p>
           </>
         )}

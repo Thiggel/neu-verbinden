@@ -29,8 +29,8 @@ export function SiteHeader() {
       title: mode === 'login' ? 'Anmelden' : 'Konto anlegen',
       intro:
         mode === 'login'
-          ? 'Damit deine Entwürfe dir gehören und du abstimmen kannst.'
-          : 'Nur ein Name und ein Passwort, keine E-Mail-Adresse.',
+          ? 'Wenn du angemeldet bist, gehören deine Entwürfe dir, und du kannst abstimmen.'
+          : 'Für ein Konto genügen ein Name und ein Passwort, eine E-Mail-Adresse ist nicht nötig.',
       fields: [
         {
           name: 'handle',

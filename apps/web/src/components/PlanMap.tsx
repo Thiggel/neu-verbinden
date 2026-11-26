@@ -86,8 +86,8 @@ export function PlanMap({
   if (failed) {
     return (
       <div className="grid h-[380px] place-items-center rounded-2xl border border-line bg-subtle px-6 text-center text-[13px] text-muted">
-        Die Karte konnte nicht geladen werden. Die Zahlen unten stimmen trotzdem, sie kommen vom
-        Server, nicht von dieser Ansicht.
+        Die Karte konnte nicht geladen werden. Die Zahlen unten stimmen trotzdem, weil sie vom
+        Server stammen und nicht von dieser Ansicht abhängen.
       </div>
     );
   }

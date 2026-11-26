@@ -133,7 +133,7 @@ export default function EditorPage() {
         if (restored) {
           showToast(
             staleModel
-              ? `„${restored}" wiederhergestellt, mit dem aktuellen Modell neu gerechnet (vorher ${staleModel})`
+              ? `„${restored}" wiederhergestellt und mit dem aktuellen Modell neu gerechnet (vorher ${staleModel})`
               : `„${restored}" wiederhergestellt`
           );
         }
@@ -367,7 +367,7 @@ export default function EditorPage() {
           onExtend={(end) => {
             controllerRef.current?.setExtendTarget({ line: d.id, end });
             setTool('extend');
-            showToast('Tippe an, wohin die Linie weitergehen soll. Jeder Klick verlängert sie.');
+            showToast('Tippe an, wohin die Linie weitergehen soll, denn jeder Klick verlängert sie um eine Station.');
           }}
           onShorten={(end) => controllerRef.current?.run(cmd.shortenLine(d.id, end, 1))}
           onDelete={() => {
@@ -513,7 +513,7 @@ export default function EditorPage() {
             showToast(
               info.current
                 ? `„${info.title}" geladen`
-                : `„${info.title}" geladen, mit dem aktuellen Modell neu gerechnet (vorher ${info.calculationVersion})`
+                : `„${info.title}" geladen und mit dem aktuellen Modell neu gerechnet (vorher ${info.calculationVersion})`
             );
           } catch (e) {
             showToast(String((e as Error).message), 'warn');
@@ -545,8 +545,8 @@ export default function EditorPage() {
               <p className="mt-2 text-[11px] leading-snug text-muted">
                 {ui.hint ??
                   (ui.tool === 'draw' || ui.tool === 'extend'
-                    ? 'Jeder Klick setzt eine Station. Dazwischen ergänzt die App weitere. Ohne Maus: Karte anwählen, mit den Pfeiltasten zielen, Leertaste setzt, Enter beendet.'
-                    : 'Tipp: Jeder Klick setzt eine Station. Dazwischen ergänzt die App weitere.')}
+                    ? 'Jeder Klick setzt eine Station, während die App dazwischen weitere ergänzt. Ohne Maus wählst du die Karte an, zielst mit den Pfeiltasten, setzt mit der Leertaste eine Station und beendest die Linie mit Enter.'
+                    : 'Beim Zeichnen setzt jeder Klick eine Station, während die App dazwischen weitere ergänzt.')}
               </p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -649,7 +649,7 @@ export default function EditorPage() {
               {quick.openingYear ? (
                 <div className="text-[12px] text-muted">fertig etwa {quick.openingYear}</div>
               ) : (
-                <div className="text-[12px] text-muted">Zeichne eine Linie und sieh, was sie kostet</div>
+                <div className="text-[12px] text-muted">Zeichne eine Linie, um zu sehen, was sie kosten würde</div>
               )}
             </div>
           )}
@@ -843,8 +843,8 @@ async function publishScenario(engine: WasmEngine, toast: (t: string, tone?: 'in
     title: 'Entwurf veröffentlichen',
     intro:
       off > 0
-        ? `Achtung: ${off === 1 ? 'eine Bestandslinie ist' : `${off} Bestandslinien sind`} abgeschaltet. Dein Entwurf wird gegen das vollständige heutige Netz gerechnet, der Nutzen fällt also negativ aus. Brich ab und schalte den Bestand wieder ein, falls das nicht gewollt ist.`
-        : 'Dein Netz bekommt eine eigene Seite. Andere können es ansehen, bewerten und weiterbauen.',
+        ? `Weil ${off === 1 ? 'eine Bestandslinie abgeschaltet ist' : `${off} Bestandslinien abgeschaltet sind`} und dein Entwurf mit dem vollständigen heutigen Netz verglichen wird, fällt der Nutzen negativ aus. Falls das nicht gewollt ist, brich ab und schalte den Bestand wieder ein.`
+        : 'Dein Netz bekommt eine eigene Seite, auf der andere es ansehen, bewerten und weiterbauen können.',
     fields: [
       { name: 'title', label: 'Titel', value: useUi.getState().scenarioTitle },
       {
@@ -913,6 +913,6 @@ async function publishScenario(engine: WasmEngine, toast: (t: string, tone?: 'in
       },
     });
   } catch (e) {
-    toast(`Veröffentlichen fehlgeschlagen: ${(e as Error).message}`, 'warn');
+    toast(`Das Veröffentlichen ist fehlgeschlagen: ${(e as Error).message}`, 'warn');
   }
 }

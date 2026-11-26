@@ -11,10 +11,10 @@ import type { LineGeometry, SourceKind } from '@/lib/types';
 const ORDER: SourceKind[] = ['existing', 'planned', 'proposal', 'user'];
 
 const GROUP_NOTE: Record<SourceKind, string> = {
-  existing: 'Was heute fährt.',
-  planned: 'Offiziell geplante oder im Bau befindliche Vorhaben.',
-  proposal: 'Politische Alternativvorschläge, als Szenario-Eingabe.',
-  user: 'Von dir gezeichnet.',
+  existing: 'Linien, die heute fahren.',
+  planned: 'Vorhaben, die offiziell geplant oder im Bau sind.',
+  proposal: 'Alternativen aus der politischen Debatte, die sich als Szenario durchrechnen lassen.',
+  user: 'Linien, die du gezeichnet hast.',
 };
 
 export function Layers({

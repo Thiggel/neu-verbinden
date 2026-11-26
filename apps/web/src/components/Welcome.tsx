@@ -59,9 +59,9 @@ export function Welcome({
         </div>
         <h1 className="text-[21px] font-semibold leading-tight">Wie soll {city} fahren?</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-muted">
-          Zeichne die U-Bahn, S-Bahn oder Straßenbahn, die du dir wünschst. Die App rechnet
-          mit, was sie kosten würde, wann sie fertig wäre und wem sie etwas bringt, und du
-          kannst deinen Entwurf mit anderen teilen.
+          Während du die U-Bahn, S-Bahn oder Straßenbahn zeichnest, die du dir wünschst, rechnet
+          die App mit, was sie kosten würde, wann sie fertig wäre und wem sie nützt. Den
+          fertigen Entwurf kannst du mit anderen teilen.
         </p>
 
         <div className="mt-4 space-y-1.5">
@@ -96,13 +96,13 @@ export function Welcome({
             derivation by unfolding each item instead — there is no ⓘ there at
             all. A promise should name a route that exists. */}
         <p className="mt-3 text-[11px] leading-relaxed text-muted">
-          Alle Zahlen sind Schätzungen eines offenen Modells, kein Planungswerkzeug, sondern
-          ein Werkzeug zum Nachdenken und Streiten. Jede Kennzahl lässt sich bis
-          zur Herleitung aufklappen, über das
+          Alle Zahlen sind Schätzungen eines offenen Modells, das Entwürfe vergleichbar
+          machen soll und keine Planung ersetzt. Wie eine Kennzahl zustande kommt, zeigt im
+          Überblick das
           <span className="mx-1 inline-grid h-[15px] w-[15px] place-items-center rounded-full border border-line align-[-2px] text-[9px] font-bold">
             i
           </span>
-          im Überblick, und in den übrigen Reitern Posten für Posten.
+          neben ihr, während sich in den übrigen Reitern jeder Posten aufklappen lässt.
         </p>
       </div>
     </div>

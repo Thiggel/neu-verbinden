@@ -239,8 +239,8 @@ export function LineInspector({
               </div>
             ))}
             <p className="pt-1 text-[11px] leading-snug text-muted">
-              Je Abschnitt danach gewählt, was dort tatsächlich ginge: Wasser, Bebauungsdichte und
-              vorhandene Bahnkorridore. Über den Abschnitt lässt sich das ändern.
+              Die Bauweise richtet sich in jedem Abschnitt danach, was Wasser, Bebauungsdichte und
+              vorhandene Bahnkorridore dort zulassen, und lässt sich über den Abschnitt ändern.
             </p>
           </div>
         </section>
