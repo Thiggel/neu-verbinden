@@ -289,9 +289,73 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
         );
     }
 
+    // A service stored as several records shares its frequency between them.
+    //
+    // OpenStreetMap maps the U1 as two routes, to Großhansdorf and to Ohlstedt,
+    // and the S1 as one to the airport and one to Poppenbüttel. Each arrived
+    // here as a line of its own at the full default frequency, so the trunk
+    // they share ran twice the trains of any other line and the operating
+    // cost of the present-day network counted most of the U1 and S1 twice.
+    // The trains of one service divide between its branches; they do not
+    // multiply.
+    let mut records: BTreeMap<(String, Mode), f64> = BTreeMap::new();
+    for l in net.lines.values() {
+        *records.entry((l.label.clone(), l.mode)).or_default() += 1.0;
+    }
+    for l in net.lines.values_mut() {
+        let n = records[&(l.label.clone(), l.mode)];
+        if n > 1.0 {
+            l.service.headway_peak_min *= n;
+            l.service.headway_offpeak_min *= n;
+        }
+    }
+
     // ---------------------------------------------------- planned projects --
     let mut project_ids: Vec<String> = Vec::new();
-    for p in &projects.projects {
+    // A proposal that names every stop is built exactly like a planned project,
+    // only under a different source: the stops are where its authors put them.
+    let named_proposal_lines: Vec<Project> = projects
+        .proposals
+        .iter()
+        .flat_map(|pr| {
+            pr.lines.iter().filter(|l| l.named_stops).map(move |l| Project {
+                id: l.id.clone(),
+                label: l.label.clone(),
+                name: l.name.clone(),
+                mode: l.mode.clone().unwrap_or_else(|| "tram".into()),
+                status: "to_build".into(),
+                // A tram runs on its own track in the street unless it says
+                // otherwise; for a railway the ground decides, section by
+                // section.
+                infrastructure: l.infrastructure.clone().or_else(|| {
+                    l.mode
+                        .is_none()
+                        .then(|| "tram_reserved".to_string())
+                }),
+                color: l.color.clone(),
+                opening_year: None,
+                official_cost_eur: None,
+                cost_disputed: false,
+                price_base_year: None,
+                construction_start_year: None,
+                note: if l.note.is_empty() {
+                    pr.note.clone()
+                } else {
+                    format!("{} {}", l.note, pr.note)
+                },
+                stations: l.stations.clone(),
+                segments: l.segments.clone(),
+                length_km: 0.0,
+            })
+        })
+        .collect();
+    let buildable: Vec<(&Project, Source)> = projects
+        .projects
+        .iter()
+        .map(|p| (p, Source::Planned))
+        .chain(named_proposal_lines.iter().map(|p| (p, Source::Proposal)))
+        .collect();
+    for (p, src) in buildable {
         let mode = mode_of(&p.mode);
         let stated_infra = p.infrastructure.as_deref().map(infra_of);
         let status = status_of(&p.status);
@@ -305,6 +369,12 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 .nodes
                 .values()
                 .filter(|n| n.kind == NodeKind::Station)
+                // A proposal does not move into a station that is itself only
+                // planned, unless it says the stop is that station. The tram
+                // study's kerbside stop "Achtern Born" stands thirty metres
+                // from where the U5 would end, and merging the two renamed the
+                // stop and turned it into an underground terminus.
+                .filter(|n| src == Source::Planned || n.source != Source::Planned || !s.is_new)
                 .map(|n| (n.id, n.geo.distance_to(&geo)))
                 .filter(|(_, d)| *d < 320.0)
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
@@ -350,7 +420,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                             name: s.name.clone(),
                             geo,
                             schematic: geo.to_metric(),
-                            source: Source::Planned,
+                            source: src,
                             status,
                             interchange: true,
                             accessible: true,
@@ -370,7 +440,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                             name: s.name.clone(),
                             geo,
                             schematic: geo.to_metric(),
-                            source: Source::Planned,
+                            source: src,
                             status,
                             interchange: false,
                             accessible: true,
@@ -459,7 +529,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 // from their alignment, so the 150 m limit has an order of
                 // magnitude of headroom and would still catch a real
                 // disagreement. Nothing was hiding behind the noise.
-                let reused = n.source != Source::Planned;
+                let reused = n.source != src;
                 let limit = if reused { 400.0 } else { 150.0 };
                 if gap > limit {
                     eprintln!(
@@ -526,13 +596,17 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 to: nodes[i + 1],
                 mode,
                 infrastructure: infra,
-                source: Source::Planned,
+                source: src,
                 status,
                 schematic: geo.iter().map(|p| p.to_metric()).collect(),
                 geo,
                 length_m: 0.0,
                 tracks: 2,
-                design_speed_kmh: if mode == Mode::Sbahn { 120.0 } else { 80.0 },
+                design_speed_kmh: match mode {
+                    Mode::Sbahn => 120.0,
+                    Mode::Tram => 50.0,
+                    _ => 80.0,
+                },
                 external_id: Some(format!("{}-{}", p.id, i)),
             };
             edge.recompute_length();
@@ -589,7 +663,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                     StationDepth::Stop => 0,
                 });
             if let (Some(d), Some(node)) = (depth, net.nodes.get_mut(&n)) {
-                if node.source == Source::Planned {
+                if node.source == src {
                     node.depth = d;
                 }
             }
@@ -603,7 +677,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 name: p.name.clone(),
                 mode,
                 color: p.color.clone(),
-                source: Source::Planned,
+                source: src,
                 edges,
                 service: ServicePattern::default_for(mode),
                 // Planned lines start switched off; the scenarios turn them on.
@@ -616,7 +690,9 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 external_id: Some(p.id.clone()),
             },
         );
-        project_ids.push(p.id.clone());
+        if src == Source::Planned {
+            project_ids.push(p.id.clone());
+        }
     }
 
     // ------------------------------------------------ political proposals --
@@ -624,6 +700,10 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
     let mut lines_by_proposal: std::collections::BTreeMap<String, Vec<String>> = Default::default();
     for pr in &projects.proposals {
         for l in &pr.lines {
+            if l.named_stops {
+                // Already built above, stop by stop.
+                continue;
+            }
             // A proposal that only gives corridor anchors gets its stops from
             // the engine, at tram spacing (plan §14).
             let corridor: Vec<LatLon> = {
@@ -655,7 +735,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 // that is already there, and it knows where that is.
                 None => None,
             };
-            let mut ed = Editor::new(std::mem::take(&mut net), city.clone(), Params::default());
+            let mut ed = Editor::new(std::mem::take(&mut net), city.clone(), params.clone());
             let diff = ed.apply(Command::DrawLine {
                 mode,
                 infrastructure,
@@ -751,7 +831,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
             id: "bestand".into(),
             title: "Bestand 2026".into(),
             summary: "Das heutige Netz.".into(),
-            description: "Ausgangslage ohne jedes Vorhaben. Alle Kosten sind null, weil nichts gebaut werden muss.".into(),
+            description: "Die Ausgangslage ohne jedes Vorhaben, in der alle Kosten null sind, weil nichts gebaut werden muss.".into(),
             included_lines: existing.clone(),
             tags: vec!["Bestand".into()],
             sources: vec!["OpenStreetMap, Stand des Datenimports".into()],
@@ -759,8 +839,8 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
         ScenarioTemplate {
             id: "leer".into(),
             title: "Freies Netz".into(),
-            summary: "Nur der Bestand, der Rest ist deine Sache.".into(),
-            description: "Startpunkt für einen eigenen Entwurf.".into(),
+            summary: "Das heutige Netz als Grundlage für einen eigenen Entwurf.".into(),
+            description: "Der Ausgangspunkt, wenn du selbst zeichnen möchtest.".into(),
             included_lines: existing.clone(),
             tags: vec!["Sandkasten".into()],
             sources: vec![],
@@ -787,7 +867,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
         id: "bestand".into(),
         title: "Bestand 2026".into(),
         summary: "Das heutige Netz.".into(),
-        description: "Ausgangslage ohne jedes Vorhaben. Alle Kosten sind null, weil nichts gebaut werden muss.".into(),
+        description: "Die Ausgangslage ohne jedes Vorhaben, in der alle Kosten null sind, weil nichts gebaut werden muss.".into(),
         included_lines: existing.clone(),
         tags: vec!["Bestand".into()],
         sources: vec!["OpenStreetMap, Stand des Datenimports".into()],
@@ -795,12 +875,12 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
     if !planned.is_empty() {
         templates.push(ScenarioTemplate {
             id: "beschlossen".into(),
-            title: "Beschlossene Vorhaben".into(),
+            title: "Geplante Vorhaben".into(),
             summary: format!(
                 "Bestand plus alle offiziell geplanten Projekte: {}.",
                 planned_labels.join(", ")
             ),
-            description: "Der Referenzfall der laufenden Planung. Kosten und Termine sind Modellwerte, nicht die Angaben der Vorhabenträger.".into(),
+            description: "Der Stand der laufenden Planung, wobei Kosten und Termine Modellwerte und nicht die Angaben der Vorhabenträger sind.".into(),
             included_lines: existing.iter().chain(planned.iter()).cloned().collect(),
             tags: vec!["Offiziell".into()],
             sources: vec![],
@@ -835,8 +915,8 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
         templates.push(ScenarioTemplate {
             id: "alles".into(),
             title: "Alles gleichzeitig".into(),
-            summary: "Jedes erfasste Vorhaben und jeden Vorschlag zusammen.".into(),
-            description: "Zeigt, was passiert, wenn nichts gegeneinander abgewogen wird.".into(),
+            summary: "Alle erfassten Vorhaben und Vorschläge zusammen.".into(),
+            description: "Zeigt, was es kostet und bewirkt, wenn alles gebaut wird, ohne dass Vorhaben gegeneinander abgewogen werden.".into(),
             included_lines: existing
                 .iter()
                 .chain(planned.iter())
@@ -851,8 +931,8 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
         ScenarioTemplate {
             id: "leer".into(),
             title: "Freies Netz".into(),
-            summary: "Nur der Bestand, der Rest ist deine Sache.".into(),
-            description: "Startpunkt für einen eigenen Entwurf.".into(),
+            summary: "Das heutige Netz als Grundlage für einen eigenen Entwurf.".into(),
+            description: "Der Ausgangspunkt, wenn du selbst zeichnen möchtest.".into(),
             included_lines: existing,
             tags: vec!["Sandkasten".into()],
             sources: vec![],
@@ -906,7 +986,8 @@ pub fn run(root: &str) -> R<()> {
             .filter_map(|e| net.edges.get(e))
             .map(|e| e.length_km())
             .sum();
-        println!("  {:?}: {} Linien, {:.1} km", source, lines.len(), km);
+        // Adding zero turns the negative zero of an empty sum into a plain one.
+        println!("  {:?}: {} Linien, {:.1} km", source, lines.len(), km + 0.0);
     }
 
     let out = path(root, &dist("network"));
@@ -1118,7 +1199,10 @@ pub fn calibrate(root: &str) -> R<()> {
     let tram_lines: Vec<LineId> = net
         .lines
         .values()
-        .filter(|l| l.source == Source::Proposal)
+        // Only the tram study. Every proposal used to be counted here, so the
+        // regional S-Bahn corridors added seventy kilometres to a comparison
+        // with a study that is about trams.
+        .filter(|l| l.source == Source::Proposal && l.mode == Mode::Tram)
         .map(|l| l.id)
         .collect();
     if !tram_lines.is_empty() {
@@ -1128,7 +1212,7 @@ pub fn calibrate(root: &str) -> R<()> {
         }
         let r = simulation::run(&sub, &city, &params);
         checks.push((
-            "Straßenbahnkonzept*".into(),
+            "Straßenbahnnetz der Studie*".into(),
             r.headline.investment_eur,
             1.5e9,
             "Kosten".into(),
@@ -1148,20 +1232,22 @@ pub fn calibrate(root: &str) -> R<()> {
             }
         }
         checks.push((
-            "Straßenbahnkonzept, Länge".into(),
+            "Straßenbahnnetz, Länge".into(),
             r.headline.new_km,
-            44.0,
+            43.7,
             "km".into(),
         ));
         checks.push((
-            "Straßenbahnkonzept, Halte".into(),
+            "Straßenbahnnetz, neue Halte".into(),
             r.headline.new_stations as f64,
             91.0,
             "Halte".into(),
         ));
     }
 
-    // The whole U5 against the €16.5 bn quoted in the 2026 debate.
+    // The whole U5 against the upper end of the 14 to 16.5 bn € HOCHBAHN gave
+    // in 2023. That range covers Bramfeld – Arenen; the line drawn here goes on
+    // to Osdorfer Born, for which no cost has been published.
     let u5: Vec<LineId> = net
         .lines
         .values()
@@ -1188,7 +1274,7 @@ pub fn calibrate(root: &str) -> R<()> {
         checks.push((
             "U5 gesamt, Länge".into(),
             r.headline.new_km,
-            24.0,
+            29.0,
             "km".into(),
         ));
     }
@@ -1258,19 +1344,44 @@ pub fn calibrate(root: &str) -> R<()> {
         "  Fahrten je Jahr:       {:.0} Mio.",
         r.demand.annual_rides / 1e6
     );
+    // By the mode a station is counted under, which is what the rate per
+    // catchment is calibrated on. A station served by several modes counts
+    // under the heaviest one.
+    let mut by_mode: BTreeMap<Mode, f64> = BTreeMap::new();
+    for st in &r.demand.stations {
+        if let Some(m) = today.services_at_node(st.node).iter().map(|(_, m)| *m).min() {
+            *by_mode.entry(m).or_default() += st.boardings_per_day;
+        }
+    }
+    for (m, b) in &by_mode {
+        println!(
+            "    {:<10} {:>9.0} je Werktag, {:.0} Mio. im Jahr",
+            format!("{m:?}"),
+            b,
+            b * params.demand.annual_factor / 1e6
+        );
+    }
     // The observed range each city is held against. Everything else the
     // calibration checks is a published project figure, and a city without
     // curated projects still has to produce a plausible demand figure.
     let observed: Option<(f64, f64, &str)> = match crate::import::city().as_str() {
+        // The operators publish rides per year, not per weekday. Divided by
+        // the 305 weekday equivalents the model itself uses to get from a day
+        // to a year, so that the two are compared like for like.
+        //
+        // Hamburg 2025: U-Bahn 291 M (HOCHBAHN Lagebericht), S-Bahn about
+        // 280 M (S-Bahn Hamburg) — 571 M, or 1.87 M a day.
         "hamburg" => Some((
-            1.3e6,
-            1.5e6,
-            "U-Bahn und S-Bahn Hamburg zusammen rund 1,3 bis 1,5 Mio. Einsteiger je Werktag",
+            1.7e6,
+            2.0e6,
+            "U-Bahn 291 Mio. und S-Bahn rund 280 Mio. Fahrgäste im Jahr 2025, also rund 1,9 Mio. je Werktag",
         )),
+        // Berlin 2025: U-Bahn 556 M, tram 211 M (BVG in Zahlen), S-Bahn about
+        // 482 M (S-Bahn Berlin) — 1 249 M, or 4.1 M a day.
         "berlin" => Some((
-            2.4e6,
-            3.2e6,
-            "U-Bahn, S-Bahn und Straßenbahn Berlin zusammen rund 2,4 bis 3,2 Mio. Einsteiger je Werktag",
+            3.7e6,
+            4.5e6,
+            "U-Bahn 556 Mio., Straßenbahn 211 Mio. und S-Bahn rund 482 Mio. Fahrgäste im Jahr 2025, also rund 4,1 Mio. je Werktag",
         )),
         _ => None,
     };
@@ -1300,7 +1411,8 @@ pub fn calibrate(root: &str) -> R<()> {
         r.operations.cost_recovery_ratio * 100.0
     );
 
-    println!("\n  * Wert aus der politischen Debatte, kein Kostenansatz eines Vorhabenträgers.");
+    println!("\n  * Kein Kostenansatz für genau diesen Umfang: beim Straßenbahnnetz die Obergrenze der Studie,");
+    println!("    bei der U5 die Obergrenze der HOCHBAHN-Spanne von 2023, die Lurup und Osdorf noch nicht enthält.");
     let stale: Vec<(&String, &i32)> = price_base
         .iter()
         .filter(|(_, y)| **y < params.price_base_year - 2)
@@ -1332,7 +1444,7 @@ pub fn calibrate(root: &str) -> R<()> {
     }
     if !disputed.is_empty() {
         println!(
-            "  † Vom Vorhabenträger veröffentlicht, aber öffentlich bestritten. Bleibt aus der\n  \
+            "  † Öffentlich genannt, aber bestritten oder nicht amtlich bestätigt. Bleibt aus der\n  \
              Kalibrierung heraus: ein Modell, das der Kritik zustimmt statt der Zahl, ist nicht\n  \
              falsch geeicht, und es auf die bestrittene Zahl zu ziehen wäre der Fehler."
         );
@@ -1393,13 +1505,18 @@ pub fn simulate(root: &str, scenario: Option<&str>) -> R<()> {
         )
     })?;
     apply_template(&mut net, t);
-    let params = Params::default();
+    // The city's own parameters. With the defaults, every command but the
+    // import itself computed Berlin with Hamburg's figures.
+    let params: Params = serde_json::from_value(city_params(root)?)?;
     let r = simulation::run(&net, &city, &params);
 
     println!("Szenario: {}\n{}\n", t.title, t.summary);
     println!(
         "  Netzlänge              {:.1} km, davon {:.1} km neu",
-        r.headline.network_km, r.headline.new_km
+        // Adding zero turns a negative zero into a plain one, so an unchanged
+        // network reads "0.0 km neu" and not "-0.0".
+        r.headline.network_km,
+        r.headline.new_km + 0.0
     );
     println!(
         "  Stationen              {} ({} neu, {} Umsteigepunkte)",
@@ -1470,7 +1587,9 @@ pub fn simulate(root: &str, scenario: Option<&str>) -> R<()> {
 pub fn audit(root: &str, which: Option<&str>) -> R<()> {
     let city = load_city(root)?;
     let (net, _) = build(root, &city)?;
-    let params = Params::default();
+    // The city's own parameters. With the defaults, every command but the
+    // import itself computed Berlin with Hamburg's figures.
+    let params: Params = serde_json::from_value(city_params(root)?)?;
 
     let targets: Vec<LineId> = net
         .lines
@@ -1615,7 +1734,9 @@ fn trim(s: &str, n: usize) -> String {
 pub fn bench(root: &str) -> R<()> {
     let city = load_city(root)?;
     let (base, templates) = build(root, &city)?;
-    let params = Params::default();
+    // The city's own parameters. With the defaults, every command but the
+    // import itself computed Berlin with Hamburg's figures.
+    let params: Params = serde_json::from_value(city_params(root)?)?;
 
     println!("Laufzeiten (Release-Build messen, nicht Debug)\n");
     for t in &templates {

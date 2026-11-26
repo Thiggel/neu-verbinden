@@ -133,7 +133,7 @@ pub struct Project {
     pub length_km: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectStation {
     pub name: String,
@@ -142,7 +142,7 @@ pub struct ProjectStation {
     pub is_new: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Segment {
     pub from: String,
@@ -178,6 +178,14 @@ pub struct ProposalLine {
     pub segments: Vec<Segment>,
     #[serde(default)]
     pub auto_stations: bool,
+    /// The proposal names every stop itself. Such a line is built stop by stop
+    /// like a planned project, instead of having the engine space stops along
+    /// a corridor: a study that publishes 91 stop names should be shown with
+    /// those 91 stops, not with however many the spacing rule happens to yield.
+    #[serde(default)]
+    pub named_stops: bool,
+    #[serde(default)]
+    pub note: String,
     /// Which mode the proposal is for. Absent means tram, which is what every
     /// proposal was until a regional S-Bahn needed to be one.
     #[serde(default)]

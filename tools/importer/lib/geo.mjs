@@ -64,6 +64,48 @@ export function projectOnLine(p, line) {
   return best;
 }
 
+/**
+ * Every place where `line` passes within `maxDistance` of `p`.
+ *
+ * `projectOnLine` answers with the single nearest point, which is the right
+ * question for a line that goes somewhere and the wrong one for a line that
+ * comes back: Hamburg's U3 leaves Barmbek, runs the whole ring and calls at
+ * Barmbek again. Both of its Barmbek stops then projected onto the same pass,
+ * were merged as one, and the other pass was left without a stop — a train
+ * from Wandsbek-Gartenstadt ran through Barmbek to Dehnhaide on 2.9 km of
+ * track that existed twice.
+ *
+ * A pass is a stretch of consecutive segments that stay within range; each
+ * contributes its own nearest point. Sorted by position along the line.
+ */
+export function projectAllOnLine(p, line, maxDistance) {
+  const out = [];
+  let run = null;
+  let acc = 0;
+  const P = toMetric(p);
+  const M = line.map(toMetric);
+  for (let i = 0; i < M.length - 1; i++) {
+    const [ax, ay] = M[i];
+    const [bx, by] = M[i + 1];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 < 1e-12 ? 0 : ((P[0] - ax) * dx + (P[1] - ay) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const d = Math.hypot(P[0] - (ax + dx * t), P[1] - (ay + dy * t));
+    const segLen = Math.sqrt(len2);
+    if (d <= maxDistance) {
+      if (!run || d < run.distance) run = { distance: d, along: acc + segLen * t, index: i, t };
+    } else if (run) {
+      out.push(run);
+      run = null;
+    }
+    acc += segLen;
+  }
+  if (run) out.push(run);
+  return out;
+}
+
 /** Cut a geographic polyline at metric distances measured from its start. */
 export function cutLine(line, distances) {
   const M = line.map(toMetric);

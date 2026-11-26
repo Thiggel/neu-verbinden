@@ -30,7 +30,7 @@ use hh_core::simulation;
 use hh_core::testing::{demo_city, demo_new_line};
 
 /// What the pinned figures below were produced with.
-const PINNED_FOR: &str = "0.15.0";
+const PINNED_FOR: &str = "0.16.0";
 
 #[test]
 fn the_models_answers_have_not_moved_unnoticed() {
@@ -57,8 +57,8 @@ fn the_models_answers_have_not_moved_unnoticed() {
     same("newKm", h.new_km, 7.994_048_473_733);
     same("newStations", h.new_stations as f64, 9.0);
     same("investmentEur", h.investment_eur, 6_329_568_708.446_442);
-    same("annualBenefitEur", h.annual_benefit_eur, 27_318_746.194_610);
+    same("annualBenefitEur", h.annual_benefit_eur, 36_473_301.869_987);
     same("populationServed", h.population_served, 525_000.0);
     same("populationGain", h.population_gain, 159_000.0);
-    same("benefitCostRatio", h.benefit_cost_ratio, 0.203_431_067_224);
+    same("benefitCostRatio", h.benefit_cost_ratio, 0.240_663_574_408);
 }

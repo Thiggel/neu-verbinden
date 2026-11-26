@@ -220,7 +220,7 @@ fn build_render_state(net: &Network) -> RenderState {
             source: source_key(n.source),
             // Only a station several lines actually call at. The stored flag is
             // set generously during import and would put a label on half the map.
-            interchange: visible.len() > 1,
+            interchange: net.services_at_node(n.id).len() > 1,
             depth: depth_key(net.effective_depth(n.id)),
             lines: visible.iter().map(|l| l.label.clone()).collect(),
             colors: visible.iter().map(|l| l.color.clone()).collect(),
@@ -443,7 +443,7 @@ impl Engine {
                 let nodes = scratch.network.line_nodes(l.id);
                 let inter = nodes
                     .iter()
-                    .filter(|n| scratch.network.lines_at_node(**n).len() > 1)
+                    .filter(|n| scratch.network.services_at_node(**n).len() > 1)
                     .count();
                 let radius = scratch.editor_catchment_radius(l.mode);
                 let pop: f64 = nodes
@@ -628,7 +628,10 @@ impl Engine {
             depth_label: net.effective_depth(node.id).label_de().into(),
             status: status_key(node.status),
             source: source_key(node.source),
-            interchange: node.interchange || lines.len() > 1,
+            // What calls here in this scenario. The stored flag is set for
+            // every station a planned or proposed line would touch, whether
+            // or not that line is switched on.
+            interchange: net.services_at_node(node.id).len() > 1,
             accessible: node.accessible,
             lines: lines
                 .iter()

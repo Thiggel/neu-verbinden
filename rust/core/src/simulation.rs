@@ -70,7 +70,7 @@ pub struct SimulationResult {
 }
 
 pub const DISCLAIMER: &str =
-    "Modellschätzung, keine offizielle Kosten-Nutzen-Untersuchung. Alle Werte beruhen auf öffentlich verfügbaren Daten und dokumentierten Annahmen.";
+    "Alle Werte sind eine Modellschätzung, die auf öffentlich verfügbaren Daten und dokumentierten Annahmen beruht, und keine offizielle Kosten-Nutzen-Untersuchung.";
 
 /// Run the whole chain. Cheap enough to call after every edit in the browser.
 pub fn run(net: &Network, city: &CityData, params: &Params) -> SimulationResult {
@@ -84,7 +84,18 @@ pub fn run(net: &Network, city: &CityData, params: &Params) -> SimulationResult 
     let feas = feasibility::calculate(net, city, params);
     let dem = demand::calculate(net, city, params);
     let eco = economics::benefits(&dem, city, params);
-    let ops = economics::operations(net, &dem, params);
+    let mut ops = economics::operations(net, &dem, params);
+    // What the scenario changes in the operating result. The network that runs
+    // today has a deficit of its own, and charging it to whatever is built next
+    // made every project look worse by a sum it has nothing to do with — in
+    // Berlin, by several times the investment.
+    let today = net.today();
+    let ops_today = economics::operations_for_rides(
+        &today,
+        demand::annual_rides(&today, city, params),
+        params,
+    );
+    ops.annual_change_eur = ops.annual_result_eur - ops_today.annual_result_eur;
     // A scenario that builds nothing has no project to appraise. Running the
     // existing network still costs money, but presenting that as the project's
     // net present value would be actively misleading.
@@ -104,7 +115,7 @@ pub fn run(net: &Network, city: &CityData, params: &Params) -> SimulationResult 
                 .opening_year
                 .max(timeline.construction_start_year + 1),
             eco.annual_benefit_eur,
-            ops.annual_result_eur,
+            ops.annual_change_eur,
             params,
         )
     };
@@ -365,6 +376,22 @@ mod tests {
     use super::*;
     use crate::model::Infrastructure;
     use crate::testing::{demo_city, demo_network, demo_new_line};
+
+    /// The lines that run today lose money whether or not anything is built.
+    /// An appraisal that charges that loss to the next project makes every
+    /// project worse by a sum it does not cause.
+    #[test]
+    fn a_project_is_charged_only_with_the_change_in_the_operating_result() {
+        let city = demo_city();
+        let params = Params::default();
+        let net = demo_new_line(Mode::Ubahn, Infrastructure::DeepTunnel, 8.0);
+        let scenario = run(&net, &city, &params);
+        let today = run(&net.today(), &city, &params);
+        let change =
+            scenario.operations.annual_result_eur - today.operations.annual_result_eur;
+        assert!((scenario.operations.annual_change_eur - change).abs() < 1.0);
+        assert_eq!(today.operations.annual_change_eur, 0.0);
+    }
 
     #[test]
     fn the_baseline_produces_a_complete_result_with_no_investment() {

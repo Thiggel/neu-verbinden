@@ -101,7 +101,9 @@ check('im Bestand ist nichts zu bauen', () => {
 
 check('die Nachfrage im Bestandsnetz liegt in der beobachteten Größenordnung', () => {
   const b = baseSim.demand.boardingsPerDay;
-  assert(b > 1_000_000 && b < 1_800_000, `${Math.round(b)} Einsteiger/Werktag ist unplausibel`);
+  // U-Bahn 291 Mio. and S-Bahn about 280 Mio. rides in 2025, over the 305
+  // weekday equivalents of the model: 1.87 Mio. a day.
+  assert(b > 1_700_000 && b < 2_000_000, `${Math.round(b)} Einsteiger/Werktag ist unplausibel`);
 });
 
 check('Stationen tragen Namen und Farben', () => {
@@ -550,7 +552,8 @@ console.log(`Rechenkern gestartet in ${bootMs.toFixed(0)} ms\n`);
   const claims = [
     ['Verlagerungsanteil vom Auto', `(${Math.round(params.demand.carSubstitutionShare * 100)} %`],
     ['ersetzte Fahrtlänge', `${de(params.demand.avgReplacedCarTripKm, 1)} km)`],
-    ['Zeitwert', `${de(params.economics.timeValueEurPerHour ?? 11.2)} € je Stunde`],
+    ['Zeitwert', `${de(params.economics.valueOfTimeEurH)} € je Stunde`],
+    ['CO₂-Preis', `${de(params.economics.co2EurPerKg * 1000, 0)} € je Tonne`],
     ['Stau je Pkw-km', `${de(params.economics.congestionEurPerCarKm, 3)} €`],
     ['Unfälle je Pkw-km', `${de(params.economics.accidentEurPerCarKm, 3)} €`],
     ['Luft und Lärm je Pkw-km', `${de(params.economics.airNoiseEurPerCarKm, 3)} €`],

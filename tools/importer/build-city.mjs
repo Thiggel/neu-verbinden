@@ -80,8 +80,8 @@ const [waterRaw, greenRaw, roadsRaw, streetsRaw, landuseRaw, landmarkRaw, bounda
     readRaw('geo-buildings_big'), readRaw('geo-railways'),
   ]);
 // Hamburg's districts come from the statistical office as GeoJSON with the
-// population already attached; Berlin's are OSM boundary relations carrying a
-// population tag. Both are normalised to the same shape here.
+// population already attached; Berlin's are OSM boundary relations joined to
+// the official register count. Both are normalised to the same shape here.
 const districtsGeo =
   CITY.districts.kind === 'geojson'
     ? JSON.parse(await readFile(resolve(ROOT, CITY.districts.file), 'utf8'))
@@ -101,42 +101,62 @@ const network = JSON.parse(
 /**
  * OSM admin relations → the same feature shape the Hamburg file has.
  *
- * The population comes from the separate lookup the fetch step wrote (OSM
- * itself has the figure for only a handful of Berlin's Ortsteile).
+ * The boundaries come from OpenStreetMap; the population and the Bezirk come
+ * from the official register count, which the city config names. Both carry
+ * the official Ortsteil number, so the join needs no name matching, and an
+ * Ortsteil the table lacks is an error rather than a silent zero.
  */
 async function districtsFromOsm(raw) {
-  const lookup = JSON.parse(
-    await readFile(resolve(ROOT, `data/raw/${CITY.id}-district-population.json`), 'utf8')
-  );
-  const features = [];
-  let withPopulation = 0;
+  const table = JSON.parse(await readFile(resolve(ROOT, CITY.statistics.file), 'utf8'));
+  // An Ortsteil can have more than one outer ring (an exclave, or a piece cut
+  // off by water). Each ring used to become a feature of its own, carrying the
+  // whole Ortsteil's population, so one of them was counted twice.
+  const byRef = new Map();
   for (const p of assemblePolygons(raw.elements, { minAreaM2: 100_000 })) {
     const t = p.tags ?? {};
-    if (!t.name) continue;
-    const population = lookup.values[t.wikidata]?.population ?? 0;
-    if (population) withPopulation++;
-    features.push({
+    const ref = t['ref:DE-BE:OT'];
+    if (!t.name || !ref) continue;
+    if (!table.values[ref]) throw new Error(`Ortsteil ${ref} (${t.name}) fehlt in ${CITY.statistics.file}`);
+    if (!byRef.has(ref)) byRef.set(ref, []);
+    byRef.get(ref).push(p.rings);
+  }
+  const features = [...byRef].map(([ref, polys]) => {
+    const row = table.values[ref];
+    const areaM2 = polys.reduce(
+      (s, rings) => s + Math.abs(ringArea(rings[0])) - rings.slice(1).reduce((h, r) => h + Math.abs(ringArea(r)), 0),
+      0
+    );
+    return {
       type: 'Feature',
       properties: {
-        id: String(t['ref:DE-BE:OT'] ?? t.name),
-        name: t.name,
-        borough: t.geographical_region ?? '',
-        population,
+        id: String(ref),
+        name: row.name,
+        borough: row.bezirk,
+        population: row.population,
         // Not published per Ortsteil; the employment surface is modelled from
         // the city total instead, as it is for Hamburg.
         employedResidents: 0,
         households: 0,
-        areaHa: Math.round(Math.abs(ringArea(p.rings[0])) / 10_000),
+        areaHa: Math.round(areaM2 / 10_000),
         carsPer1000: 0,
       },
-      geometry: { type: 'Polygon', coordinates: p.rings },
-    });
-  }
+      geometry: polys.length === 1
+        ? { type: 'Polygon', coordinates: polys[0] }
+        : { type: 'MultiPolygon', coordinates: polys },
+    };
+  });
+  const missing = Object.keys(table.values).filter((k) => !byRef.has(k));
+  if (missing.length) throw new Error(`Ortsteile ohne Grenze in OSM: ${missing.join(', ')}`);
+  const total = features.reduce((s, f) => s + f.properties.population, 0);
   console.log(
-    `  Ortsteile: ${features.length}, davon ${withPopulation} mit Einwohnerzahl ` +
-      `(${lookup.source})`
+    `  Ortsteile: ${features.length}, ` +
+      `${total.toLocaleString('de-DE')} Einwohner, Stand ${table.referenceDate}`
   );
-  return { type: 'FeatureCollection', features, metadata: { referenceYear: lookup.retrieved?.slice(0, 4) } };
+  return {
+    type: 'FeatureCollection',
+    features,
+    metadata: { referenceYear: table.referenceDate.slice(0, 4) },
+  };
 }
 
 // ---------------------------------------------------------------- water ----
@@ -882,9 +902,9 @@ const sources = [
         note: `Einwohner, Haushalte, Beschäftigte je Stadtteil, Stand ${districtsGeo.metadata?.referenceYear ?? '—'}`,
       }
     : {
-        name: `Einwohnerzahlen der ${CITY.adjective} Ortsteile (OpenStreetMap)`,
-        url: 'https://www.openstreetmap.org',
-        licence: 'ODbL 1.0',
+        name: CITY.statistics.source,
+        url: CITY.statistics.url,
+        licence: CITY.statistics.licence,
         retrieved: new Date().toISOString().slice(0, 10),
         note: CITY.statistics.note,
       },
@@ -900,7 +920,7 @@ const sources = [
     url: 'https://www.openstreetmap.org',
     licence: 'ODbL 1.0',
     retrieved: new Date().toISOString().slice(0, 10),
-    note: 'population-Angaben an Orten zwischen Lüneburg, Kiel und Rostock, auf ein 1-km-Raster verteilt',
+    note: `population-Angaben an Orten ${CITY.regionLabel}, auf ein 1-km-Raster verteilt`,
   },
 ];
 
@@ -913,7 +933,7 @@ await writeJson(distName(CITY, 'city', DATA_VERSION), {
     districtCount: districts.length,
     buildingsCounted: counted,
     populationSource: CITY.statistics?.label ?? 'amtliche Statistik',
-    officialPopulation: CITY.statistics?.kind !== 'osm-population',
+    officialPopulation: CITY.statistics?.official !== false,
   },
   center: CITY.center,
   // The metric plane every calculation runs in. It belongs to the dataset, not

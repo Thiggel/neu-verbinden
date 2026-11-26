@@ -1,0 +1,495 @@
+{
+ "source": "Amt für Statistik Berlin-Brandenburg, Statistischer Bericht A I 5 – hj 2/25: Einwohnerinnen und Einwohner im Land Berlin am 31. Dezember 2025, Tabelle 11 (Ortsteile)",
+ "url": "https://download.statistik-berlin-brandenburg.de/b50a3a074782ec0e/e0095590e436/SB_A01-05-00_2025h02_BE.pdf",
+ "licence": "CC BY 3.0 DE",
+ "referenceDate": "2025-12-31",
+ "note": "Melderechtlich registrierte Einwohner mit Hauptwohnsitz. Schlüssel ist die amtliche Ortsteilnummer (ref:DE-BE:OT in OpenStreetMap).",
+ "total": 3913644,
+ "values": {
+  "1001": {
+   "name": "Marzahn",
+   "bezirk": "Marzahn-Hellersdorf",
+   "population": 120584
+  },
+  "1002": {
+   "name": "Biesdorf",
+   "bezirk": "Marzahn-Hellersdorf",
+   "population": 30891
+  },
+  "1003": {
+   "name": "Kaulsdorf",
+   "bezirk": "Marzahn-Hellersdorf",
+   "population": 19827
+  },
+  "1004": {
+   "name": "Mahlsdorf",
+   "bezirk": "Marzahn-Hellersdorf",
+   "population": 30452
+  },
+  "1005": {
+   "name": "Hellersdorf",
+   "bezirk": "Marzahn-Hellersdorf",
+   "population": 94933
+  },
+  "1101": {
+   "name": "Friedrichsfelde",
+   "bezirk": "Lichtenberg",
+   "population": 58445
+  },
+  "1102": {
+   "name": "Karlshorst",
+   "bezirk": "Lichtenberg",
+   "population": 31821
+  },
+  "1103": {
+   "name": "Lichtenberg",
+   "bezirk": "Lichtenberg",
+   "population": 45253
+  },
+  "1104": {
+   "name": "Falkenberg",
+   "bezirk": "Lichtenberg",
+   "population": 3276
+  },
+  "1106": {
+   "name": "Malchow",
+   "bezirk": "Lichtenberg",
+   "population": 616
+  },
+  "1107": {
+   "name": "Wartenberg",
+   "bezirk": "Lichtenberg",
+   "population": 2708
+  },
+  "1109": {
+   "name": "Neu-Hohenschönhausen",
+   "bezirk": "Lichtenberg",
+   "population": 59715
+  },
+  "1110": {
+   "name": "Alt-Hohenschönhausen",
+   "bezirk": "Lichtenberg",
+   "population": 53845
+  },
+  "1111": {
+   "name": "Fennpfuhl",
+   "bezirk": "Lichtenberg",
+   "population": 34639
+  },
+  "1112": {
+   "name": "Rummelsburg",
+   "bezirk": "Lichtenberg",
+   "population": 27943
+  },
+  "1201": {
+   "name": "Reinickendorf",
+   "bezirk": "Reinickendorf",
+   "population": 86061
+  },
+  "1202": {
+   "name": "Tegel",
+   "bezirk": "Reinickendorf",
+   "population": 38453
+  },
+  "1203": {
+   "name": "Konradshöhe",
+   "bezirk": "Reinickendorf",
+   "population": 6109
+  },
+  "1204": {
+   "name": "Heiligensee",
+   "bezirk": "Reinickendorf",
+   "population": 17887
+  },
+  "1205": {
+   "name": "Frohnau",
+   "bezirk": "Reinickendorf",
+   "population": 16309
+  },
+  "1206": {
+   "name": "Hermsdorf",
+   "bezirk": "Reinickendorf",
+   "population": 16430
+  },
+  "1207": {
+   "name": "Waidmannslust",
+   "bezirk": "Reinickendorf",
+   "population": 11661
+  },
+  "1208": {
+   "name": "Lübars",
+   "bezirk": "Reinickendorf",
+   "population": 5058
+  },
+  "1209": {
+   "name": "Wittenau",
+   "bezirk": "Reinickendorf",
+   "population": 25497
+  },
+  "1210": {
+   "name": "Märkisches Viertel",
+   "bezirk": "Reinickendorf",
+   "population": 41199
+  },
+  "1211": {
+   "name": "Borsigwalde",
+   "bezirk": "Reinickendorf",
+   "population": 7091
+  },
+  "0101": {
+   "name": "Mitte",
+   "bezirk": "Mitte",
+   "population": 108953
+  },
+  "0102": {
+   "name": "Moabit",
+   "bezirk": "Mitte",
+   "population": 84913
+  },
+  "0103": {
+   "name": "Hansaviertel",
+   "bezirk": "Mitte",
+   "population": 6120
+  },
+  "0104": {
+   "name": "Tiergarten",
+   "bezirk": "Mitte",
+   "population": 16217
+  },
+  "0105": {
+   "name": "Wedding",
+   "bezirk": "Mitte",
+   "population": 86662
+  },
+  "0106": {
+   "name": "Gesundbrunnen",
+   "bezirk": "Mitte",
+   "population": 95014
+  },
+  "0201": {
+   "name": "Friedrichshain",
+   "bezirk": "Friedrichshain-Kreuzberg",
+   "population": 142116
+  },
+  "0202": {
+   "name": "Kreuzberg",
+   "bezirk": "Friedrichshain-Kreuzberg",
+   "population": 150673
+  },
+  "0301": {
+   "name": "Prenzlauer Berg",
+   "bezirk": "Pankow",
+   "population": 169856
+  },
+  "0302": {
+   "name": "Weißensee",
+   "bezirk": "Pankow",
+   "population": 58297
+  },
+  "0303": {
+   "name": "Blankenburg",
+   "bezirk": "Pankow",
+   "population": 6806
+  },
+  "0304": {
+   "name": "Heinersdorf",
+   "bezirk": "Pankow",
+   "population": 10265
+  },
+  "0305": {
+   "name": "Karow",
+   "bezirk": "Pankow",
+   "population": 20149
+  },
+  "0306": {
+   "name": "Stadtrandsiedlung Malchow",
+   "bezirk": "Pankow",
+   "population": 1050
+  },
+  "0307": {
+   "name": "Pankow",
+   "bezirk": "Pankow",
+   "population": 68836
+  },
+  "0308": {
+   "name": "Blankenfelde",
+   "bezirk": "Pankow",
+   "population": 2106
+  },
+  "0309": {
+   "name": "Buch",
+   "bezirk": "Pankow",
+   "population": 17603
+  },
+  "0310": {
+   "name": "Französisch Buchholz",
+   "bezirk": "Pankow",
+   "population": 21930
+  },
+  "0311": {
+   "name": "Niederschönhausen",
+   "bezirk": "Pankow",
+   "population": 33539
+  },
+  "0312": {
+   "name": "Rosenthal",
+   "bezirk": "Pankow",
+   "population": 10050
+  },
+  "0313": {
+   "name": "Wilhelmsruh",
+   "bezirk": "Pankow",
+   "population": 8413
+  },
+  "0401": {
+   "name": "Charlottenburg",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 130566
+  },
+  "0402": {
+   "name": "Wilmersdorf",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 101125
+  },
+  "0403": {
+   "name": "Schmargendorf",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 23955
+  },
+  "0404": {
+   "name": "Grunewald",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 11144
+  },
+  "0405": {
+   "name": "Westend",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 41348
+  },
+  "0406": {
+   "name": "Charlottenburg-Nord",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 19651
+  },
+  "0407": {
+   "name": "Halensee",
+   "bezirk": "Charlottenburg-Wilmersdorf",
+   "population": 15836
+  },
+  "0501": {
+   "name": "Spandau",
+   "bezirk": "Spandau",
+   "population": 42786
+  },
+  "0502": {
+   "name": "Haselhorst",
+   "bezirk": "Spandau",
+   "population": 19999
+  },
+  "0503": {
+   "name": "Siemensstadt",
+   "bezirk": "Spandau",
+   "population": 13841
+  },
+  "0504": {
+   "name": "Staaken",
+   "bezirk": "Spandau",
+   "population": 47324
+  },
+  "0505": {
+   "name": "Gatow",
+   "bezirk": "Spandau",
+   "population": 3519
+  },
+  "0506": {
+   "name": "Kladow",
+   "bezirk": "Spandau",
+   "population": 16518
+  },
+  "0507": {
+   "name": "Hakenfelde",
+   "bezirk": "Spandau",
+   "population": 35923
+  },
+  "0508": {
+   "name": "Falkenhagener Feld",
+   "bezirk": "Spandau",
+   "population": 39927
+  },
+  "0509": {
+   "name": "Wilhelmstadt",
+   "bezirk": "Spandau",
+   "population": 41429
+  },
+  "0601": {
+   "name": "Steglitz",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 76177
+  },
+  "0602": {
+   "name": "Lichterfelde",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 85113
+  },
+  "0603": {
+   "name": "Lankwitz",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 44891
+  },
+  "0604": {
+   "name": "Zehlendorf",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 54864
+  },
+  "0605": {
+   "name": "Dahlem",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 16670
+  },
+  "0606": {
+   "name": "Nikolassee",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 11499
+  },
+  "0607": {
+   "name": "Wannsee",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 10057
+  },
+  "0608": {
+   "name": "Schlachtensee",
+   "bezirk": "Steglitz-Zehlendorf",
+   "population": 10067
+  },
+  "0701": {
+   "name": "Schöneberg",
+   "bezirk": "Tempelhof-Schöneberg",
+   "population": 125756
+  },
+  "0702": {
+   "name": "Friedenau",
+   "bezirk": "Tempelhof-Schöneberg",
+   "population": 30057
+  },
+  "0703": {
+   "name": "Tempelhof",
+   "bezirk": "Tempelhof-Schöneberg",
+   "population": 63470
+  },
+  "0704": {
+   "name": "Mariendorf",
+   "bezirk": "Tempelhof-Schöneberg",
+   "population": 54337
+  },
+  "0705": {
+   "name": "Marienfelde",
+   "bezirk": "Tempelhof-Schöneberg",
+   "population": 32306
+  },
+  "0706": {
+   "name": "Lichtenrade",
+   "bezirk": "Tempelhof-Schöneberg",
+   "population": 52909
+  },
+  "0801": {
+   "name": "Neukölln",
+   "bezirk": "Neukölln",
+   "population": 163184
+  },
+  "0802": {
+   "name": "Britz",
+   "bezirk": "Neukölln",
+   "population": 43895
+  },
+  "0803": {
+   "name": "Buckow",
+   "bezirk": "Neukölln",
+   "population": 42079
+  },
+  "0804": {
+   "name": "Rudow",
+   "bezirk": "Neukölln",
+   "population": 42944
+  },
+  "0805": {
+   "name": "Gropiusstadt",
+   "bezirk": "Neukölln",
+   "population": 39521
+  },
+  "0901": {
+   "name": "Alt-Treptow",
+   "bezirk": "Treptow-Köpenick",
+   "population": 13491
+  },
+  "0902": {
+   "name": "Plänterwald",
+   "bezirk": "Treptow-Köpenick",
+   "population": 11869
+  },
+  "0903": {
+   "name": "Baumschulenweg",
+   "bezirk": "Treptow-Köpenick",
+   "population": 19592
+  },
+  "0904": {
+   "name": "Johannisthal",
+   "bezirk": "Treptow-Köpenick",
+   "population": 22760
+  },
+  "0905": {
+   "name": "Niederschöneweide",
+   "bezirk": "Treptow-Köpenick",
+   "population": 15387
+  },
+  "0906": {
+   "name": "Altglienicke",
+   "bezirk": "Treptow-Köpenick",
+   "population": 33821
+  },
+  "0907": {
+   "name": "Adlershof",
+   "bezirk": "Treptow-Köpenick",
+   "population": 22942
+  },
+  "0908": {
+   "name": "Bohnsdorf",
+   "bezirk": "Treptow-Köpenick",
+   "population": 13865
+  },
+  "0909": {
+   "name": "Oberschöneweide",
+   "bezirk": "Treptow-Köpenick",
+   "population": 25846
+  },
+  "0910": {
+   "name": "Köpenick",
+   "bezirk": "Treptow-Köpenick",
+   "population": 72778
+  },
+  "0911": {
+   "name": "Friedrichshagen",
+   "bezirk": "Treptow-Köpenick",
+   "population": 19014
+  },
+  "0912": {
+   "name": "Rahnsdorf",
+   "bezirk": "Treptow-Köpenick",
+   "population": 11227
+  },
+  "0913": {
+   "name": "Grünau",
+   "bezirk": "Treptow-Köpenick",
+   "population": 8551
+  },
+  "0914": {
+   "name": "Müggelheim",
+   "bezirk": "Treptow-Köpenick",
+   "population": 7015
+  },
+  "0915": {
+   "name": "Schmöckwitz",
+   "bezirk": "Treptow-Köpenick",
+   "population": 4528
+  }
+ }
+}

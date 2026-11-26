@@ -735,6 +735,25 @@ impl Network {
         }
     }
 
+    /// The network as it runs today: every line whose track is all in service
+    /// switched on, everything else off.
+    ///
+    /// This is the comparison case of the appraisal. It does not depend on what
+    /// the scenario has switched on, so a scenario that turns an existing line
+    /// off is measured against a network that still has it.
+    pub fn today(&self) -> Network {
+        let mut n = self.clone();
+        for l in n.lines.values_mut() {
+            l.included = !l.edges.is_empty()
+                && l.edges.iter().all(|e| {
+                    self.edges
+                        .get(e)
+                        .is_some_and(|e| e.status == BuildStatus::InService)
+                });
+        }
+        n
+    }
+
     /// Edges that belong to at least one included line.
     pub fn active_edges(&self) -> Vec<EdgeId> {
         let mut out: Vec<EdgeId> = self

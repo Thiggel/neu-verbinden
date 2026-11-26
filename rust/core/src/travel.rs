@@ -50,6 +50,23 @@ impl TravelGraph {
     /// today rather than against a rewritten yesterday.
     pub fn build(net: &Network, ops: &OperationsParams, only_in_service: bool) -> Self {
         let mut adjacency: BTreeMap<NodeId, Vec<Link>> = BTreeMap::new();
+        // One identity per service, not per stored record.
+        //
+        // A service can be stored as several line records: the five building
+        // stages of the U5, the U4 and the two extensions planned for it, the
+        // U1 and its eastern branch. They carry the same label because they
+        // are the same train. Compared by record id, a ride from Bramfeld to
+        // Hauptbahnhof was charged two changes of line at City Nord and
+        // Jarrestraße — ten minutes on a through service — and every extension
+        // of an existing line began with a five-minute transfer onto itself.
+        let mut service: BTreeMap<(&str, Mode), LineId> = BTreeMap::new();
+        for l in net.lines.values() {
+            let id = l.extends.unwrap_or(l.id);
+            let e = service.entry((l.label.as_str(), l.mode)).or_insert(id);
+            if id < *e {
+                *e = id;
+            }
+        }
         for l in net.lines.values() {
             if !l.included && !only_in_service {
                 continue;
@@ -62,7 +79,11 @@ impl TravelGraph {
             // be listed and switched off on its own — but it is the same train,
             // and charging a transfer at the join would appraise a through
             // service as a change.
-            let identity = l.extends.unwrap_or(l.id);
+            let parent = l.extends.and_then(|p| net.lines.get(&p)).unwrap_or(l);
+            let identity = service
+                .get(&(parent.label.as_str(), parent.mode))
+                .copied()
+                .unwrap_or(parent.id);
             for eid in &l.edges {
                 let Some(e) = net.edges.get(eid) else {
                     continue;

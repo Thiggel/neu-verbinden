@@ -80,7 +80,7 @@ async function open(path = '/', { city = 'hamburg' } = {}) {
 }
 
 /** Dismiss the welcome sheet, choosing a starting point by its visible text. */
-async function start(page, choice = 'Beschlossene Vorhaben') {
+async function start(page, choice = 'Geplante Vorhaben') {
   const heading = page.getByRole('heading', { name: /Wie soll/ });
   await heading.waitFor({ state: 'visible', timeout: READY });
   // Scoped to the sheet's own buttons. Matching on text alone picked the hidden
@@ -157,7 +157,8 @@ await check('die Stadt lässt sich wechseln', async () => {
   // A real <select>, deliberately: it works with the keyboard, a screen reader
   // and the phone's own picker. Driven as one here for the same reason.
   await page.selectOption('#city', 'berlin');
-  await page.waitForFunction(() => document.body.innerText.includes('Berlin'), null, { timeout: READY });
+  // Switching city reloads the page, and for a moment there is no body to read.
+  await page.waitForFunction(() => document.body?.innerText.includes('Berlin') ?? false, null, { timeout: READY });
   await page.waitForFunction(
     () => (window.__map?.getSource('transit-lines')?.serialize().data.features.length ?? 0) > 100,
     null,

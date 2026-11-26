@@ -2156,9 +2156,12 @@ mod tests {
         let graph = TravelGraph::build(&ed.network, &ops, false);
         let through = *graph.times_from(start).get(&far).expect("no route through");
 
-        // The same journey, with the extension made into an unrelated line.
+        // The same journey, with the extension made into an unrelated line:
+        // detached and under a name of its own, since one name is one service.
         let mut apart = ed.network.clone();
-        apart.lines.get_mut(&ext.id).unwrap().extends = None;
+        let detached = apart.lines.get_mut(&ext.id).unwrap();
+        detached.extends = None;
+        detached.label = format!("{}-neu", detached.label);
         let split = *TravelGraph::build(&apart, &ops, false)
             .times_from(start)
             .get(&far)
