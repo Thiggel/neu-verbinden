@@ -116,7 +116,7 @@ export function HistoryButton({
               ))}
           </ol>
           <p className="border-t border-line px-3 py-2 text-[11px] leading-snug text-muted">
-            Ein Klick nimmt alles bis einschließlich dieses Schritts zurück.
+            Ein Klick auf einen Schritt nimmt ihn und alle späteren Schritte zurück.
           </p>
         </div>
       )}

@@ -62,9 +62,9 @@ export default function ProfilePage({ params }: { params: Promise<{ handle: stri
         {items && items.length > 0 && (
           <p className="mt-6 text-[11px] text-muted">
             Zusammengezählt über alle {count(items.length)} Entwürfe: {eur(totals.investment)}{' '}
-            Investition. Entwürfe sind meist Alternativen zueinander und enthalten dieselben
-            Abschnitte mehrfach. Die Summen sagen also, wie viel jemand vorgeschlagen hat, nicht
-            wie viel gebaut würde. Modellschätzungen, keine Planungsgrundlage.
+            Investition. Weil Entwürfe meist Alternativen zueinander sind und dieselben Abschnitte
+            mehrfach enthalten, zeigen die Summen, wie viel jemand vorgeschlagen hat, und nicht,
+            wie viel gebaut würde. Alle Werte sind Modellschätzungen und keine Planungsgrundlage.
           </p>
         )}
       </main>

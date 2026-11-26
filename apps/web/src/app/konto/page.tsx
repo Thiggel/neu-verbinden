@@ -64,7 +64,7 @@ export default function AccountPage() {
     const answers = await ask({
       title: 'Konto löschen',
       intro:
-        'Das Konto, alle Entwürfe, Kommentare und Stimmen werden endgültig gelöscht. Auch veröffentlichte Entwürfe verschwinden dann für alle. Das lässt sich nicht rückgängig machen.',
+        'Das Konto wird mit allen Entwürfen, Kommentaren und Stimmen endgültig gelöscht, sodass auch veröffentlichte Entwürfe für niemanden mehr abrufbar sind. Das lässt sich nicht rückgängig machen.',
       fields: [
         {
           name: 'handle',
@@ -77,7 +77,7 @@ export default function AccountPage() {
     });
     if (!answers) return;
     if (answers.handle?.trim() !== user?.handle) {
-      toast('Der Nutzername stimmt nicht, es wurde nichts gelöscht.', 'warn');
+      toast('Weil der Nutzername nicht stimmt, wurde nichts gelöscht.', 'warn');
       return;
     }
     setBusy('delete');
@@ -99,7 +99,8 @@ export default function AccountPage() {
       <main className="mx-auto max-w-2xl px-4 py-6 pb-20">
         <h1 className="text-[22px] font-semibold">Konto und Daten</h1>
         <p className="mt-1 text-[14px] leading-relaxed text-muted">
-          Was dieser Dienst über dich gespeichert hat, und wie du es wieder loswirst.
+          Hier kannst du herunterladen, was dieser Dienst über dich gespeichert hat, und dein
+          Konto löschen.
         </p>
 
         {state === 'laden' && <p className="mt-6 text-[14px] text-muted">Wird geladen …</p>}
@@ -108,8 +109,9 @@ export default function AccountPage() {
           <div className="mt-6 rounded-2xl border border-line bg-surface p-5">
             <h2 className="text-[15px] font-semibold">Nicht angemeldet</h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
-              Ohne Konto speichert dieser Dienst nichts über dich: Entwürfe, die du nicht
-              veröffentlichst, bleiben in deinem Browser. Was gespeichert wird und warum, steht
+              Ohne Konto speichert dieser Dienst nichts, was dir zugeordnet ist, weil Entwürfe, die
+              du nicht veröffentlichst, in deinem Browser bleiben. Ausgenommen sind kurzlebige
+              Zähler gegen Missbrauch und Rückmeldungen, die du selbst abschickst. Was gespeichert wird und warum, steht
               unter{' '}
               <Link className="underline" href="/rechtliches#datenschutz">
                 Datenschutz
@@ -125,16 +127,16 @@ export default function AccountPage() {
               <h2 className="text-[15px] font-semibold">Angemeldet als {user.handle}</h2>
               <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
                 Zu diesem Konto gehören ein Nutzername, ein Anzeigename, eine Selbstbeschreibung und
-                ein Passwort-Hash. Für das Konto wird keine E-Mail-Adresse erhoben.
+                ein Passwort-Hash, während eine E-Mail-Adresse nicht erhoben wird.
               </p>
             </section>
 
             <section className="rounded-2xl border border-line bg-surface p-5">
               <h2 className="text-[15px] font-semibold">Daten herunterladen</h2>
               <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
-                Eine JSON-Datei mit allem, was gespeichert ist: Konto, sämtliche Entwürfe mitsamt
-                ihren Netzen, Kommentare und Stimmen. Auskunft nach Art. 15 DSGVO und
-                Datenübertragbarkeit nach Art. 20 DSGVO.
+                Die JSON-Datei enthält alles, was gespeichert ist, also das Konto, sämtliche
+                Entwürfe mitsamt ihren Netzen, Kommentare und Stimmen. Sie erfüllt die Rechte auf
+                Auskunft nach Art. 15 DSGVO und auf Datenübertragbarkeit nach Art. 20 DSGVO.
               </p>
               <button className="btn btn-primary mt-4" onClick={download} disabled={busy !== null}>
                 {busy === 'export' ? 'Wird erzeugt …' : 'Meine Daten herunterladen'}
@@ -144,9 +146,9 @@ export default function AccountPage() {
             <section className="rounded-2xl border border-rose-500/40 bg-rose-500/5 p-5">
               <h2 className="text-[15px] font-semibold">Konto löschen</h2>
               <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
-                Löscht das Konto, alle Entwürfe, Kommentare und Stimmen endgültig. Auch
-                veröffentlichte Entwürfe sind danach für niemanden mehr abrufbar. Recht auf Löschung
-                nach Art. 17 DSGVO.
+                Das Konto wird mit allen Entwürfen, Kommentaren und Stimmen endgültig gelöscht,
+                sodass auch veröffentlichte Entwürfe danach für niemanden mehr abrufbar sind. Das
+                entspricht dem Recht auf Löschung nach Art. 17 DSGVO.
               </p>
               <button
                 className="btn mt-4 border-rose-500/50 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400"

@@ -119,8 +119,8 @@ export const useUi = create<UiState>((set) => ({
 
 export const TOOL_HINT: Record<Tool, string> = {
   select: 'Tippe eine Linie oder Station an, um zu sehen, was dahintersteckt.',
-  draw: 'Jeder Klick setzt eine Station. Dazwischen ergänzt die App weitere. Enter oder Doppelklick beendet die Linie.',
-  extend: 'Jeder Klick verlängert die gewählte Linie um eine Station. Die Kosten wachsen mit.',
+  draw: 'Jeder Klick setzt eine Station, während die App dazwischen weitere ergänzt, bis du die Linie mit Enter oder einem Doppelklick beendest.',
+  extend: 'Jeder Klick verlängert die gewählte Linie um eine Station, wodurch auch die Kosten steigen.',
   split: 'Tippe auf eine Strecke, um dort eine zusätzliche Station einzufügen.',
   delete: 'Tippe an, was wieder verschwinden soll.',
 };

@@ -96,8 +96,9 @@ export default function DiscoverPage() {
           <div>
             <h1 className="text-[22px] font-semibold">Entwürfe entdecken</h1>
             <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-muted">
-              Veröffentlichte Netzentwürfe anderer. Alle Kennzahlen sind Modellschätzungen, auf dem
-              Server mit demselben Modell neu berechnet, nicht die Angaben der Einreichenden.
+              Hier stehen die Netzentwürfe, die andere veröffentlicht haben. Alle Kennzahlen sind
+              Modellschätzungen, die der Server mit demselben Modell neu berechnet hat, statt die
+              Angaben der Einreichenden zu übernehmen.
             </p>
           </div>
           {items && items.length > 0 && (
@@ -168,12 +169,12 @@ export default function DiscoverPage() {
         ) : offline ? (
           <EmptyState
             title="Der Server ist nicht erreichbar"
-            body="Der Editor funktioniert auch ohne Server. Entwürfe lassen sich als Datei speichern und wieder öffnen. Zum Veröffentlichen und Diskutieren muss der API-Server laufen."
+            body="Der Editor funktioniert auch ohne Server, sodass sich Entwürfe als Datei speichern und wieder öffnen lassen. Veröffentlichen und Diskutieren sind erst wieder möglich, wenn der Server erreichbar ist."
           />
         ) : items.length === 0 ? (
           <EmptyState
             title="Noch nichts veröffentlicht"
-            body="Zeichne im Editor ein Netz und veröffentliche es, dann steht es hier."
+            body="Sobald du im Editor ein Netz zeichnest und veröffentlichst, steht es hier."
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -187,10 +188,10 @@ export default function DiscoverPage() {
           <section className="mt-10">
             <h2 className="text-[18px] font-semibold">Ranglisten</h2>
             <p className="mt-1 max-w-2xl text-[13px] text-muted">
-              Bewusst mehrere Ranglisten statt einer Gesamtpunktzahl: ein sparsames Netz, ein
-              schnell gebautes und ein wirksames Netz sind verschiedene Dinge. Gemessen wird,
-              was ein Entwurf <em>bewirkt</em>, nicht, wie wenig er tut: sonst gewönne die
-              kürzeste denkbare Strecke jede Rangliste, bei der weniger besser ist.
+              Es gibt mehrere Ranglisten statt einer Gesamtpunktzahl, weil ein sparsames, ein
+              schnell gebautes und ein wirksames Netz verschiedene Dinge sind. Gemessen wird, was
+              ein Entwurf <em>bewirkt</em>, und nicht, wie wenig er tut, weil sonst die kürzeste
+              denkbare Strecke jede Rangliste gewönne, in der ein kleinerer Wert besser ist.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {boards.map((b) => (

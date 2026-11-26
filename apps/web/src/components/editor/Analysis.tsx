@@ -203,9 +203,9 @@ function Overview({
       {existingOff > 0 && (
         <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-[12px] leading-relaxed">
           {existingOff === 1 ? 'Eine Bestandslinie ist' : `${count(existingOff)} Bestandslinien sind`}{' '}
-          abgeschaltet. Alle Zahlen unten sind Unterschiede zum <b>heutigen Netz</b>, das vollständig
-          fährt. Ein Szenario, in dem Teile davon fehlen, liegt darunter, der Nutzen wird also
-          negativ.
+          abgeschaltet. Weil alle Zahlen unten mit dem <b>heutigen Netz</b> verglichen werden, das
+          vollständig fährt, schneidet ein Szenario, in dem Teile davon fehlen, schlechter ab,
+          sodass der Nutzen negativ wird.
           {onRestoreExisting && (
             <>
               {' '}
@@ -500,10 +500,10 @@ function Economics({ result }: { result: SimulationResult }) {
           <span className="shrink-0 tabular-nums">{eurPerYear(e.annualBenefitCoreEur)}</span>
         </div>
         <p className="mt-1 text-muted">
-          Produktivität und Bodenwerte sind hier herausgerechnet. Die Standardisierte Bewertung
-          zählt sie nicht mit, dafür Wirkungen, die dieses Modell nicht kennt, etwa eingesparte
-          Busleistung. Veröffentlichte Nutzen-Kosten-Verhältnisse sind deshalb nicht direkt
-          vergleichbar.
+          Produktivität und Bodenwerte sind hier herausgerechnet, weil die Standardisierte
+          Bewertung sie nicht mitzählt. Da sie dafür Wirkungen berücksichtigt, die dieses Modell
+          nicht kennt, etwa eingesparte Busleistung, sind veröffentlichte
+          Nutzen-Kosten-Verhältnisse nicht direkt vergleichbar.
         </p>
       </div>
 
@@ -644,10 +644,10 @@ function Assumptions({ result }: { result: SimulationResult }) {
       </Section>
       <Section title="Was das Modell nicht kann">
         <p className="py-1 text-[12px] leading-relaxed text-muted">
-          Es kennt keinen Baugrund, keine Leitungslage, keine Grundstücksverhältnisse und keine
-          politischen Verfahren. Es rechnet mit Kennwerten aus veröffentlichten Projekten und mit
-          offenen Geo- und Statistikdaten. Ergebnisse sind Größenordnungen für den Vergleich von
-          Entwürfen untereinander, keine Planungsgrundlage.
+          Das Modell kennt weder Baugrund noch Leitungslage, Grundstücksverhältnisse oder
+          politische Verfahren, weil es nur mit Kennwerten aus veröffentlichten Projekten und mit
+          offenen Geo- und Statistikdaten rechnet. Die Ergebnisse sind deshalb Größenordnungen,
+          mit denen sich Entwürfe untereinander vergleichen lassen, und keine Planungsgrundlage.
         </p>
       </Section>
       <ul className="space-y-1 text-[11px] leading-snug text-muted">

@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Verkehrsnetz-Designer',
   description:
-    'Zeichne das Nahverkehrsnetz, das du dir wünschst, für Hamburg oder Berlin, und erfahre, was es vermutlich kosten und wie lange es dauern würde.',
+    'Zeichne für Hamburg oder Berlin das Nahverkehrsnetz, das du dir wünschst, und erfahre, was es voraussichtlich kosten und wie lange der Bau dauern würde.',
   applicationName: 'Verkehrsnetz-Designer',
   manifest: '/manifest.webmanifest',
 };

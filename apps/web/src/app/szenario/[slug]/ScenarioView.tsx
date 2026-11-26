@@ -217,7 +217,7 @@ export function ScenarioView({ slug }: { slug: string }) {
                     hasDraft(city) &&
                     !(await askConfirm(
                       'Angefangene Arbeit ersetzen?',
-                      `Im Editor liegt noch ein unfertiger Entwurf für ${cityLabel(city)}. „${data.title}" zu öffnen überschreibt ihn.`,
+                      `Im Editor liegt noch ein unfertiger Entwurf für ${cityLabel(city)}, der überschrieben wird, wenn du „${data.title}" öffnest.`,
                       'Öffnen und ersetzen'
                     ))
                   ) {
@@ -267,8 +267,9 @@ export function ScenarioView({ slug }: { slug: string }) {
             </div>
 
             <p className="mt-3 text-[11px] leading-snug text-muted">
-              Gerechnet mit Modell {data.calculation_version} auf Datenstand {data.data_version}. Die
-              Werte wurden beim Veröffentlichen auf dem Server neu berechnet.
+              Die Werte sind mit Modell {data.calculation_version} auf Datenstand{' '}
+              {data.data_version} gerechnet und wurden beim Veröffentlichen auf dem Server neu
+              berechnet.
             </p>
 
             <section className="mt-8">

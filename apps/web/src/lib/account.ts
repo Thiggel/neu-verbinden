@@ -24,23 +24,23 @@ export type AccountPurpose = 'publish' | 'vote' | 'fork' | 'comment' | 'report';
 const WORDING: Record<AccountPurpose, { title: string; intro: string }> = {
   publish: {
     title: 'Wer veröffentlicht?',
-    intro: 'Ein Name und ein Passwort genügen, keine E-Mail-Adresse. Damit gehört der Entwurf dir.',
+    intro: 'Damit der Entwurf dir gehört, genügen ein Name und ein Passwort, eine E-Mail-Adresse ist nicht nötig.',
   },
   vote: {
     title: 'Wer stimmt zu?',
-    intro: 'Ein Name und ein Passwort genügen, keine E-Mail-Adresse. Damit zählt deine Stimme genau einmal.',
+    intro: 'Damit deine Stimme genau einmal zählt, genügen ein Name und ein Passwort, eine E-Mail-Adresse ist nicht nötig.',
   },
   fork: {
     title: 'Wer baut weiter?',
-    intro: 'Ein Name und ein Passwort genügen, keine E-Mail-Adresse. Damit gehört dir, was du daraus machst.',
+    intro: 'Damit dir gehört, was du daraus machst, genügen ein Name und ein Passwort, eine E-Mail-Adresse ist nicht nötig.',
   },
   comment: {
     title: 'Wer schreibt?',
-    intro: 'Ein Name und ein Passwort genügen, keine E-Mail-Adresse. Damit steht dein Name an deinem Beitrag.',
+    intro: 'Damit dein Name an deinem Beitrag steht, genügen ein Name und ein Passwort, eine E-Mail-Adresse ist nicht nötig.',
   },
   report: {
     title: 'Wer meldet?',
-    intro: 'Ein Name und ein Passwort genügen, keine E-Mail-Adresse. Meldungen ohne Konto wären wertlos.',
+    intro: 'Weil eine Meldung einem Konto zugeordnet sein muss, brauchst du einen Namen und ein Passwort, eine E-Mail-Adresse ist nicht nötig.',
   },
 };
 
@@ -58,7 +58,7 @@ export async function ensureSession(purpose: AccountPurpose = 'publish'): Promis
         secret: true,
         hint: `Mindestens ${MIN_PASSWORD} Zeichen`,
         validate: (v) =>
-          v.length < MIN_PASSWORD ? `Noch ${MIN_PASSWORD - v.length} Zeichen fehlen.` : null,
+          v.length < MIN_PASSWORD ? `Es fehlen noch ${MIN_PASSWORD - v.length} Zeichen.` : null,
       },
     ],
     confirm: 'Weiter',

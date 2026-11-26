@@ -85,8 +85,8 @@ function ComparePageInner() {
       <main className="mx-auto max-w-4xl px-4 py-6 pb-16">
         <h1 className="text-[22px] font-semibold">Entwürfe vergleichen</h1>
         <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-muted">
-          Zwei veröffentlichte Entwürfe nebeneinander. Beide Seiten stammen aus derselben Rechnung,
-          sind also direkt vergleichbar, was bei realen Projektangaben selten der Fall ist.
+          Hier stehen zwei veröffentlichte Entwürfe nebeneinander, die direkt vergleichbar sind,
+          weil beide Seiten mit demselben Modell und demselben Datenstand gerechnet wurden.
         </p>
 
         <div className="mt-5 grid gap-3 rounded-2xl border border-line bg-surface p-4 sm:grid-cols-2">
@@ -167,9 +167,9 @@ function ComparePageInner() {
             baselines. Say so rather than putting the two columns side by side. */}
         {mismatch && (
           <p className="mt-4 rounded-xl border border-line bg-subtle p-3 text-[13px] leading-relaxed">
-            Diese beiden Entwürfe gehören zu verschiedenen Städten ({mismatch}). Nebeneinander
-            gestellt hätten die Zahlen keine gemeinsame Grundlage. Vergleiche Entwürfe derselben
-            Stadt.
+            Weil diese beiden Entwürfe zu verschiedenen Städten gehören ({mismatch}), hätten ihre
+            Zahlen nebeneinander keine gemeinsame Grundlage. Vergleichen lassen sich nur Entwürfe
+            derselben Stadt.
           </p>
         )}
 
@@ -178,9 +178,9 @@ function ComparePageInner() {
             recalibration, not yet swept — saying so is the whole point. */}
         {rows && !mismatch && !sameModel && (
           <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-[13px] leading-relaxed">
-            Diese beiden Entwürfe wurden mit <b>unterschiedlichen Modellständen</b> gerechnet. Der
-            ältere wird in Kürze neu berechnet; bis dahin sind die Zahlen nicht direkt
-            gegenüberzustellen.
+            Weil diese beiden Entwürfe mit <b>unterschiedlichen Modellständen</b> gerechnet wurden,
+            lassen sich ihre Zahlen nicht direkt vergleichen, bis der ältere in Kürze neu berechnet
+            ist.
           </p>
         )}
 
@@ -198,10 +198,10 @@ function ComparePageInner() {
               </h2>
               <p className="mt-2 max-w-prose text-[13.5px] leading-relaxed text-muted">
                 {offline
-                  ? 'Veröffentlichte Entwürfe lassen sich deshalb nicht laden. Der Editor funktioniert weiter.'
+                  ? 'Veröffentlichte Entwürfe lassen sich deshalb nicht laden, während der Editor weiter funktioniert.'
                   : options.length === 0
                     ? 'Sobald jemand ein Netz veröffentlicht, lässt es sich hier gegen ein anderes stellen.'
-                    : 'Zwei Netze nebeneinander, Kennzahl für Kennzahl. Weil beide Seiten mit derselben Rechnung entstanden sind, sagt der Unterschied etwas, anders als bei zwei Zahlen aus zwei Pressemitteilungen.'}
+                    : 'Der Vergleich stellt zwei Netze Kennzahl für Kennzahl nebeneinander. Weil beide Seiten mit derselben Rechnung entstanden sind, ist der Unterschied aussagekräftig, anders als bei Zahlen aus verschiedenen Quellen.'}
               </p>
               {suggestion && (
                 <button
@@ -278,8 +278,8 @@ function ComparePageInner() {
               </tbody>
             </table>
             <p className="border-t border-line p-3 text-[11px] leading-snug text-muted">
-              Hervorgehoben ist jeweils der günstigere Wert. Das heißt nicht, dass ein Entwurf
-              insgesamt besser ist. Welche Kennzahl zählt, ist eine politische Frage.
+              Hervorgehoben ist jeweils der günstigere Wert, was nicht bedeutet, dass ein Entwurf
+              insgesamt besser ist, denn welche Kennzahl zählt, ist eine politische Frage.
             </p>
           </div>
         )}

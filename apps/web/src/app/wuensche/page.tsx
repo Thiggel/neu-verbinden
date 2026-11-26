@@ -85,9 +85,9 @@ export default function WishesPage() {
         <section className="flex min-w-0 flex-1 flex-col">
           <h1 className="text-[22px] font-semibold">Wo Verbindungen fehlen</h1>
           <p className="mt-1 max-w-3xl text-[14px] leading-relaxed text-muted">
-            Alle veröffentlichten Entwürfe übereinandergelegt. Gezählt wird nur, was gebaut werden
-            müsste, nicht das Netz, das ohnehin schon fährt. Wo es heiß ist, haben viele unabhängig
-            voneinander dieselbe Lücke gezeichnet.
+            Die Karte legt alle veröffentlichten Entwürfe übereinander, wobei nur zählt, was gebaut
+            werden müsste, und nicht das Netz, das schon fährt. Je wärmer die Farbe ist, desto mehr
+            Entwürfe haben unabhängig voneinander an derselben Stelle eine neue Strecke gezeichnet.
           </p>
 
           <div className="relative mt-4 min-h-[380px] flex-1 overflow-hidden rounded-2xl border border-line">
@@ -154,13 +154,13 @@ export default function WishesPage() {
               <span>
                 Nur Entwürfe mit mindestens einer Stimme
                 <span className="block text-[12px] text-muted">
-                  Blendet aus, was niemand außer der zeichnenden Person gesehen hat.
+                  Blendet Entwürfe aus, für die noch niemand gestimmt hat.
                 </span>
               </span>
             </label>
             <p className="mt-3 text-[12px] leading-relaxed text-muted">
-              Entwürfe mit Stimmen und Forks zählen stärker, aber nur logarithmisch: ein Entwurf,
-              der die Runde gemacht hat, soll zwanzig stille nicht zudecken.
+              Entwürfe mit Stimmen und Forks zählen stärker, allerdings nur logarithmisch, damit
+              ein viel beachteter Entwurf nicht zwanzig wenig beachtete überdeckt.
             </p>
           </section>
 
@@ -199,8 +199,9 @@ export default function WishesPage() {
               <span>oft gezeichnet</span>
             </div>
             <p className="mt-3">
-              Die Skala ist relativ zur heißesten Stelle dieser Stadt. Sie sagt, wo die Entwürfe
-              sich einig sind, nicht wie viele Menschen dort wohnen oder fahren würden.
+              Die Skala bezieht sich auf die am häufigsten gezeichnete Stelle dieser Stadt und
+              zeigt deshalb, wo die Entwürfe übereinstimmen, nicht aber, wie viele Menschen dort
+              wohnen oder fahren würden.
             </p>
             <p className="mt-2">
               <Link href="/entdecken" className="underline hover:text-ink">

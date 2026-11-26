@@ -1,7 +1,7 @@
 {
   "name": "Verkehrsnetz-Designer",
   "short_name": "Netzplan",
-  "description": "Zeichne das Nahverkehrsnetz, das du dir wünschst — für Hamburg oder Berlin.",
+  "description": "Zeichne das Nahverkehrsnetz, das du dir für Hamburg oder Berlin wünschst.",
   "lang": "de",
   "start_url": "/",
   "display": "standalone",

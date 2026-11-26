@@ -125,7 +125,7 @@ export class EditorController {
       // Switching away from drawing keeps the line. Discarding it silently is
       // the single most annoying thing a drawing tool can do.
       this.commitDraft();
-      this.cb.onMessage('Linie übernommen.');
+      this.cb.onMessage('Die gezeichnete Linie wurde übernommen.');
     }
     this.tool = tool;
     if (tool !== 'draw' && tool !== 'extend') this.clearDraft();
@@ -306,7 +306,7 @@ export class EditorController {
   private splitAt(lngLat: { lng: number; lat: number }) {
     const hit = this.engine.pickEdge(lngLat.lng, lngLat.lat, this.pickRadius());
     if (!hit) {
-      this.cb.onMessage('Kein Abschnitt getroffen.', 'warn');
+      this.cb.onMessage('An dieser Stelle liegt kein Abschnitt.', 'warn');
       return;
     }
     this.run(cmd.splitEdge(hit[0], hit[2]));
@@ -321,7 +321,7 @@ export class EditorController {
     }
     const hit = this.engine.pickEdge(lngLat.lng, lngLat.lat, this.pickRadius());
     if (!hit) {
-      this.cb.onMessage('Nichts zum Löschen getroffen.', 'warn');
+      this.cb.onMessage('An dieser Stelle liegt nichts, das sich entfernen lässt.', 'warn');
       return;
     }
     this.run(cmd.deleteEdge(hit[0]));
@@ -394,7 +394,7 @@ export class EditorController {
     this.extendTarget = { line: best.line, end: best.end };
     this.mode = line?.mode ?? this.mode;
     this.cb.onMessage(
-      `${line?.label ?? 'Linie'} wird weitergebaut, tippe an, wohin.`,
+      `Tippe an, wohin ${line?.label ?? 'die Linie'} weitergebaut werden soll.`,
       'info'
     );
     return true;
@@ -424,7 +424,7 @@ export class EditorController {
     const extending = this.tool === 'extend' && this.extendTarget;
     if (points.length < (extending ? 1 : 2)) {
       this.cb.onMessage(
-        extending ? 'Tippe erst, wohin die Linie weitergehen soll.' : 'Setze mindestens zwei Punkte.',
+        extending ? 'Tippe zuerst an, wohin die Linie weitergehen soll.' : 'Eine Linie braucht mindestens zwei Punkte.',
         'warn'
       );
       return;

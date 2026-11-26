@@ -177,7 +177,7 @@ function ShareSheet({ input, onClose }: { input: ShareInput; onClose: () => void
       toast('Im Teilen-Menü Instagram wählen');
     } else {
       await download();
-      toast('Bild gespeichert. Bei Instagram als Beitrag oder Story hochladen');
+      toast('Das Bild ist gespeichert und lässt sich bei Instagram als Beitrag oder Story hochladen');
     }
   };
 
@@ -275,7 +275,7 @@ function ShareSheet({ input, onClose }: { input: ShareInput; onClose: () => void
           <div>
             <h2 className="text-[15px] font-semibold">Entwurf teilen</h2>
             <p className="mt-0.5 text-[12.5px] text-muted">
-              Das Bild wird hier im Browser erzeugt, nichts wird dafür hochgeladen.
+              Das Bild wird im Browser erzeugt, ohne dass dafür etwas hochgeladen wird.
             </p>
           </div>
           <button onClick={onClose} aria-label="Schließen" className="rounded-lg px-2 py-1 text-muted hover:bg-subtle">
@@ -366,8 +366,9 @@ function ShareSheet({ input, onClose }: { input: ShareInput; onClose: () => void
           })}
         </div>
         <p className="mt-3 text-[11.5px] leading-snug text-muted">
-          Instagram und Threads nehmen keine Beiträge aus dem Browser entgegen. Der Instagram-Knopf oben
-          bereitet deshalb das Bild vor: auf dem Handy landet es im Teilen-Menü, am Rechner im Download.
+          Weil Instagram und Threads keine Beiträge aus dem Browser entgegennehmen, bereitet der
+          Instagram-Knopf oben nur das Bild vor, das auf dem Handy im Teilen-Menü und am Rechner im
+          Download-Ordner landet.
         </p>
       </div>
     </div>
