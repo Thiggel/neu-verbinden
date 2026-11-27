@@ -747,8 +747,8 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
   ließ, kommentarlos — der Datensatz hatte dann still eine Linie weniger, als in
   der kuratierten Datei steht. Sagt jetzt, welche und warum. *(2026-09-03)*
 
-* **[I]** Zwei Modellvorschläge ergänzt: S5 Harburg–Winsen–Lüneburg (37,7 km,
-  9 Halte) und S6 Bad Oldesloe–Reinfeld–Lübeck (32,5 km). Beide folgen der
+* **[I]** Zwei Modellvorschläge ergänzt: S8 (damals S5) Harburg–Winsen–Lüneburg (37,7 km,
+  9 Halte) und S6 Bad Oldesloe–Reinfeld–Lübeck (22,7 km). Beide folgen der
   bestehenden Bahnstrecke, beide sind aus mehreren gerechneten Varianten die mit
   dem besten Nutzen-Kosten-Verhältnis. In beiden Korridoren gewinnt der volle
   Weg gegen das kürzere Ende. *(2026-09-03)*
