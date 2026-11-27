@@ -55,7 +55,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let database_url = env::var("DATABASE_URL")
+    // The direct connection where a pooler also offers one (Neon sets both):
+    // the migrations take a session-level advisory lock, which a pooler in
+    // transaction mode does not keep, and this server holds its own pool anyway.
+    let database_url = env::var("DATABASE_URL_UNPOOLED")
+        .or_else(|_| env::var("DATABASE_URL"))
         .unwrap_or_else(|_| "postgres://localhost/hamburg_transit".to_string());
     let data_dir = env::var("HH_DATA_DIR").unwrap_or_else(|_| "../data/dist".to_string());
     let data_version = env::var("HH_DATA_VERSION").unwrap_or_else(|_| "2026-09".to_string());

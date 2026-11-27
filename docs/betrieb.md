@@ -97,7 +97,11 @@ Zwei Vercel-Projekte aus demselben Repository:
 | API | Wurzel | Container | alle aus der Tabelle oben, dazu `PORT=8080`, `HH_TRUST_PROXY=1`, `HH_WORKER_IDLE_SECS=600`, `HH_DB_IDLE_SECS=60` |
 
 `DATABASE_URL` setzt die Neon-Integration aus dem Vercel Marketplace, wenn
-dort der Free-Tarif gewählt wird. In GitHub stehen als Secrets
+dort der Free-Tarif gewählt wird. Bei der Einrichtung: Region Frankfurt, Auth
+und Realtime aus, denn die Anmeldung erledigt die API selbst; verbunden nur mit
+dem API-Projekt, nur für Production, Präfix `DATABASE`. Die Integration setzt
+dann auch `DATABASE_URL_UNPOOLED`, die der Server vorzieht, weil die
+Migrationen eine Sitzungssperre brauchen, die der Pooler nicht hält. In GitHub stehen als Secrets
 `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_WEB` und
 `VERCEL_PROJECT_ID_API`, als Variable optional `API_URL`. Ist `API_URL` gesetzt,
 geht die Oberfläche erst hinaus, wenn die neue API antwortet.
