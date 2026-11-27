@@ -14,12 +14,13 @@ import {
   km,
   MODE_LABEL,
   minutes,
+  people,
   percent,
   ratio,
   SEVERITY_LABEL,
   tonnes,
 } from '@/lib/format';
-import type { SimulationResult } from '@/lib/types';
+import type { Relation, SimulationResult, Trip, ZoneConnectivity } from '@/lib/types';
 import { AnimatedNumber } from '../AnimatedNumber';
 import { Explain } from '../Explain';
 import { EXPLAIN, localise } from '@/lib/explanations';
@@ -49,6 +50,7 @@ const TABS: { id: PanelTab; label: string }[] = [
   { id: 'invoice', label: 'Kosten' },
   { id: 'timeline', label: 'Zeitplan' },
   { id: 'economics', label: 'Wirkung' },
+  { id: 'connections', label: 'Verbindungen' },
   { id: 'feasibility', label: 'Baubarkeit' },
   { id: 'assumptions', label: 'Grundlagen' },
 ];
@@ -109,6 +111,7 @@ export function Analysis({
         {tab === 'invoice' && <Invoice result={result} />}
         {tab === 'timeline' && <Timeline result={result} />}
         {tab === 'economics' && <Economics result={result} />}
+        {tab === 'connections' && <Connections result={result} />}
         {tab === 'feasibility' && <Feasibility result={result} />}
         {tab === 'assumptions' && <Assumptions result={result} />}
       </div>
@@ -290,10 +293,15 @@ function Overview({
             }
           />
           <Metric label="CO₂" explain="co2" value={tonnes(h.co2SavedTPerYear)} sub="Einsparung pro Jahr" />
+          {/* The time saved across every journey, changes included, rather
+              than the access time to a handful of centres, which a line
+              between two outer districts barely moves. */}
           <Metric
-            label="Reisezeit"
-            value={minutes(Math.max(0, result.demand.accessTimeBeforeMin - result.demand.accessTimeAfterMin))}
-            sub="kürzer zu den Zentren, im Mittel"
+            label="Zeitgewinn"
+            explain="timeSaved"
+            value={`${count(result.demand.hoursSavedPerDay)} h`}
+            sub="Reisezeit je Werktag, Umstiege eingerechnet"
+            tone={result.demand.hoursSavedPerDay < 0 ? 'bad' : 'default'}
           />
         </div>
       )}
@@ -576,6 +584,155 @@ function Sparkline({ series }: { series: SimulationResult['appraisal']['series']
         <span>{series[0].year}</span>
         <span className="tabular-nums">Saldo {series[series.length - 1].year}: {eur(last.cumulativeNetEur)}</span>
       </div>
+    </div>
+  );
+}
+
+/** "74 min, 2 Umstiege", "41 min, direkt" or "keine Bahnverbindung": the model knows rail only, and buses run almost everywhere. */
+function trip(t: Trip | null) {
+  if (!t) return 'keine Bahnverbindung';
+  const changes = t.changes === 0 ? 'direkt' : t.changes === 1 ? '1 Umstieg' : `${t.changes} Umstiege`;
+  return `${count(t.minutes)} min, ${changes}`;
+}
+
+function RelationRow({ r }: { r: Relation }) {
+  return (
+    <li className="border-t border-line/60 py-2 first:border-0">
+      <div className="flex items-baseline justify-between gap-2 text-[13px]">
+        <span className="min-w-0 font-medium">
+          {r.fromName} – {r.toName}
+        </span>
+        <span
+          className={`shrink-0 tabular-nums ${
+            r.hoursPerDay >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+          }`}
+        >
+          {r.hoursPerDay >= 0 ? '+' : '−'}
+          {count(Math.abs(r.hoursPerDay))} h
+        </span>
+      </div>
+      <div className="mt-0.5 text-[12px] leading-snug text-muted">
+        {trip(r.before)} → <span className="text-ink">{trip(r.after)}</span> · {count(r.tripsPerDay)} Fahrten
+      </div>
+    </li>
+  );
+}
+
+const ZONES_SHOWN = 12;
+
+/**
+ * How much closer the parts of the city and the region move together.
+ *
+ * The question this answers is the one the access measure misses: not how
+ * quickly a quarter reaches the centre, but how quickly it reaches every other
+ * quarter, changes included.
+ */
+function Connections({ result }: { result: SimulationResult }) {
+  const c = result.demand.connectivity;
+  const [region, setRegion] = useState(false);
+  const [all, setAll] = useState(false);
+  if (!c || !c.model) {
+    return (
+      <p className="p-4 text-[13px] text-muted">
+        Für dieses Ergebnis liegen keine Verbindungsdaten vor, weil es mit einer älteren Modellversion
+        gerechnet wurde.
+      </p>
+    );
+  }
+  const delta = (z: ZoneConnectivity) => z.meanMinBefore - z.meanMinAfter;
+  const zones = c.zones
+    .filter((z) => region || z.kind === 'district')
+    .filter((z) => Math.abs(delta(z)) >= 0.05 || Math.abs(z.reachableAfter - z.reachableBefore) >= 1)
+    .sort((a, b) => delta(b) - delta(a));
+  const shown = all ? zones : zones.slice(0, ZONES_SHOWN);
+  const tripsGain = c.tripsBefore > 0 ? c.tripsAfter / c.tripsBefore - 1 : 0;
+  const regional = c.zones.filter((z) => z.kind === 'region').length;
+
+  return (
+    <div className="space-y-3 p-3">
+      <div className="grid grid-cols-2 gap-2">
+        <Metric
+          label="Zeitgewinn"
+          explain="timeSaved"
+          value={`${count(c.hoursSavedPerDay)} h`}
+          sub="je Werktag, Umstiege eingerechnet"
+          tone={c.hoursSavedPerDay < 0 ? 'bad' : 'default'}
+        />
+        <Metric
+          label="Bahnfahrten"
+          value={count(c.tripsAfter)}
+          sub={`je Werktag, ${tripsGain >= 0 ? '+' : '−'}${percent(Math.abs(tripsGain), 1)} gegenüber heute`}
+        />
+      </div>
+
+      <Section title="Schnellere Verbindungen">
+        {c.improved.length === 0 ? (
+          <p className="py-1 text-[12px] text-muted">Das Szenario verkürzt keine Verbindung messbar.</p>
+        ) : (
+          <ul>
+            {c.improved.map((r) => (
+              <RelationRow key={`${r.from}-${r.to}`} r={r} />
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      {c.worsened.length > 0 && (
+        <Section title="Langsamere Verbindungen">
+          <ul>
+            {c.worsened.map((r) => (
+              <RelationRow key={`${r.from}-${r.to}`} r={r} />
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <Section title={region ? 'Stadtteile und Umland' : 'Stadtteile'}>
+        <div className="flex items-center justify-between gap-2 pb-1 text-[11px] text-muted">
+          <span>Mittlere Reisezeit · in 45 min erreichbar</span>
+          {regional > 0 && (
+            <button onClick={() => setRegion(!region)} className="shrink-0 font-medium underline">
+              {region ? 'nur Stadtteile' : 'mit Umland'}
+            </button>
+          )}
+        </div>
+        {zones.length === 0 ? (
+          <p className="py-1 text-[12px] text-muted">Kein Stadtteil rückt messbar näher an die übrigen heran.</p>
+        ) : (
+          <ul>
+            {shown.map((z) => (
+              <li key={z.id} className="border-t border-line/60 py-1.5 first:border-0">
+                <div className="flex items-baseline justify-between gap-2 text-[13px]">
+                  <span className="min-w-0 truncate">
+                    {z.name}
+                    {z.kind === 'region' && <span className="ml-1 text-[11px] text-muted">Umland</span>}
+                  </span>
+                  <span className="shrink-0 tabular-nums">
+                    {count(z.meanMinBefore)} → {count(z.meanMinAfter)} min
+                  </span>
+                </div>
+                <div className="text-right text-[12px] tabular-nums text-muted">
+                  {people(z.reachableBefore)} → {people(z.reachableAfter)} Einwohner und Arbeitsplätze
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {zones.length > ZONES_SHOWN && (
+          <button onClick={() => setAll(!all)} className="mt-1 text-[12px] font-medium underline">
+            {all ? 'weniger zeigen' : `alle ${count(zones.length)} zeigen`}
+          </button>
+        )}
+      </Section>
+
+      <p className="px-1 text-[11px] leading-relaxed text-muted">
+        Die mittlere Reisezeit gilt von Tür zu Tür zu allen Stadtteilen, gewichtet nach deren Einwohnern
+        und Arbeitsplätzen. Wer keine Station in 1,2 km Fußweg hat, und jedes Ziel ohne Station gehen mit
+        180 Minuten ein, damit eine neue Anbindung die Zahl stets senkt; deshalb liegen schlecht
+        angebundene Stadtteile weit über den tatsächlichen Fahrzeiten. Außerhalb der Stadt fasst das
+        Modell Einwohner und Arbeitsplätze in Kacheln von 5 km Kantenlänge zusammen, die nach dem
+        wichtigsten Ort darin benannt sind.
+      </p>
     </div>
   );
 }

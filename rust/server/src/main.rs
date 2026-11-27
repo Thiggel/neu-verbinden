@@ -134,6 +134,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
         tracing::info!(city = %key, version = %params.version, "Parameter geladen");
+        // The published network is what a submitted plan's "in service" and
+        // "under construction" are checked against. Without it every such claim
+        // would have to be taken on trust, so its absence stops the start.
+        let network_path = if key == "hamburg" {
+            format!("{data_dir}/network-{data_version}.json")
+        } else {
+            format!("{data_dir}/{key}/network-{data_version}.json")
+        };
+        let base: hh_core::model::Network = serde_json::from_str(
+            &std::fs::read_to_string(&network_path)
+                .map_err(|e| format!("Netz {key} ({network_path}): {e}"))?,
+        )
+        .map_err(|e| format!("Netz {key} ({network_path}): {e}"))?;
         cities.insert(
             key.clone(),
             state::City {
@@ -142,6 +155,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 data,
                 origin,
                 params: Arc::new(params),
+                base: Arc::new(base),
             },
         );
     }

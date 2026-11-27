@@ -45,6 +45,14 @@ export function ratio(value: number): string {
   return two.format(value);
 }
 
+/** A head count rounded to what the model can tell apart: "1,4 Mio.", "895 Tsd." */
+export function people(value: number): string {
+  const a = Math.abs(value);
+  if (a >= 1e6) return `${one.format(value / 1e6)} Mio.`;
+  if (a >= 1e4) return `${int.format(Math.round(value / 1e3))} Tsd.`;
+  return int.format(Math.round(value));
+}
+
 export function minutes(value: number): string {
   return `${one.format(value)} min`;
 }

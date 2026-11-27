@@ -55,6 +55,14 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
   kommen hier ausdrücklich nicht in Frage: ein erfundener Index wäre genau der
   Fehler, der bei der U4-Zahl gerade behoben wurde.
 * **[I]** Zensus-2022-Gitter statt OSM-Einwohnerzahlen für die Region.
+* **[F]** Veröffentlichte Entwürfe nach einer Datenberichtigung. Wird
+  bestehende Strecke im Datenstand verschoben, ohne dass sich dessen Kennung
+  ändert, führt ein älterer Entwurf Abschnitte als bestehend, die das heutige
+  Netz nicht mehr trägt. Anzeigen lässt er sich weiterhin (`showDocument`),
+  bearbeiten und neu veröffentlichen nicht (`loadDocument` und der Server
+  lehnen ab). Nach dem Start sollte jede Berichtigung deshalb einen neuen
+  Datenstand bekommen; die Beispiele müssen nach den Korrekturen dieses Laufs
+  mit `npm run examples:seed` neu angelegt werden.
 
 
 ### Karte
@@ -190,6 +198,34 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 ## Erledigt
 
+* **[F]** 2026-11-27 Verbindungen zwischen Stadtteilen und Umland, Modell
+  0.17.0. Der Reisezeitnutzen kam vorher nur aus der Erreichbarkeit von 14
+  Zentren, sodass eine direkte Linie zwischen zwei Stadtteilen, die heute
+  zwei Umstiege brauchen, kaum zählte. Jetzt:
+  * **Zonen** sind die Stadtteile und 5-km-Kacheln im Umland (Hamburg 121,
+    davon 22 im Umland; Berlin 130, davon 33).
+  * **Fahrten** von Tür zu Tür zwischen allen Zonen, mit Umstiegen und
+    Wartezeit, aus der Routensuche über das Szenarionetz.
+  * **Wahl** von Ziel und Verkehrsmittel als Logit, geeicht auf die heutigen
+    Einsteiger und eine Fahrzeitelastizität von −0,5 (Balcombe u. a. 2004,
+    TRL593); der Nutzen ist die Änderung der Logsumme.
+  * **Wegezahl** je Person und Tag: Hamburg 3,0 (MiD 2023, Kurzbericht
+    Hamburg,
+    https://www.hamburg.de/resource/blob/1132384/df391ad7f5773fe715e834e4926039e6/mid2023-kurzbericht-hamburg-data.pdf),
+    Berlin 3,3 (SrV 2023, Steckbrief Berlin,
+    https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsdaten/zahlen-und-fakten/mobilitaet-in-staedten-srv-2023/srv_2023_berlin_steckbrief.pdf).
+  * **Oberfläche:** Reiter „Verbindungen“ mit den am stärksten beschleunigten
+    und verlangsamten Relationen und der mittleren Reisezeit je Stadtteil,
+    wahlweise mit Umland.
+  * Die beschlossenen Hamburger Vorhaben kommen damit auf ein
+    Nutzen-Kosten-Verhältnis von 0,58 (vorher 0,65); die Summen werden in
+    fester Reihenfolge gebildet, sodass ein Szenario mit sich selbst
+    verglichen genau gleich ausfällt.
+  * **Neue Fahrgäste** sind höchstens so viele, wie die vom Wahlmodell neu
+    gewonnenen Fahrten tragen, weil die Einzugsbereiche benachbarter
+    Stationen sich überlappen und ein Stummel von 190 m sonst 8 200 neue
+    Einsteiger und ein Nutzen-Kosten-Verhältnis von 3,9 erhielt; die
+    Vorlagen beider Städte ändern sich dadurch nicht.
 * **[F]** 2026-11-26 Faktenprüfung aller Eingangsdaten gegen Primärquellen,
   Modell 0.16.0. Was sich geändert hat:
   * **Einwohner Berlin** kommen jetzt aus der Einwohnerregisterstatistik des

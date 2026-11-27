@@ -207,7 +207,61 @@ export interface DemandResult {
   hoursSavedPerDay: number;
   carTripsReplacedPerDay: number;
   carKmReplacedPerYear: number;
+  /** Journeys between the parts of the city and the region. Absent in
+   *  results saved before model 0.17.0. */
+  connectivity?: ConnectivityResult;
   notes: string[];
+}
+
+/** The destination and mode choice model behind the hours saved. */
+export interface ChoiceModel {
+  betaPerMin: number;
+  otherModes: number;
+  elasticity: number;
+  railShare: number;
+}
+
+export interface ZoneConnectivity {
+  id: string;
+  name: string;
+  kind: 'district' | 'region';
+  population: number;
+  jobs: number;
+  servedBefore: number;
+  servedAfter: number;
+  /** Mean door-to-door minutes to the city, unserved shares at 180 minutes. */
+  meanMinBefore: number;
+  meanMinAfter: number;
+  /** Residents and workplaces reached within 45 minutes. */
+  reachableBefore: number;
+  reachableAfter: number;
+}
+
+export interface Trip {
+  minutes: number;
+  changes: number;
+  inVehicleMin: number;
+}
+
+export interface Relation {
+  from: string;
+  fromName: string;
+  to: string;
+  toName: string;
+  before: Trip | null;
+  after: Trip | null;
+  tripsPerDay: number;
+  hoursPerDay: number;
+}
+
+export interface ConnectivityResult {
+  model: ChoiceModel | null;
+  hoursSavedPerDay: number;
+  tripsBefore: number;
+  tripsAfter: number;
+  zones: ZoneConnectivity[];
+  improved: Relation[];
+  worsened: Relation[];
 }
 
 export interface BenefitItem {

@@ -158,6 +158,25 @@ check('das Szenario verbessert die Erreichbarkeit', () => {
   assert(d.populationServedAfter >= d.populationServedBefore, 'weniger Menschen erschlossen');
 });
 
+check('die Verbindungen zwischen den Stadtteilen werden schneller', () => {
+  const c = planned.demand.connectivity;
+  assert(c && c.model, 'keine Verbindungsdaten');
+  assert(c.model.betaPerMin > 0 && c.model.railShare > 0 && c.model.railShare < 1, 'Wahlmodell unplausibel');
+  assert(c.zones.some((z) => z.kind === 'district'), 'keine Stadtteile');
+  assert(c.zones.some((z) => z.kind === 'region'), 'kein Umland');
+  assert(c.hoursSavedPerDay > 0, `Zeitgewinn ${c.hoursSavedPerDay}`);
+  near(planned.demand.hoursSavedPerDay, c.hoursSavedPerDay, 1e-6, 'Zeitgewinn weicht ab');
+  assert(c.tripsAfter >= c.tripsBefore, 'weniger Bahnfahrten');
+  assert(c.improved.length > 0, 'keine schnellere Verbindung');
+  for (const r of c.improved) {
+    assert(r.hoursPerDay > 0, `${r.fromName}–${r.toName} ohne Gewinn`);
+    if (r.before && r.after) assert(r.after.minutes < r.before.minutes, `${r.fromName}–${r.toName} nicht schneller`);
+  }
+  for (const z of c.zones) {
+    assert(z.meanMinAfter <= 180 + 1e-9 && z.meanMinBefore <= 180 + 1e-9, `${z.name} über 180 min`);
+  }
+});
+
 check('Nutzen, Fiskaleffekt und Betrieb bleiben getrennt', () => {
   assert(planned.economics.annualBenefitEur > 0);
   assert(planned.fiscal.annualCityEur <= planned.fiscal.annualTotalEur + 1);

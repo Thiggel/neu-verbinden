@@ -259,6 +259,9 @@ struct HistoryEntry {
 }
 
 /// The editor: a network plus its command history.
+/// Shortest section the editor creates by moving a station.
+const MIN_SECTION_M: f64 = 30.0;
+
 pub struct Editor {
     pub network: Network,
     pub city: CityData,
@@ -319,7 +322,15 @@ impl Editor {
 
     pub fn apply(&mut self, cmd: Command) -> Result<Diff, EditError> {
         let before = self.network.clone();
-        let diff = self.run(&cmd)?;
+        // A command that fails halfway leaves nothing behind, because some
+        // steps change the network before a later check refuses the edit.
+        let diff = match self.run(&cmd) {
+            Ok(d) => d,
+            Err(e) => {
+                self.network = before;
+                return Err(e);
+            }
+        };
         // Saving rounds coordinates to make the file byte-stable. Rounding the
         // live network too means the figures on screen are exactly the figures
         // that get saved and published — otherwise a scenario quietly changed
@@ -431,6 +442,7 @@ impl Editor {
                 e.infrastructure = infrastructure;
                 if e.status == BuildStatus::InService {
                     e.status = BuildStatus::ToBuild;
+                    e.rebuilt = true;
                 }
                 let (from, to) = (e.from, e.to);
                 for n in [from, to] {
@@ -578,6 +590,7 @@ impl Editor {
                 Mode::Regional => 140.0,
             },
             external_id: None,
+            rebuilt: false,
         };
         e.recompute_length();
         self.network.edges.insert(id, e);
@@ -1146,6 +1159,7 @@ impl Editor {
         for id in [a, b] {
             if let Some(x) = self.network.edges.get_mut(&id) {
                 x.status = e.status;
+                x.rebuilt = e.rebuilt;
                 x.source = e.source;
                 x.tracks = e.tracks;
                 x.design_speed_kmh = e.design_speed_kmh;
@@ -1200,7 +1214,7 @@ impl Editor {
                 self.network
                     .edges
                     .get(e)
-                    .map(|e| e.status != BuildStatus::InService)
+                    .map(|e| !e.runs_today())
                     .unwrap_or(false)
             })
             .collect();
@@ -1211,6 +1225,11 @@ impl Editor {
                 nodes_removed: vec![node],
                 ..Default::default()
             });
+        }
+        // A stop added on existing track goes again by joining the two halves
+        // back into the existing section.
+        if removable.is_empty() && n.status != BuildStatus::InService && touching.len() == 2 {
+            return self.merge_at_node(node);
         }
         if removable.is_empty() {
             return Err(EditError::Invalid(format!(
@@ -1263,6 +1282,20 @@ impl Editor {
                 "Die beiden Abschnitte gehören zu verschiedenen Verkehrsmitteln.".into(),
             ));
         }
+        // Merging existing track into a new section would turn the existing
+        // part into new construction, so that it would be costed and dropped
+        // from the comparison case.
+        if e1.runs_today() != e2.runs_today() {
+            let name = self
+                .network
+                .nodes
+                .get(&node)
+                .map(|n| n.name.clone())
+                .unwrap_or_default();
+            return Err(EditError::Invalid(format!(
+                "„{name}“ verbindet die bestehende Strecke mit einem neuen Abschnitt, sodass sich nur der neue Abschnitt entfernen lässt."
+            )));
+        }
         let outer1 = e1.other_end(node).ok_or(EditError::UnknownNode(node))?;
         let outer2 = e2.other_end(node).ok_or(EditError::UnknownNode(node))?;
 
@@ -1291,6 +1324,7 @@ impl Editor {
             } else {
                 BuildStatus::ToBuild
             };
+            x.rebuilt = x.status != BuildStatus::InService && e1.runs_today() && e2.runs_today();
             x.source = e1.source;
             x.tracks = e1.tracks.min(e2.tracks);
             x.design_speed_kmh = e1.design_speed_kmh.min(e2.design_speed_kmh);
@@ -1339,6 +1373,28 @@ impl Editor {
 
     fn move_node(&mut self, node: NodeId, to: LatLon) -> Result<Diff, EditError> {
         let grid = self.params.geometry.grid_size_m;
+        if !to.lat.is_finite() || !to.lon.is_finite() {
+            return Err(EditError::Invalid("Die Zielposition ist ungültig.".into()));
+        }
+        // Existing track and track under construction stay where they are,
+        // because moving them would relocate a railway without costing it.
+        let fixed = self
+            .network
+            .nodes
+            .get(&node)
+            .is_some_and(|n| n.status != BuildStatus::ToBuild)
+            || self
+                .network
+                .edges_at(node)
+                .iter()
+                .filter_map(|e| self.network.edges.get(e))
+                .any(|e| e.status != BuildStatus::ToBuild || e.rebuilt);
+        if fixed {
+            let name = self.network.nodes.get(&node).map(|n| n.name.clone()).unwrap_or_default();
+            return Err(EditError::Invalid(format!(
+                "„{name}“ gehört zum Bestand oder zu einem Vorhaben im Bau und lässt sich deshalb nicht verschieben."
+            )));
+        }
         {
             let n = self
                 .network
@@ -1361,6 +1417,11 @@ impl Editor {
                 e.schematic[last] = to.to_metric();
             }
             e.recompute_length();
+            if e.length_m < MIN_SECTION_M {
+                return Err(EditError::Invalid(
+                    "Die Station läge zu nah an ihrer Nachbarstation.".into(),
+                ));
+            }
         }
         Ok(Diff {
             nodes_changed: vec![node],
@@ -1487,17 +1548,54 @@ impl Editor {
         if corridor.len() < 2 {
             return Err(EditError::TooFewPoints);
         }
-        let infra = l
+        let old: Vec<&Edge> = l
             .edges
-            .first()
-            .and_then(|e| self.network.edges.get(e))
-            .map(|e| e.infrastructure);
+            .iter()
+            .filter_map(|e| self.network.edges.get(e))
+            .collect();
+        // Laying out an existing line again would replace running track with
+        // track that has to be built, so only a drawn line can be regenerated.
+        if old.iter().any(|e| e.status != BuildStatus::ToBuild || e.rebuilt) {
+            return Err(EditError::Invalid(
+                "Die Stationen lassen sich nur auf einer neu gezeichneten Linie neu verteilen.".into(),
+            ));
+        }
+        // Each section keeps its construction type, so a line that runs in a
+        // tunnel downtown and at grade outside stays that way.
+        let sections: Vec<(Vec<Point>, Infrastructure)> = old
+            .iter()
+            .map(|e| (e.geo.iter().map(|p| p.to_metric()).collect(), e.infrastructure))
+            .collect();
+        let infra = old.first().map(|e| e.infrastructure);
 
         // Drop the old track (keeping anything another line still uses) and lay
         // the corridor out again.
         let mut diff = self.delete_line(line)?;
         let (_, edges, sub) = self.materialise(&corridor, l.mode, infra, true, None, &[])?;
         diff.merge(sub);
+        for eid in &edges {
+            let Some(e) = self.network.edges.get_mut(eid) else {
+                continue;
+            };
+            if e.status != BuildStatus::ToBuild {
+                continue;
+            }
+            let pts: Vec<Point> = e.geo.iter().map(|p| p.to_metric()).collect();
+            let Some(&mid) = split_polyline(&pts, polyline_length(&pts) / 2.0).0.last() else {
+                continue;
+            };
+            let nearest = sections
+                .iter()
+                .filter_map(|(g, i)| {
+                    crate::geo::project_on_polyline(mid, g).map(|pr| (pr.distance, *i))
+                })
+                .min_by(|a, b| a.0.total_cmp(&b.0));
+            if let Some((_, i)) = nearest {
+                if Infrastructure::allowed_for(e.mode).contains(&i) {
+                    e.infrastructure = i;
+                }
+            }
+        }
         let id = LineId(self.network.fresh_id());
         self.network.lines.insert(id, Line { id, edges, ..l });
         diff.lines_changed.push(id);
@@ -2344,9 +2442,22 @@ mod tests {
     #[test]
     fn moving_a_node_drags_its_edges_along() {
         let mut ed = editor();
-        let node = *ed.network.nodes.keys().next().unwrap();
+        let diff = ed
+            .apply(Command::DrawLine {
+                mode: Mode::Ubahn,
+                infrastructure: None,
+                points: pts(&[(-6000.0, 9000.0), (0.0, 9000.0), (6000.0, 9000.0)]),
+                label: Some("U9".into()),
+                color: None,
+                auto_stations: true,
+                anchors: None,
+            })
+            .unwrap();
+        let nodes = ed.network.line_nodes(diff.lines_changed[0]);
+        let node = nodes[nodes.len() / 2];
         let touching = ed.network.edges_at(node);
-        let target = Point::new(1234.0, 5678.0).to_latlon();
+        let at = ed.network.nodes[&node].geo.to_metric();
+        let target = Point::new(at.x + 200.0, at.y + 300.0).to_latlon();
         ed.apply(Command::MoveNode { node, to: target }).unwrap();
         // Coordinates are rounded to seven decimals (about a centimetre) so
         // that what is on screen is exactly what gets saved.
@@ -2357,6 +2468,101 @@ mod tests {
             assert!(ends.iter().any(|p| p.distance_to(&target) < 1.0));
             assert!(edge.length_m > 0.0);
         }
+    }
+
+    #[test]
+    fn regenerating_keeps_each_sections_construction_type() {
+        let mut ed = editor();
+        let diff = ed
+            .apply(Command::DrawLine {
+                mode: Mode::Ubahn,
+                infrastructure: Some(Infrastructure::DeepTunnel),
+                points: pts(&[(-8000.0, 9000.0), (0.0, 9000.0), (8000.0, 9000.0)]),
+                label: Some("U9".into()),
+                color: None,
+                auto_stations: true,
+                anchors: None,
+            })
+            .unwrap();
+        let line = diff.lines_changed[0];
+        // The western half goes to grade.
+        let west: Vec<EdgeId> = ed.network.lines[&line]
+            .edges
+            .iter()
+            .copied()
+            .filter(|e| {
+                let g = &ed.network.edges[e].geo;
+                g.iter().all(|p| p.to_metric().x < -500.0)
+            })
+            .collect();
+        assert!(!west.is_empty());
+        for e in &west {
+            ed.apply(Command::ChangeInfrastructure {
+                edge: *e,
+                infrastructure: Infrastructure::Surface,
+            })
+            .unwrap();
+        }
+        let diff = ed.apply(Command::RegenerateStations { line }).unwrap();
+        let line = *diff.lines_changed.last().unwrap();
+        let infra_at = |x: f64| {
+            ed.network.lines[&line]
+                .edges
+                .iter()
+                .map(|e| &ed.network.edges[e])
+                .find(|e| {
+                    let xs: Vec<f64> = e.geo.iter().map(|p| p.to_metric().x).collect();
+                    xs.iter().cloned().fold(f64::MAX, f64::min) <= x
+                        && xs.iter().cloned().fold(f64::MIN, f64::max) >= x
+                })
+                .map(|e| e.infrastructure)
+        };
+        assert_eq!(infra_at(-6000.0), Some(Infrastructure::Surface));
+        assert_eq!(infra_at(6000.0), Some(Infrastructure::DeepTunnel));
+    }
+
+    #[test]
+    fn existing_lines_cannot_be_regenerated() {
+        let mut ed = editor();
+        let line = *ed.network.lines.keys().next().unwrap();
+        let before = ed.network.clone();
+        assert!(ed.apply(Command::RegenerateStations { line }).is_err());
+        assert_eq!(ed.network, before);
+    }
+
+    #[test]
+    fn existing_stations_cannot_be_moved() {
+        let mut ed = editor();
+        let node = *ed.network.nodes.keys().next().unwrap();
+        let before = ed.network.clone();
+        let target = Point::new(1234.0, 5678.0).to_latlon();
+        assert!(ed.apply(Command::MoveNode { node, to: target }).is_err());
+        assert_eq!(ed.network, before);
+        let nan = LatLon { lat: f64::NAN, lon: 10.0 };
+        assert!(ed.apply(Command::MoveNode { node, to: nan }).is_err());
+    }
+
+    #[test]
+    fn a_station_cannot_be_moved_onto_its_neighbour() {
+        let mut ed = editor();
+        let diff = ed
+            .apply(Command::DrawLine {
+                mode: Mode::Ubahn,
+                infrastructure: None,
+                points: pts(&[(-6000.0, 9000.0), (0.0, 9000.0), (6000.0, 9000.0)]),
+                label: Some("U9".into()),
+                color: None,
+                auto_stations: true,
+                anchors: None,
+            })
+            .unwrap();
+        let nodes = ed.network.line_nodes(diff.lines_changed[0]);
+        let (node, next) = (nodes[1], nodes[2]);
+        let before = ed.network.clone();
+        let target = ed.network.nodes[&next].geo;
+        // The command fails and leaves the network exactly as it was.
+        assert!(ed.apply(Command::MoveNode { node, to: target }).is_err());
+        assert_eq!(ed.network, before);
     }
 
     #[test]

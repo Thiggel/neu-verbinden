@@ -155,7 +155,7 @@ await check('ein belegter Nutzername wird abgelehnt', async () => {
     body: { handle, password: 'ein-hinreichend-langes-passwort' },
     raw: true,
   });
-  assert(r.status === 409 || r.status === 429, `Status ${r.status}`);
+  assert(r.status === 409, `Status ${r.status}`);
 });
 
 await check('Anmeldung mit falschem Passwort schlägt fehl', async () => {

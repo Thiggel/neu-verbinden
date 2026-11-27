@@ -232,6 +232,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                 _ => 60.0,
             },
             external_id: Some(e.id.clone()),
+            rebuilt: false,
         };
         edge.recompute_length();
         net.edges.insert(id, edge);
@@ -608,6 +609,7 @@ pub fn build(root: &str, city: &CityData) -> R<(Network, Vec<ScenarioTemplate>)>
                     _ => 80.0,
                 },
                 external_id: Some(format!("{}-{}", p.id, i)),
+                rebuilt: false,
             };
             edge.recompute_length();
             net.edges.insert(id, edge);
@@ -1411,8 +1413,10 @@ pub fn calibrate(root: &str) -> R<()> {
         r.operations.cost_recovery_ratio * 100.0
     );
 
-    println!("\n  * Kein Kostenansatz für genau diesen Umfang: beim Straßenbahnnetz die Obergrenze der Studie,");
-    println!("    bei der U5 die Obergrenze der HOCHBAHN-Spanne von 2023, die Lurup und Osdorf noch nicht enthält.");
+    if self::city() == "hamburg" {
+        println!("\n  * Kein Kostenansatz für genau diesen Umfang: beim Straßenbahnnetz die Obergrenze der Studie,");
+        println!("    bei der U5 die Obergrenze der HOCHBAHN-Spanne von 2023, die Lurup und Osdorf noch nicht enthält.");
+    }
     let stale: Vec<(&String, &i32)> = price_base
         .iter()
         .filter(|(_, y)| **y < params.price_base_year - 2)
@@ -1579,6 +1583,68 @@ pub fn simulate(root: &str, scenario: Option<&str>) -> R<()> {
             println!("    [{}] {}", f.severity.label_de(), f.title);
         }
     }
+
+    let c = &r.demand.connectivity;
+    println!("\n  Verbindungen");
+    if let Some(m) = &c.model {
+        println!(
+            "    Modell: β {:.4}/min, andere Verkehrsmittel {:.2}, Elastizität {:.2}, Bahnanteil {:.1} %",
+            m.beta_per_min,
+            m.other_modes,
+            m.elasticity,
+            m.rail_share * 100.0
+        );
+    }
+    println!(
+        "    Fahrten/Werktag {:.0} → {:.0}, Zeitgewinn {:.0} h/Werktag",
+        c.trips_before, c.trips_after, c.hours_saved_per_day
+    );
+    let trip = |t: &Option<hh_core::connectivity::Trip>| match t {
+        Some(t) => format!("{:>4.0} min {} Umst.", t.minutes, t.changes),
+        None => "  keine Verbindung".to_string(),
+    };
+    for (title, list) in [("Gewinne", &c.improved), ("Verluste", &c.worsened)] {
+        if list.is_empty() {
+            continue;
+        }
+        println!("    {title}");
+        for rel in list.iter().take(12) {
+            println!(
+                "      {:<24} – {:<24} {} → {}  {:>6.0} Fahrten {:>6.0} h",
+                rel.from_name,
+                rel.to_name,
+                trip(&rel.before),
+                trip(&rel.after),
+                rel.trips_per_day,
+                rel.hours_per_day
+            );
+        }
+    }
+    let mut zones: Vec<_> = c.zones.iter().collect();
+    zones.sort_by(|a, b| {
+        (b.mean_min_before - b.mean_min_after).total_cmp(&(a.mean_min_before - a.mean_min_after))
+    });
+    println!("    Stärkste Verbesserung der mittleren Reisezeit");
+    for z in zones.iter().take(10) {
+        println!(
+            "      {:<28} {:>5.1} → {:>5.1} min, in 45 min {:>8.0} → {:>8.0}",
+            z.name, z.mean_min_before, z.mean_min_after, z.reachable_before, z.reachable_after
+        );
+    }
+    println!(
+        "    Erreichbarkeit der Zentren {:.1} → {:.1} min; Zonen insgesamt {}",
+        r.demand.access_time_before_min,
+        r.demand.access_time_after_min,
+        city.zones().map_or(0, |z| z.zones.len())
+    );
+    println!(
+        "    Zonen: {} ({} in der Region)",
+        c.zones.len(),
+        c.zones
+            .iter()
+            .filter(|z| z.kind == hh_core::connectivity::ZoneKind::Region)
+            .count()
+    );
     Ok(())
 }
 

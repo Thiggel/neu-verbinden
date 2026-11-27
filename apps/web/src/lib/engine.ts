@@ -85,7 +85,12 @@ interface WasmEngine {
     calculationVersion: string;
     dataVersion: string;
     current: boolean;
+    /** Drawn on an earlier state of the city data. */
+    olderData: boolean;
   };
+  /** Loads a published plan for reading, even when today's network has moved
+   *  some of its existing track; `loadDocument` refuses that for editing. */
+  showDocument(json: string): ReturnType<WasmEngine['loadDocument']>;
   recalculateWithCurrentModel(): SimulationResult;
   /** Figures for a document, without loading it into the editor. */
   simulateDocument(json: string): SimulationResult;

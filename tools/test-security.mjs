@@ -463,7 +463,9 @@ await check('Auskunft und Löschung sind an das eigene Konto gebunden', async ()
     token: aliceToken,
     body: { password: 'das-ist-es-nicht' },
   });
-  assert(wrong.status === 401, `Löschen mit falschem Passwort: ${wrong.status}`);
+  // 400, not 401: the session is still valid, and a 401 would sign the
+  // person out over a typo.
+  assert(wrong.status === 400, `Löschen mit falschem Passwort: ${wrong.status}`);
   // And the account is still there afterwards.
   const still = await call('/api/auth/me', { token: aliceToken });
   assert(still.status === 200, `nach dem Fehlversuch ist das Konto weg: ${still.status}`);

@@ -479,10 +479,30 @@ export class EditorController {
       if (a) pts.push([a.lon, a.lat]);
     }
     pts.push(...this.draft.map((p) => [p.lon, p.lat] as [number, number]));
-    if (this.cursor) pts.push([this.cursor.geo.lon, this.cursor.geo.lat]);
+    if (this.cursor) {
+      const c: [number, number] = [this.cursor.geo.lon, this.cursor.geo.lat];
+      // The pointer still resting on the point just placed adds no length; a
+      // corridor of zero length has no stations, and the first click would
+      // leave nothing on the map.
+      const last = pts[pts.length - 1];
+      if (!last || Math.abs(last[0] - c[0]) > 1e-7 || Math.abs(last[1] - c[1]) > 1e-7) pts.push(c);
+    }
     if (pts.length < 2) {
       this.setSource('preview', EMPTY);
-      this.setSource('preview-stations', EMPTY);
+      // The first point of a new line is its first station.
+      this.setSource(
+        'preview-stations',
+        this.draft.length
+          ? {
+              type: 'FeatureCollection',
+              features: pts.map((p) => ({
+                type: 'Feature',
+                properties: { color: MODE_COLOR[this.mode], name: '', interchange: 0 },
+                geometry: { type: 'Point', coordinates: p },
+              })),
+            }
+          : EMPTY
+      );
       return;
     }
     this.setSource('preview', {

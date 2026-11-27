@@ -77,6 +77,17 @@ export class ApiUnavailable extends Error {
   }
 }
 
+/** A refusal from the server, with its status, so callers can tell an expired
+ * session from a mistyped name. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function call<T>(path: string, init?: RequestInit & { token?: string | null }): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body) headers.set('Content-Type', 'application/json');
@@ -93,7 +104,11 @@ async function call<T>(path: string, init?: RequestInit & { token?: string | nul
       const body = (await res.json()) as { error?: string };
       if (body.error) message = body.error;
     } catch {}
-    throw new Error(message);
+    // A token the server no longer accepts is useless, and keeping it would
+    // make every later request fail the same way; without it, the next action
+    // that needs an account asks for one.
+    if (res.status === 401 && init?.token) session.set(null);
+    throw new ApiError(message, res.status);
   }
   return (await res.json()) as T;
 }

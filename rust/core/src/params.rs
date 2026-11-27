@@ -22,6 +22,17 @@ use serde::{Deserialize, Serialize};
 
 /// Bump this whenever a change moves the numbers.
 ///
+/// 0.17.0: travel-time benefit follows from a destination- and mode-choice
+/// model instead of a fixed induced share. Residents are grouped into the
+/// city's districts and five-kilometre tiles of the region, each district pair
+/// is timed door to door with walks, waits and changes, and a logit over
+/// destinations and against the other modes — calibrated on today's boardings
+/// and an in-vehicle-time elasticity of −0.5 (TRL593) — turns the faster
+/// journeys into consumer surplus. Trips per resident: 3.0 in Hamburg
+/// (MiD 2023), 3.3 in Berlin (SrV 2023). Residents of the towns inside the
+/// Hamburg raster's square but outside the city — Pinneberg, Norderstedt,
+/// Ahrensburg — had been dropped from the travel-time appraisal and now count.
+///
 /// 0.16.0: the valuation and calibration figures are re-based on published
 /// sources. The value of time (6.60 €/h), accident cost (8.5 ct/car-km), car
 /// emissions (168 g/km) and the price of CO2 (670 €/t) now come from the
@@ -96,7 +107,7 @@ use serde::{Deserialize, Serialize};
 /// construction stages of one line no longer count as an interchange or buy
 /// their own fleet; planning phases are scaled by the share not already under
 /// construction; corners are filleted, so alignments are slightly shorter.
-pub const CALCULATION_VERSION: &str = "0.16.0";
+pub const CALCULATION_VERSION: &str = "0.17.0";
 
 /// Reference price level of all monetary parameters.
 pub const PRICE_BASE_YEAR: i32 = 2026;
@@ -144,6 +155,42 @@ impl Params {
             h = h.wrapping_mul(0x1000_0000_01b3);
         }
         format!("{h:016x}")[..12].to_string()
+    }
+
+    /// Every figure a parameter set may hold is a non-negative, finite amount
+    /// of something — euros, years, shares, minutes. A set that comes from a
+    /// saved document is not under our control, and one negative build cost or
+    /// zero-length year would quietly turn every result upside down, so it is
+    /// checked before it replaces the city's own set. Returns the offending
+    /// paths, empty when the set is usable.
+    pub fn validate(&self) -> Vec<String> {
+        fn walk(v: &serde_json::Value, path: &str, out: &mut Vec<String>) {
+            match v {
+                serde_json::Value::Object(m) => {
+                    for (k, x) in m {
+                        walk(x, &format!("{path}.{k}"), out);
+                    }
+                }
+                serde_json::Value::Array(a) => {
+                    for (i, x) in a.iter().enumerate() {
+                        walk(x, &format!("{path}[{i}]"), out);
+                    }
+                }
+                serde_json::Value::Number(n) => match n.as_f64() {
+                    Some(f) if f.is_finite() && (0.0..=1e13).contains(&f) => {}
+                    _ => out.push(format!("{} hat den unzulässigen Wert {n}", &path[1..])),
+                },
+                // serde_json writes a non-finite float as null.
+                serde_json::Value::Null => out.push(format!("{} fehlt", &path[1..])),
+                _ => {}
+            }
+        }
+        let mut out = Vec::new();
+        match serde_json::to_value(self) {
+            Ok(v) => walk(&v, "", &mut out),
+            Err(e) => out.push(e.to_string()),
+        }
+        out
     }
 }
 
@@ -631,8 +678,22 @@ pub struct DemandParams {
     pub car_substitution_share: f64,
     /// Average car trip length replaced, km.
     pub avg_replaced_car_trip_km: f64,
-    /// Share of demand that is genuinely new (induced) rather than shifted.
-    pub induced_share: f64,
+    /// Trips per resident and day, all modes. Hamburg: 3.0 (Mobilität in
+    /// Deutschland 2023, Kurzbericht Hamburg, BVM 2024: all days of the week);
+    /// Berlin overrides it with 3.3 (SrV 2023, Steckbrief Berlin, TU Dresden
+    /// 2024: all residents, mean working day). The Hamburg figure averages in
+    /// weekends and is therefore slightly low for a working day; the
+    /// calibration to today's boardings absorbs the difference in the
+    /// constant of the other modes. The connectivity model distributes these
+    /// trips over destinations and modes.
+    pub trips_per_person_day: f64,
+    /// Magnitude of the elasticity of public transport demand to in-vehicle
+    /// time that the connectivity model reproduces on today's network; the
+    /// elasticity itself is negative. Balcombe et al. (2004), The demand for
+    /// public transport, TRL593, report about −0.4 to −0.6 for urban rail and
+    /// bus; 0.5 is the midpoint. Stored unsigned because every parameter is
+    /// checked to be non-negative.
+    pub ivt_elasticity: f64,
 }
 
 impl Default for DemandParams {
@@ -653,9 +714,9 @@ impl Default for DemandParams {
             // that has a tram to observe. Berlin overrides the U- and S-Bahn
             // rates in `data/cities/berlin.json`, calibrated the same way.
             boardings_per_catchment: ModeValues {
-                ubahn: 0.78,
-                sbahn: 0.63,
-                tram: 0.34,
+                ubahn: 0.55,
+                sbahn: 0.80,
+                tram: 0.40,
                 regional: 0.20,
             },
             interchange_factor: 1.55,
@@ -663,7 +724,8 @@ impl Default for DemandParams {
             annual_factor: 305.0,
             car_substitution_share: 0.28,
             avg_replaced_car_trip_km: 8.4,
-            induced_share: 0.22,
+            trips_per_person_day: 3.0,
+            ivt_elasticity: 0.5,
         }
     }
 }
@@ -678,8 +740,6 @@ pub struct EconomicsParams {
     /// prices, so the figure is scaled with the consumer price index
     /// (2016 = 95.0, 2025 = 121.9, 2026 projected at +2 %): × 1.309.
     pub value_of_time_eur_h: f64,
-    /// Value of time for newly induced trips (rule of a half).
-    pub induced_trip_share_of_benefit: f64,
     /// Agglomeration elasticity of productivity to effective density.
     pub agglomeration_elasticity: f64,
     /// Share of residents in work, for the agglomeration base.
@@ -723,7 +783,6 @@ impl Default for EconomicsParams {
     fn default() -> Self {
         Self {
             value_of_time_eur_h: 8.64,
-            induced_trip_share_of_benefit: 0.5,
             agglomeration_elasticity: 0.04,
             employment_rate: 0.52,
             gva_per_worker_eur: 92_000.0,
@@ -975,6 +1034,16 @@ impl InfrastructureShares {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn published_defaults_are_valid_and_nonsense_is_not() {
+        assert!(Params::default().validate().is_empty(), "{:?}", Params::default().validate());
+        let mut p = Params::default();
+        p.demand.annual_factor = -305.0;
+        assert_eq!(p.validate().len(), 1);
+        p.demand.annual_factor = f64::NAN;
+        assert_eq!(p.validate().len(), 1);
+    }
 
     #[test]
     fn params_round_trip_through_json() {

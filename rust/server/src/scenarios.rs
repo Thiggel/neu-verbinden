@@ -184,8 +184,12 @@ fn evaluate(state: &AppState, document: &str) -> ApiResult<(ScenarioDocument, Si
     // Recompute with the server's own parameters, never the client's, and in
     // the metric plane that belongs to the scenario's city.
     let result = state.with_city(&doc.city, |city| {
-        simulation::run(&doc.network, &city.data, &city.params)
-    })?;
+        let forged = doc.network.status_not_backed_by(&city.base);
+        if let Some(first) = forged.first() {
+            return Err(ApiError::BadRequest(format!("Ungültiges Szenario: {first}")));
+        }
+        Ok(simulation::run(&doc.network, &city.data, &city.params))
+    })??;
     Ok((doc, result))
 }
 
@@ -562,6 +566,11 @@ pub async fn update(
     Json(body): Json<UpdateBody>,
 ) -> ApiResult<Json<ScenarioSummary>> {
     let user = claims.user_id()?;
+    // A changed document is computed in full, like a new one, so editing is
+    // limited like publishing. `recalculate` goes through here as well.
+    state
+        .rate_limit(&format!("update:{user}"), 120, 3600)
+        .await?;
     let owner: Option<Uuid> = sqlx::query_scalar("SELECT author_id FROM scenarios WHERE slug = $1")
         .bind(&slug)
         .fetch_optional(&state.db)
@@ -749,25 +758,29 @@ pub async fn vote(
     .await?
     .ok_or(ApiError::NotFound)?;
 
+    // The vote and the counter change together: a request that failed between
+    // the two left a vote that the counter did not show, for ever.
+    let mut tx = state.db.begin().await?;
     let inserted = sqlx::query(
         "INSERT INTO votes (scenario_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
     )
     .bind(id)
     .bind(user)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await?
     .rows_affected();
     if inserted > 0 {
         sqlx::query("UPDATE scenarios SET votes = votes + 1 WHERE id = $1")
             .bind(id)
-            .execute(&state.db)
+            .execute(&mut *tx)
             .await?;
     }
-    state.cache.invalidate_prefix("board:");
     let votes: i32 = sqlx::query_scalar("SELECT votes FROM scenarios WHERE id = $1")
         .bind(id)
-        .fetch_one(&state.db)
+        .fetch_one(&mut *tx)
         .await?;
+    tx.commit().await?;
+    state.cache.invalidate_prefix("board:");
     Ok(Json(serde_json::json!({ "voted": true, "votes": votes })))
 }
 
@@ -777,28 +790,40 @@ pub async fn unvote(
     Path(slug): Path<String>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let user = claims.user_id()?;
-    let id: Uuid = sqlx::query_scalar("SELECT id FROM scenarios WHERE slug = $1")
-        .bind(&slug)
-        .fetch_optional(&state.db)
-        .await?
-        .ok_or(ApiError::NotFound)?;
+    // A private plan answered "not found" to a vote but told anyone who
+    // withdrew one that it exists and how many votes it has. Whoever voted
+    // while it was visible can still withdraw that vote.
+    let id: Uuid = sqlx::query_scalar(
+        "SELECT s.id FROM scenarios s
+          WHERE s.slug = $1
+            AND ((s.visibility <> 'private' AND s.hidden_at IS NULL)
+                 OR s.author_id = $2
+                 OR EXISTS (SELECT 1 FROM votes v WHERE v.scenario_id = s.id AND v.user_id = $2))",
+    )
+    .bind(&slug)
+    .bind(user)
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+    let mut tx = state.db.begin().await?;
     let removed = sqlx::query("DELETE FROM votes WHERE scenario_id = $1 AND user_id = $2")
         .bind(id)
         .bind(user)
-        .execute(&state.db)
+        .execute(&mut *tx)
         .await?
         .rows_affected();
     if removed > 0 {
         sqlx::query("UPDATE scenarios SET votes = GREATEST(0, votes - 1) WHERE id = $1")
             .bind(id)
-            .execute(&state.db)
+            .execute(&mut *tx)
             .await?;
     }
-    state.cache.invalidate_prefix("board:");
     let votes: i32 = sqlx::query_scalar("SELECT votes FROM scenarios WHERE id = $1")
         .bind(id)
-        .fetch_one(&state.db)
+        .fetch_one(&mut *tx)
         .await?;
+    tx.commit().await?;
+    state.cache.invalidate_prefix("board:");
     Ok(Json(serde_json::json!({ "voted": false, "votes": votes })))
 }
 
@@ -950,7 +975,12 @@ pub async fn report(
         .rate_limit(&format!("report:{user}"), 20, 3600)
         .await?;
     let reason = sanitize_text(&body.reason, 1000)?;
-    let id: Uuid = sqlx::query_scalar("SELECT id FROM scenarios WHERE slug = $1")
+    // Only what others can see can be reported; for anything else the answer
+    // would tell a stranger that a private plan of that name exists.
+    let id: Uuid = sqlx::query_scalar(
+        "SELECT id FROM scenarios
+          WHERE slug = $1 AND visibility <> 'private' AND hidden_at IS NULL",
+    )
         .bind(&slug)
         .fetch_optional(&state.db)
         .await?

@@ -451,11 +451,15 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
         });
     }
     let blocking = findings.iter().any(|f| f.severity == Severity::Blocking);
-    let class = if unassessable {
+    // A blocking finding inside the surveyed area stands even when much of the
+    // route lies outside it, because what is known already rules it out.
+    let class = if blocking {
+        FeasibilityClass::Critical
+    } else if unassessable {
         // Not "difficult" — unassessable. Saying anything else would claim a
         // judgement that was never made.
         FeasibilityClass::Demanding
-    } else if blocking || normalised > 0.75 {
+    } else if normalised > 0.75 {
         FeasibilityClass::Critical
     } else if normalised > 0.45 {
         FeasibilityClass::Difficult

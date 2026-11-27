@@ -18,7 +18,14 @@ import type {
 
 export type Tool = 'select' | 'draw' | 'extend' | 'split' | 'delete';
 export type SheetState = 'closed' | 'collapsed' | 'half' | 'full';
-export type PanelTab = 'analysis' | 'invoice' | 'timeline' | 'economics' | 'feasibility' | 'assumptions';
+export type PanelTab =
+  | 'analysis'
+  | 'invoice'
+  | 'timeline'
+  | 'economics'
+  | 'connections'
+  | 'feasibility'
+  | 'assumptions';
 
 export interface Selection {
   kind: 'station' | 'line' | 'edge';

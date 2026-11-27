@@ -61,8 +61,8 @@ export const EXPLAIN: Record<string, Explanation> = {
     title: 'Volkswirtschaftlicher Nutzen',
     what: 'Was das Szenario der Gesellschaft pro Jahr wert wäre, ausgedrückt als Wohlfahrtsgewinn und nicht als Einnahme einer öffentlichen Kasse.',
     how: [
-      '<b>Reisezeit</b> ist der größte Posten: Für jede bewohnte Rasterzelle wird die schnellste Verbindung zu den 14 Beschäftigungszentren berechnet, einmal im heutigen Netz und einmal im Netz des Szenarios.',
-      'Die Differenz wird mit der Zahl der Fahrten und <b>8,64 € je Stunde</b> multipliziert, wobei neu entstehende Fahrten nur zur Hälfte zählen.',
+      '<b>Reisezeit</b> ist der größte Posten: Zwischen allen Stadtteilen und den Orten des Umlands wird die schnellste Verbindung von Tür zu Tür berechnet, Umstiege eingerechnet, einmal im heutigen Netz und einmal im Netz des Szenarios.',
+      'Die eingesparten Stunden, die der Reiter „Verbindungen" herleitet, werden mit <b>8,64 € je Stunde</b> bewertet, wobei Fahrten, die erst die schnellere Verbindung gewinnt, etwa zur Hälfte zählen.',
       '<b>Produktivität</b> wird mit einer Elastizität von 0,04 auf die <i>relative</i> Verkürzung der Wege angesetzt, die die Erwerbstätigen im Einzugsbereich gewinnen.',
       '<b>Straße</b>: Jeder vermiedene Pkw-Kilometer spart 0,108 € Stau, 0,111 € Unfälle sowie 0,019 € Luft und Lärm.',
       '<b>Klima</b>: 0,168 kg CO₂ je Pkw-km abzüglich Bahnstrom, bewertet mit 877 € je Tonne.',
@@ -112,7 +112,7 @@ export const EXPLAIN: Record<string, Explanation> = {
       'Im Nutzen stecken auch <b>weitere volkswirtschaftliche Wirkungen</b> (Produktivität, Bodenwerte), die eine amtliche Bewertung nicht mitzählt, weshalb der Reiter „Wirkung" den Nutzen auch ohne sie ausweist.',
     ],
     caveat:
-      'Wirkungen, die nur die amtliche Standardisierte Bewertung erfasst, weshalb sich die Zahl nicht mit veröffentlichten Nutzen-Kosten-Verhältnissen vergleichen lässt. Zur Einordnung: Die in Hamburg geplanten Vorhaben S4, U4 und U5 zusammen kommen in diesem Modell auf rund 0,65, während die amtliche Bewertung der U5 allein 1,27 ergibt. Die Zahl eignet sich deshalb vor allem dazu, Entwürfe untereinander zu vergleichen.',
+      'Wirkungen, die nur die amtliche Standardisierte Bewertung erfasst, weshalb sich die Zahl nicht mit veröffentlichten Nutzen-Kosten-Verhältnissen vergleichen lässt. Zur Einordnung: Die in Hamburg geplanten Vorhaben S4, U4 und U5 zusammen kommen in diesem Modell auf rund 0,58, während die amtliche Bewertung der U5 allein 1,27 ergibt. Die Zahl eignet sich deshalb vor allem dazu, Entwürfe untereinander zu vergleichen.',
   },
   feasibility: {
     title: 'Baubarkeit',
@@ -122,6 +122,19 @@ export const EXPLAIN: Record<string, Explanation> = {
       'Der Schweregrad wird auf die Größe des Vorhabens bezogen, sodass zwei Hinweise auf 40 km weniger wiegen als zwei auf 2 km.',
     ],
     caveat: 'Baugrund und Leitungslage, obwohl gerade sie Tunnelprojekte in der Praxis verteuern.',
+  },
+  timeSaved: {
+    title: 'Zeitgewinn',
+    what: 'Wie viele Stunden Reisezeit das Szenario an einem Werktag einspart, auf allen Wegen zwischen den Stadtteilen und dem Umland.',
+    how: [
+      'Die Stadtteile und, außerhalb der Stadt, Kacheln von 5 km Kantenlänge bilden die Zonen, zwischen denen die schnellste Verbindung von Tür zu Tür gesucht wird: Fußweg, Warten, Fahrt, <b>Umstiege</b> und Fußweg am Ziel.',
+      'Wohin Menschen fahren und ob sie die Bahn nehmen, folgt einem Logit-Modell, in dem ein Ziel mit seinen Einwohnern und Arbeitsplätzen anzieht und mit der Reisezeit an Anziehung verliert.',
+      'Das Modell ist am heutigen Netz <b>kalibriert</b>: Es ergibt die heutigen Einsteiger, und die Nachfrage reagiert auf die Fahrzeit mit einer Elastizität von −0,5.',
+      'Wer die Bahn ohnehin nimmt, gewinnt die volle Zeitersparnis, und wer erst durch die schnellere Verbindung umsteigt, ungefähr die Hälfte davon. Fällt eine Verbindung weg, zählt das als Verlust.',
+    ],
+    caveat: 'Kapazitätsgrenzen, Fahrpläne im Einzelnen und Wege innerhalb eines Stadtteils.',
+    source:
+      'Elastizität nach Balcombe u. a. (2004), TRL-Bericht 593; Wege je Person und Tag nach MiD 2023 (Hamburg) und SrV 2023 (Berlin).',
   },
   boardings: {
     title: 'Einsteiger je Werktag',

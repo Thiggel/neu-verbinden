@@ -236,6 +236,7 @@ await check('die Werkzeuge lassen sich mit der Tastatur wählen', async () => {
     () => window.__map?.getSource('preview-stations')?.serialize().data.features.length ?? -1
   );
   assert(points >= 0, 'die Vorschauquelle fehlt');
+  assert(points >= 1, `der Klick setzt keinen Punkt (${points})`);
   await page.keyboard.press('Escape');
   await context.close();
 });
@@ -338,6 +339,12 @@ await check('jeder Reiter der Analyse zeigt etwas', async () => {
     const text = await page.evaluate(() => document.body.innerText.length);
     assert(text > 500, `der Reiter ${tab} ist leer`);
   }
+  // The journeys tab carries the travel-time model: it has to list relations
+  // with their minutes and changes, not merely render.
+  await page.getByRole('tab', { name: 'Verbindungen' }).click();
+  await page.getByText('Schnellere Verbindungen').waitFor({ timeout: 10_000 });
+  const trips = await page.evaluate(() => (document.body.innerText.match(/\d+ min, (direkt|\d+ Umstiege?)/g) ?? []).length);
+  assert(trips >= 2, `der Reiter Verbindungen nennt keine Fahrten (${trips})`);
   assert(errors.length === 0, `Fehler in der Konsole: ${errors.slice(0, 2).join(' | ')}`);
   await context.close();
 });

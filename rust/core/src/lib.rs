@@ -8,6 +8,7 @@
 //! It knows about networks, geometry, money and time — nothing else.
 
 pub mod city;
+pub mod connectivity;
 pub mod construction;
 pub mod costs;
 pub mod demand;

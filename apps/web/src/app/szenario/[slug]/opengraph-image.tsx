@@ -23,9 +23,12 @@ const C = {
   accent: '#57c785',
 };
 
+// A line colour goes into the SVG markup as is, so only a plain hex value may.
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
 const km = (v: number) => `${v.toFixed(1).replace('.', ',')} km`;
 const eur = (v: number) =>
-  v >= 1e9
+  Math.abs(v) >= 1e9
     ? `${(v / 1e9).toFixed(1).replace('.', ',')} Mrd. €`
     : `${Math.round(v / 1e6).toLocaleString('de-DE')} Mio. €`;
 
@@ -49,7 +52,7 @@ function networkSvg(data: Awaited<ReturnType<typeof fetchScenario>>, w: number, 
   const colourOf = new Map<string, string>();
   for (const line of Object.values(net?.lines ?? {})) {
     if (!line.included) continue;
-    for (const e of line.edges) if (!colourOf.has(String(e))) colourOf.set(String(e), line.color);
+    for (const e of line.edges) if (!colourOf.has(String(e))) colourOf.set(String(e), HEX.test(line.color) ? line.color : C.accent);
   }
   const keys = Object.keys(edgeMap);
 

@@ -178,9 +178,11 @@ export function LineInspector({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button className="btn" onClick={onRegenerate}>
-          Stationen neu setzen
-        </button>
+        {detail.source !== 'existing' && (
+          <button className="btn" onClick={onRegenerate}>
+            Stationen neu setzen
+          </button>
+        )}
         <button className="btn btn-danger" onClick={onDelete}>
           Linie löschen
         </button>

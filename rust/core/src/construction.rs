@@ -70,23 +70,8 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
             None => mode_km.push((e.mode, km)),
         }
     }
-    if let Some((m, _)) = mode_km.iter().max_by(|a, b| a.1.partial_cmp(&b.1).unwrap()) {
+    if let Some((m, _)) = mode_km.iter().max_by(|a, b| a.1.total_cmp(&b.1)) {
         dominant_mode = *m;
-    }
-
-    if total_km <= 0.001 {
-        return TimelineResult {
-            phases: Vec::new(),
-            planning_start_year: start,
-            construction_start_year: start,
-            opening_year: start,
-            opening_year_low: start,
-            opening_year_high: start,
-            construction_years: 0.0,
-            total_years: 0.0,
-            nothing_to_build: true,
-            notes: vec!["Im Szenario ist nichts zu bauen.".into()],
-        };
     }
 
     // Station effort, by depth class.
@@ -122,6 +107,38 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
             * n.status.cost_share();
     }
 
+    // A new station on a running line is a project of its own, even though
+    // no track is built, so only a scenario without either has nothing to do.
+    if total_km <= 0.001 && station_years <= 0.0 {
+        return TimelineResult {
+            phases: Vec::new(),
+            planning_start_year: start,
+            construction_start_year: start,
+            opening_year: start,
+            opening_year_low: start,
+            opening_year_high: start,
+            construction_years: 0.0,
+            total_years: 0.0,
+            nothing_to_build: true,
+            notes: vec!["Im Szenario ist nichts zu bauen.".into()],
+        };
+    }
+
+    if total_km <= 0.001 {
+        // Without new track the station's line decides the approval route.
+        if let Some(m) = net
+            .active_stations()
+            .into_iter()
+            .flat_map(|n| adjacency.get(&n).cloned().unwrap_or_default())
+            .filter(|e| active_set.contains(e))
+            .filter_map(|e| net.edges.get(&e))
+            .map(|e| e.mode)
+            .next()
+        {
+            dominant_mode = m;
+        }
+    }
+
     let track_years: f64 = km_by_infra
         .iter()
         .map(|(i, km)| t.years_per_km.get(*i) * km)
@@ -147,13 +164,18 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
         0.0
     };
     let parallelism = 1.0 - in_corridor * (1.0 - t.fronts_in_corridor);
-    let fronts =
-        (total_km / t.km_per_front * parallelism).clamp(1.0, t.max_parallel_fronts * parallelism);
-    let setup = km_by_infra
-        .iter()
-        .map(|(i, km)| t.construction_setup_years.get(*i) * km)
-        .sum::<f64>()
-        / total_km;
+    let fronts = (total_km / t.km_per_front * parallelism)
+        .min(t.max_parallel_fronts * parallelism)
+        .max(1.0);
+    let setup = if total_km > 0.001 {
+        km_by_infra
+            .iter()
+            .map(|(i, km)| t.construction_setup_years.get(*i) * km)
+            .sum::<f64>()
+            / total_km
+    } else {
+        0.0
+    };
     let construction_years = setup + (track_years + station_years) / fronts;
 
     let approval = t.approval_years.get(dominant_mode);
@@ -169,7 +191,11 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
     // Work already under way skips planning and approval — but only in
     // proportion. A scenario that adds eighty kilometres of new tram alongside
     // one tunnel already being dug does not inherit that tunnel's permits.
-    let started_share = (started_km / total_km).clamp(0.0, 1.0);
+    let started_share = if total_km > 0.001 {
+        (started_km / total_km).clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
     let front_end = 1.0 - started_share;
 
     let mut cursor = start as f64;
@@ -251,14 +277,31 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
     // every Hamburg project that is actually under way. Never more than four
     // fifths: the last stretch of a tunnel is not the part that goes quickly,
     // and a line still under construction is by definition not finished.
-    let elapsed = net
-        .lines
-        .values()
-        .filter(|l| l.included)
-        .filter_map(|l| l.construction_started_year)
-        .min()
-        .map(|y| (start - y).max(0) as f64)
-        .unwrap_or(0.0)
+    //
+    // The years count per section, weighted by its share of the work, so a
+    // long new line is not treated as half built because a short project that
+    // broke ground years ago is part of the same scenario.
+    let mut started: std::collections::BTreeMap<crate::model::EdgeId, i32> = Default::default();
+    for l in net.lines.values().filter(|l| l.included) {
+        let Some(y) = l.construction_started_year else {
+            continue;
+        };
+        for e in &l.edges {
+            let entry = started.entry(*e).or_insert(y);
+            *entry = (*entry).min(y);
+        }
+    }
+    let elapsed = (active
+        .iter()
+        .filter_map(|eid| net.edges.get(eid).map(|e| (eid, e)))
+        .filter(|(_, e)| e.status != BuildStatus::InService)
+        .filter_map(|(eid, e)| {
+            started
+                .get(eid)
+                .map(|y| e.length_km() * e.status.cost_share() * (start - y).max(0) as f64)
+        })
+        .sum::<f64>()
+        / total_km.max(0.001))
         .min(construction_years * 0.8);
     let remaining_construction = (construction_years - elapsed).max(0.5);
 

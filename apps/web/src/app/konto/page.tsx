@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
-import { api, session } from '@/lib/api';
+import { api, ApiError, session } from '@/lib/api';
 import { ask, toast } from '@/components/Dialog';
 
 export default function AccountPage() {
@@ -30,8 +30,10 @@ export default function AccountPage() {
         setUser(u);
         setState('angemeldet');
       })
-      .catch(() => {
-        session.set(null);
+      .catch((e) => {
+        // Only a refused token ends the session (`api` clears it); a server
+        // that is down leaves it for the next visit.
+        if (!(e instanceof ApiError && e.status === 401)) toast((e as Error).message, 'warn');
         setState('fremd');
       });
   }, []);

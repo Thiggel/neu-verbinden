@@ -536,11 +536,13 @@ for (const [di, cells] of cellsByDistrict) {
 
 // Jobs: distributed city-wide over non-residential floor area, with a
 // city-centre multiplier reflecting the office density the footprints miss.
-const CENTRE = toMetric([9.9937, 53.5511]);
+// Only cells inside the city boundary take jobs, because the published total
+// counts workplaces in the city and the regional raster covers the rest.
+const CENTRE = toMetric([CITY.center.lon, CITY.center.lat]);
 let jobWeightTotal = 0;
 const jobWeight = new Float64Array(cols * rows);
 for (let i = 0; i < jobArea.length; i++) {
-  if (jobArea[i] <= 0) continue;
+  if (jobArea[i] <= 0 || districtOfCell[i] < 0) continue;
   const c = i % cols;
   const r = Math.floor(i / cols);
   const x = originX + (c + 0.5) * CELL_M;
@@ -608,6 +610,17 @@ const regionCells = (() => {
     })
     .filter((p) => p.population > 0);
   if (corrected) console.log(`  Region: ${corrected} unplausible Einwohnerzahlen ersetzt`);
+  // A place inside the city is already counted by the official statistics,
+  // and spreading it over a disc would leak its residents into the border
+  // cells outside, which then count them a second time.
+  const ringsForPlaces = districtRingsMetric();
+  const insideCity = (p) => {
+    const xy = toMetric([p.lon, p.lat]);
+    return ringsForPlaces.some((rings) => rings.some((ring) => pointInRing(xy, ring)));
+  };
+  const before = places.length;
+  places.splice(0, places.length, ...places.filter((p) => !insideCity(p)));
+  console.log(`  Region: ${before - places.length} Orte im Stadtgebiet nicht verteilt`);
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const p of places) {

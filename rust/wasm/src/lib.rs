@@ -559,7 +559,9 @@ impl Engine {
                 .map(|e| t.included_lines.contains(e))
                 .unwrap_or(false);
         }
-        self.editor = Editor::new(net, self.editor.city.clone(), self.editor.params.clone());
+        // A template is a fresh start, so it runs with the city's own figures,
+        // not with those of whatever plan was loaded before it.
+        self.editor = Editor::new(net, self.editor.city.clone(), self.city_params.clone());
         to_js(&t)
     }
 
@@ -757,12 +759,51 @@ impl Engine {
         ))
     }
 
-    /// Load a saved scenario.
+    /// Load a saved scenario for editing.
     #[wasm_bindgen(js_name = loadDocument)]
     pub fn load_document(&mut self, json: &str) -> Result<JsValue, JsValue> {
+        self.load(json, true)
+    }
+
+    /// Load a published scenario for reading: its map, its picture.
+    ///
+    /// A plan published before a correction of the city data can list existing
+    /// track where today's network has moved it. Editing such a plan is
+    /// refused, because the server would refuse to publish it again; showing it
+    /// is not, because its stored figures and its drawing stay what they were.
+    #[wasm_bindgen(js_name = showDocument)]
+    pub fn show_document(&mut self, json: &str) -> Result<JsValue, JsValue> {
+        self.load(json, false)
+    }
+
+    fn load(&mut self, json: &str, for_editing: bool) -> Result<JsValue, JsValue> {
         let doc =
             ScenarioDocument::from_json(json).map_err(|e| JsValue::from_str(&e.to_string()))?;
-        let params = doc.params_or_default();
+        // A plan drawn for another city would be laid over this one's streets
+        // and computed with this one's figures; nothing about it would be true.
+        let here = city_key(&self.editor.city.version.city);
+        if !doc.city.is_empty() && doc.city != here {
+            return Err(JsValue::from_str(
+                "Dieser Plan wurde für eine andere Stadt gezeichnet.",
+            ));
+        }
+        // The server refuses a plan that lists track as running or under
+        // construction where the published network has none; opening it here
+        // would only let someone work on a plan that cannot be published.
+        let unbacked = if for_editing { doc.network.status_not_backed_by(&self.baseline) } else { Vec::new() };
+        if !unbacked.is_empty() {
+            return Err(JsValue::from_str(&format!(
+                "Dieser Plan führt {} Abschnitte als bestehend oder im Bau, die im heutigen Netz nicht oder anders verlaufen, und lässt sich deshalb nicht bearbeiten. Das kommt vor, wenn die Daten der Stadt nach dem Zeichnen berichtigt wurden.",
+                unbacked.len()
+            )));
+        }
+        // Drawn on an earlier state of the data: it opens, but the page says so.
+        let older_data = !doc.data_version.is_empty() && doc.data_version != self.editor.city.version.id;
+        let params = doc.params_or(&self.city_params);
+        // Current only when both the calculation and its figures are today's:
+        // a recalibration changes the figures without changing the version.
+        let current = doc.calculation_version == hh_core::CALCULATION_VERSION
+            && params.fingerprint() == self.city_params.fingerprint();
         self.editor = Editor::new(doc.network, self.editor.city.clone(), params);
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
@@ -772,11 +813,13 @@ impl Engine {
             calculation_version: String,
             data_version: String,
             current: bool,
+            older_data: bool,
         }
         to_js(&Info {
+            older_data,
             title: doc.title,
             description: doc.description,
-            current: doc.calculation_version == hh_core::CALCULATION_VERSION,
+            current,
             calculation_version: doc.calculation_version,
             data_version: doc.data_version,
         })
@@ -826,7 +869,7 @@ impl Engine {
         let doc =
             ScenarioDocument::from_json(json).map_err(|e| JsValue::from_str(&e.to_string()))?;
         let a = simulation::run(&self.editor.network, &self.editor.city, &self.editor.params);
-        let b = simulation::run(&doc.network, &self.editor.city, &doc.params_or_default());
+        let b = simulation::run(&doc.network, &self.editor.city, &doc.params_or(&self.city_params));
         to_js(&simulation::compare(&a, &b))
     }
 

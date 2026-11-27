@@ -12,7 +12,7 @@
 // looking for a control you were not using.
 
 import { ask } from '@/components/Dialog';
-import { api, session } from '@/lib/api';
+import { api, ApiError, session } from '@/lib/api';
 
 /** Kept in step with the server, which rejects anything shorter. */
 export const MIN_PASSWORD = 8;
@@ -69,11 +69,21 @@ export async function ensureSession(purpose: AccountPurpose = 'publish'): Promis
     const res = await api.login({ handle, password });
     session.set(res.token);
     return res.token;
-  } catch {
-    // No account yet — or the wrong password, which `register` reports as a
-    // name that is already taken.
+  } catch (e) {
+    // Only a refused login means there may be no account yet; a server that
+    // is down would fail the registration the same way.
+    if (!(e instanceof ApiError && e.status === 401)) throw e;
   }
-  const res = await api.register({ handle, password });
-  session.set(res.token);
-  return res.token;
+  try {
+    const res = await api.register({ handle, password });
+    session.set(res.token);
+    return res.token;
+  } catch (e) {
+    // The login just failed, so a name that is taken means the password was
+    // not the one of that account.
+    if (e instanceof ApiError && e.status === 409) {
+      throw new Error('Unter diesem Namen gibt es schon ein Konto, dessen Passwort ein anderes ist.');
+    }
+    throw e;
+  }
 }

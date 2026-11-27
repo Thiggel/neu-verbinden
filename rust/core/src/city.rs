@@ -300,6 +300,8 @@ pub struct CityData {
     index: Option<Box<SpatialIndex>>,
     #[serde(skip)]
     water_mask: Option<Box<WaterMask>>,
+    #[serde(skip)]
+    zones: Option<Box<crate::connectivity::Zones>>,
 }
 
 /// A major destination: the main centre, a sub-centre or an employment hub.
@@ -656,6 +658,7 @@ impl CityData {
             centres: vec![],
             index: None,
             water_mask: None,
+            zones: None,
         }
     }
 
@@ -672,6 +675,12 @@ impl CityData {
         // from the CLI, which is native.
         self.index = Some(Box::new(SpatialIndex::build(self)));
         self.water_mask = Some(Box::new(WaterMask::build(&self.water, 30.0)));
+        self.zones = Some(Box::new(crate::connectivity::Zones::build(self)));
+    }
+
+    /// The zones of the connectivity model, if [`Self::prepare`] has run.
+    pub fn zones(&self) -> Option<&crate::connectivity::Zones> {
+        self.zones.as_deref()
     }
 
     /// Structural check on a freshly loaded dataset.
@@ -900,11 +909,13 @@ impl CityData {
     /// application should say so rather than present both with the same
     /// confidence.
     pub fn only_coarsely_covered(&self, p: Point) -> bool {
-        !self.grid.covers(p)
-            && self
-                .region_grid
-                .as_ref()
-                .is_some_and(|r| r.covers(p))
+        // The fine raster's square reaches beyond the city — Pinneberg and
+        // Norderstedt lie inside it — but holds residents only within it.
+        let fine = self.grid.population_at(p) + self.grid.jobs_at(p);
+        let Some(r) = self.region_grid.as_ref().filter(|r| r.covers(p)) else {
+            return false;
+        };
+        !self.grid.covers(p) || (fine <= 0.0 && r.population_at(p) + r.jobs_at(p) > 0.0)
     }
 
     pub fn crosses_major_water(&self, line: &[Point]) -> bool {
@@ -1027,8 +1038,14 @@ impl CityData {
     /// Residents and workplaces in the cell containing a point, from whichever
     /// raster covers it.
     fn cell_totals(&self, p: Point) -> (f64, f64, f64) {
+        // The fine raster holds only the city itself; around it, inside its
+        // square, the towns of the region exist only in the coarse raster.
         let fine = self.grid.population_at(p) + self.grid.jobs_at(p);
-        if fine > 0.0 || self.grid.covers(p) {
+        let coarse = self
+            .region_grid
+            .as_ref()
+            .map_or(0.0, |r| r.population_at(p) + r.jobs_at(p));
+        if fine > 0.0 || (coarse <= 0.0 && self.grid.covers(p)) {
             let cell_km2 = (self.grid.cell_m * self.grid.cell_m) / 1.0e6;
             return (self.grid.population_at(p), self.grid.jobs_at(p), cell_km2);
         }

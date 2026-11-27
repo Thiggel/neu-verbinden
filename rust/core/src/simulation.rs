@@ -141,7 +141,7 @@ pub fn run(net: &Network, city: &CityData, params: &Params) -> SimulationResult 
             None => km_by_mode.push((e.mode, e.length_km())),
         }
     }
-    km_by_mode.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    km_by_mode.sort_by(|a, b| b.1.total_cmp(&a.1));
 
     let headline = Headline {
         network_km,
@@ -391,6 +391,30 @@ mod tests {
             scenario.operations.annual_result_eur - today.operations.annual_result_eur;
         assert!((scenario.operations.annual_change_eur - change).abs() < 1.0);
         assert_eq!(today.operations.annual_change_eur, 0.0);
+    }
+
+    #[test]
+    fn a_new_station_on_a_running_line_is_appraised() {
+        let mut ed = crate::editor::Editor::new(demo_network(), demo_city(), Params::default());
+        let edge = *ed
+            .network
+            .edges
+            .iter()
+            .max_by(|a, b| a.1.length_m.total_cmp(&b.1.length_m))
+            .unwrap()
+            .0;
+        let half = ed.network.edges[&edge].length_m / 2.0;
+        ed.apply(crate::editor::Command::SplitEdge {
+            edge,
+            along_m: half,
+            name: Some("Neu".into()),
+        })
+        .unwrap();
+        let r = run(&ed.network, &demo_city(), &Params::default());
+        assert!(r.headline.investment_eur > 0.0);
+        assert!(!r.timeline.nothing_to_build);
+        assert!(r.timeline.construction_years.is_finite() && r.timeline.construction_years > 0.0);
+        assert!(r.appraisal.npv_eur.is_finite() && r.appraisal.npv_eur != 0.0);
     }
 
     #[test]

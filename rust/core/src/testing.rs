@@ -64,6 +64,7 @@ fn edge(
         tracks: 2,
         design_speed_kmh: 80.0,
         external_id: None,
+        rebuilt: false,
     };
     e.recompute_length();
     net.edges.insert(id, e);

@@ -175,7 +175,7 @@ export function ScenarioView({ slug }: { slug: string }) {
                     // network loaded into Hamburg's engine is drawn in the
                     // wrong metric plane and comes out as a smear.
                     const { engine, city } = await loadEngine(undefined, data.city);
-                    engine.loadDocument(JSON.stringify(data.document));
+                    engine.showDocument(JSON.stringify(data.document));
                     await openShareSheet({
                       title: data.title,
                       author: data.author_name ?? data.author,

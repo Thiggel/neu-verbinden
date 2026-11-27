@@ -16,7 +16,7 @@ export async function generateMetadata({
   if (!data) return { title: 'Entwurf · Verkehrsnetz-Designer' };
   const km = (v: number) => `${v.toFixed(1).replace('.', ',')} km`;
   const eur = (v: number) =>
-    v >= 1e9
+    Math.abs(v) >= 1e9
       ? `${(v / 1e9).toFixed(1).replace('.', ',')} Mrd. €`
       : `${Math.round(v / 1e6).toLocaleString('de-DE')} Mio. €`;
   const summary =

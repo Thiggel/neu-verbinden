@@ -451,7 +451,7 @@ pub fn calculate(
     let station_total: f64 = station_items.iter().map(|i| i.amount_eur).sum();
     let junction_total: f64 = junction_items.iter().map(|i| i.amount_eur).sum();
     if track_total > 0.0 {
-        track_items.sort_by(|a, b| b.amount_eur.partial_cmp(&a.amount_eur).unwrap());
+        track_items.sort_by(|a, b| b.amount_eur.total_cmp(&a.amount_eur));
         categories.push(CostCategory {
             key: "track".into(),
             label: "Strecke".into(),
@@ -460,7 +460,7 @@ pub fn calculate(
         });
     }
     if station_total > 0.0 {
-        station_items.sort_by(|a, b| b.amount_eur.partial_cmp(&a.amount_eur).unwrap());
+        station_items.sort_by(|a, b| b.amount_eur.total_cmp(&a.amount_eur));
         categories.push(CostCategory {
             key: "stations".into(),
             label: "Stationen".into(),
@@ -575,7 +575,7 @@ pub fn calculate(
         notes.push("Weil Tunnelkosten stark vom Baugrund und von der Bebauung abhängen, ist die Spanne entsprechend breit.".into());
     }
 
-    segments.sort_by(|a, b| b.amount_eur.partial_cmp(&a.amount_eur).unwrap());
+    segments.sort_by(|a, b| b.amount_eur.total_cmp(&a.amount_eur));
 
     CostResult {
         total_eur: total,
@@ -730,6 +730,7 @@ mod tests {
             tracks: 2,
             design_speed_kmh: 50.0,
             external_id: None,
+            rebuilt: false,
         };
         edge.recompute_length();
         net.edges.insert(eid, edge);

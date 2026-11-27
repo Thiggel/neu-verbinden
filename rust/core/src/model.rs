@@ -316,9 +316,19 @@ pub struct Edge {
     pub design_speed_kmh: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub external_id: Option<String>,
+    /// Existing track that the scenario rebuilds in another construction
+    /// type. It is costed as new construction but still runs today, so the
+    /// comparison case keeps it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub rebuilt: bool,
 }
 
 impl Edge {
+    /// Whether this track carries trains in the comparison case.
+    pub fn runs_today(&self) -> bool {
+        self.status == BuildStatus::InService || self.rebuilt
+    }
+
     pub fn length_km(&self) -> f64 {
         self.length_m / 1000.0
     }
@@ -551,6 +561,24 @@ impl Network {
                 self.lines.len()
             )));
         }
+        // Line colours reach SVG and style markup on the shared pages, so only
+        // a plain #rrggbb value is accepted; names and labels stay short.
+        for l in self.lines.values() {
+            let hex = l.color.len() == 7
+                && l.color.starts_with('#')
+                && l.color[1..].bytes().all(|b| b.is_ascii_hexdigit());
+            if !hex {
+                return Err(SizeError(format!(
+                    "Die Linie {} hat keine Farbe der Form #rrggbb.",
+                    l.label.chars().take(20).collect::<String>()
+                )));
+            }
+            if l.label.chars().count() > 20 || l.name.chars().count() > 120 {
+                return Err(SizeError(
+                    "Kurzname höchstens 20, Name höchstens 120 Zeichen.".into(),
+                ));
+            }
+        }
         let vertices: usize = self.edges.values().map(|e| e.geo.len()).sum();
         if vertices > MAX_VERTICES {
             return Err(SizeError(format!(
@@ -745,11 +773,16 @@ impl Network {
         let mut n = self.clone();
         for l in n.lines.values_mut() {
             l.included = !l.edges.is_empty()
-                && l.edges.iter().all(|e| {
-                    self.edges
-                        .get(e)
-                        .is_some_and(|e| e.status == BuildStatus::InService)
-                });
+                && l.edges
+                    .iter()
+                    .all(|e| self.edges.get(e).is_some_and(Edge::runs_today));
+        }
+        // Rebuilt track runs today in its old form.
+        for e in n.edges.values_mut() {
+            if e.rebuilt {
+                e.status = BuildStatus::InService;
+                e.rebuilt = false;
+            }
         }
         n
     }
@@ -866,6 +899,64 @@ impl Network {
         }
     }
 
+    /// Track a client says is in service, under construction or merely being
+    /// rebuilt, but that the published network does not have.
+    ///
+    /// The status decides what a plan is charged for: track in service costs
+    /// nothing, track under construction only its outstanding share. A plan
+    /// sent to the server could otherwise mark a new line as existing and be
+    /// ranked as if it were free. Each such edge is sampled every 100 m and
+    /// every sample must lie within 75 m of published track of the same mode;
+    /// the published track is sampled every 50 m into a 150 m grid, so a
+    /// genuine copy always passes. Must run in the city's metric plane.
+    pub fn status_not_backed_by(&self, base: &Network) -> Vec<String> {
+        use crate::geo::{point_at_distance, to_metric};
+        use std::collections::HashMap;
+        const CELL: f64 = 150.0;
+        const TOLERANCE: f64 = 75.0;
+        let key = |p: Point| ((p.x / CELL).floor() as i64, (p.y / CELL).floor() as i64);
+        let samples = |geo: &[LatLon], step: f64| -> Vec<Point> {
+            let pts = to_metric(geo);
+            let len = polyline_length(&pts);
+            let n = (len / step).ceil().max(1.0) as usize;
+            (0..=n)
+                .map(|i| point_at_distance(&pts, len * i as f64 / n as f64))
+                .collect()
+        };
+        let mut index: HashMap<(i64, i64), Vec<(Mode, Point)>> = HashMap::new();
+        for e in base.edges.values() {
+            if e.status == BuildStatus::ToBuild {
+                continue;
+            }
+            for p in samples(&e.geo, 50.0) {
+                index.entry(key(p)).or_default().push((e.mode, p));
+            }
+        }
+        let backed = |mode: Mode, p: Point| {
+            let (cx, cy) = key(p);
+            (cx - 1..=cx + 1).any(|x| {
+                (cy - 1..=cy + 1).any(|y| {
+                    index.get(&(x, y)).is_some_and(|v| {
+                        v.iter().any(|(m, q)| {
+                            *m == mode && (q.x - p.x).hypot(q.y - p.y) <= TOLERANCE
+                        })
+                    })
+                })
+            })
+        };
+        self.edges
+            .values()
+            .filter(|e| e.status != BuildStatus::ToBuild || e.rebuilt)
+            .filter(|e| !samples(&e.geo, 100.0).into_iter().all(|p| backed(e.mode, p)))
+            .map(|e| {
+                format!(
+                    "Kante {} gilt als bestehend oder im Bau, liegt aber nicht auf einer bestehenden Strecke",
+                    e.id
+                )
+            })
+            .collect()
+    }
+
     /// Basic structural validation, used when accepting a network from a client.
     pub fn validate(&self) -> Vec<String> {
         let mut problems = Vec::new();
@@ -897,6 +988,27 @@ impl Network {
                     name(e.to)
                 ));
             }
+            if e.geo.len() >= 2 && e.length_m.is_finite() {
+                // Costs and travel times follow the stored length, so it has
+                // to match the drawn geometry rather than any number a file
+                // happens to carry.
+                let drawn = crate::geo::polyline_length_geo(&e.geo);
+                if (e.length_m - drawn).abs() > (0.01 * drawn).max(1.0) {
+                    problems.push(format!(
+                        "Kante {} gibt {:.0} m an, obwohl ihre Geometrie {:.0} m lang ist",
+                        e.id, e.length_m, drawn
+                    ));
+                }
+            }
+            if e.tracks == 0 {
+                problems.push(format!("Kante {} hat kein Gleis", e.id));
+            }
+            if !e.design_speed_kmh.is_finite() || e.design_speed_kmh <= 0.0 {
+                problems.push(format!(
+                    "Kante {} hat keine gültige Entwurfsgeschwindigkeit",
+                    e.id
+                ));
+            }
             if !Infrastructure::allowed_for(e.mode).contains(&e.infrastructure) {
                 problems.push(format!(
                     "Kante {}: {} ist für {} nicht zulässig",
@@ -915,6 +1027,19 @@ impl Network {
             }
         }
         for l in self.lines.values() {
+            let sp = &l.service;
+            let headway_ok = |h: f64| h.is_finite() && h > 0.0;
+            if !headway_ok(sp.headway_peak_min)
+                || !headway_ok(sp.headway_offpeak_min)
+                || !sp.service_hours.is_finite()
+                || !(0.0..=24.0).contains(&sp.service_hours)
+                || sp.cars_per_train == 0
+            {
+                problems.push(format!(
+                    "Linie {} hat keinen gültigen Fahrplan",
+                    l.label
+                ));
+            }
             for e in &l.edges {
                 if !self.edges.contains_key(e) {
                     problems.push(format!(
@@ -932,6 +1057,36 @@ impl Network {
 mod tests {
     use super::*;
     use crate::testing::{demo_crossing_network, demo_network};
+
+    #[test]
+    fn invented_existing_track_is_caught() {
+        let base = demo_network();
+        assert!(base.status_not_backed_by(&base).is_empty());
+
+        let id = *base
+            .edges
+            .iter()
+            .find(|(_, e)| e.status == BuildStatus::InService)
+            .unwrap()
+            .0;
+        // The same edge, shifted a kilometre north: no such track exists.
+        let mut moved = base.clone();
+        for p in &mut moved.edges.get_mut(&id).unwrap().geo {
+            p.lat += 0.009;
+        }
+        assert_eq!(moved.status_not_backed_by(&base).len(), 1);
+
+        // In place, but claiming another mode.
+        let mut other = base.clone();
+        let e = other.edges.get_mut(&id).unwrap();
+        e.mode = if e.mode == Mode::Tram { Mode::Ubahn } else { Mode::Tram };
+        assert_eq!(other.status_not_backed_by(&base).len(), 1);
+
+        // A new line drawn as new is none of this check's business.
+        let mut fresh = moved.clone();
+        fresh.edges.get_mut(&id).unwrap().status = BuildStatus::ToBuild;
+        assert!(fresh.status_not_backed_by(&base).is_empty());
+    }
 
     #[test]
     fn mode_compatibility() {

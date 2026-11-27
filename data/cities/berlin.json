@@ -64,11 +64,12 @@
     "calibratedOn": "Hamburg",
     "demand": {
       "boardingsPerCatchment": {
-        "ubahn": 0.65,
-        "sbahn": 0.52,
-        "tram": 0.34,
+        "ubahn": 0.38,
+        "sbahn": 0.62,
+        "tram": 0.4,
         "regional": 0.17
-      }
+      },
+      "tripsPerPersonDay": 3.3
     }
   },
   "modelParamsNote": "Berlin hat 3,9 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 4,43 % des Umsatzsteueraufkommens der Länder zustehen. Der Baugrund aus Sand mit hoch anstehendem Grundwasser ist anspruchsvoll, aber leichter als die Hamburger Marsch. Die Einsteigerraten sind so gewählt, dass das heutige Netz die für 2025 veröffentlichten Fahrgastzahlen von BVG und S-Bahn Berlin ergibt.",

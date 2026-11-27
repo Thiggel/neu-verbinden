@@ -47,11 +47,14 @@ pub struct DemandResult {
     /// Weighted mean access time to the employment centres, minutes.
     pub access_time_before_min: f64,
     pub access_time_after_min: f64,
-    /// Person-hours saved per weekday across the city.
+    /// Person-hours saved per weekday across the city and region.
     pub hours_saved_per_day: f64,
     /// Car trips removed per weekday.
     pub car_trips_replaced_per_day: f64,
     pub car_km_replaced_per_year: f64,
+    /// Journeys between the parts of the city and the region.
+    #[serde(default)]
+    pub connectivity: crate::connectivity::ConnectivityResult,
     pub notes: Vec<String>,
 }
 
@@ -173,7 +176,8 @@ fn station_demand(net: &Network, city: &CityData, params: &Params) -> (Vec<Stati
 
 pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResult {
     let d = &params.demand;
-    let (mut stations, total, new_total) = station_demand(net, city, params);
+    let (mut stations, catchment_total, _) = station_demand(net, city, params);
+    let today_total = station_demand(&net.today(), city, params).1;
 
     // ------------------------------------------------------- accessibility --
 
@@ -280,9 +284,12 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
                     continue;
                 }
                 let p = grid.cell_center(col, row);
-                // The coarse raster overlaps the fine one around the city.
-                // Counting a cell from both would weight the centre twice.
-                if skip_covered && city.grid.covers(p) {
+                // The coarse raster is zeroed inside the city's districts when
+                // it is built, so a cell counts from one raster only. Its
+                // extent still overlaps the fine one's: Pinneberg, Norderstedt
+                // and Ahrensburg lie inside the fine raster's square but
+                // outside the city, and their residents exist only here.
+                if skip_covered && city.grid.population_at(p) > 0.0 {
                     continue;
                 }
                 cells.push((
@@ -336,13 +343,44 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
     // the sign only ever turns negative when something was removed.
     let saved_min = access_before - access_after;
 
-    // Trips affected per weekday: everyone who uses public transport for a trip
-    // touching the improved relations. Approximated by the ridership of the
-    // whole scenario network, since the access measure is a network average.
-    let affected_trips = total;
-    let hours_saved = saved_min * affected_trips / 60.0
-        // Newly induced trips only count at half the saving (rule of a half).
-        * (1.0 - d.induced_share + d.induced_share * 0.5);
+    // Hours saved: from the change in the logsum of a destination and mode
+    // choice model over every pair of zones, calibrated on today's network.
+    // It counts the full saving for trips made anyway, about half for trips
+    // the faster connection wins over, and a loss where lines are removed.
+    let connectivity =
+        crate::connectivity::compare(net, city, params, &before, &after, today_total);
+    let hours_saved = connectivity.hours_saved_per_day;
+
+    // New boardings: the increase over today's network, but no more than the
+    // journeys the choice model sees switching to rail can carry.
+    //
+    // Counting every boarding at a station that new track touches would credit
+    // an existing interchange's whole demand to the scenario, hence the
+    // difference to today. The difference alone still overstates, because each
+    // station counts its catchment as if no other station were near: two tram
+    // stops 190 m apart between Holstenwall and Neustadt, in streets the U-Bahn
+    // already serves, reached no one new and yet added 8 200 boardings a day,
+    // which as replaced car trips and fares gave the stub a benefit-cost ratio
+    // near four. Riders who merely walk to a nearer stop are not new riders;
+    // the choice model, which compares door-to-door journeys over the whole
+    // network, is what says how many there are.
+    let catchment_new = (catchment_total - today_total).max(0.0);
+    let boardings_per_journey = if connectivity.trips_before > 0.0 {
+        today_total / connectivity.trips_before
+    } else {
+        1.0
+    };
+    let journeys_gained = (connectivity.trips_after - connectivity.trips_before).max(0.0);
+    let new_total = if connectivity.trips_before > 0.0 {
+        catchment_new.min(journeys_gained * boardings_per_journey)
+    } else {
+        catchment_new
+    };
+    let total = if catchment_total > today_total {
+        today_total + new_total
+    } else {
+        catchment_total
+    };
 
     let annual = total * d.annual_factor;
     let avg_trip_km = {
@@ -363,14 +401,18 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
         "Die Nachfrage ist nicht gezählt, sondern aus Einzugsbereichen, Umsteigezuschlägen und den Reisezeiten im Netz berechnet."
             .to_string(),
     ];
+    if catchment_new > new_total + 1.0 {
+        notes.push(
+            "Die neuen Haltestellen liegen zum Teil in Einzugsbereichen bestehender; als neue Fahrgäste zählen nur die Wege, die nach dem Wahlmodell neu auf die Bahn wechseln."
+                .into(),
+        );
+    }
     if saved_min <= 0.0 {
         notes.push("Das Szenario verkürzt die mittlere Erreichbarkeit nicht messbar.".into());
     }
 
     stations.sort_by(|a, b| {
-        b.boardings_per_day
-            .partial_cmp(&a.boardings_per_day)
-            .unwrap()
+        b.boardings_per_day.total_cmp(&a.boardings_per_day)
     });
 
     DemandResult {
@@ -386,6 +428,7 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> DemandResul
         hours_saved_per_day: hours_saved,
         car_trips_replaced_per_day: car_trips,
         car_km_replaced_per_year: car_km_year,
+        connectivity,
         notes,
     }
 }

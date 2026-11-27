@@ -88,7 +88,7 @@ impl TravelGraph {
                 let Some(e) = net.edges.get(eid) else {
                     continue;
                 };
-                if only_in_service && e.status != crate::model::BuildStatus::InService {
+                if only_in_service && !e.runs_today() {
                     continue;
                 }
                 let speed = ops.commercial_speed_kmh.get(e.mode).max(5.0);
@@ -169,6 +169,8 @@ impl TravelGraph {
                 cost: BOARDING_PENALTY_MIN + offset,
                 node: *start,
                 lines: Vec::new(),
+                changes: 0,
+                in_vehicle: 0.0,
             });
             let e = best.entry(*start).or_insert(f64::INFINITY);
             *e = e.min(*offset);
@@ -177,7 +179,10 @@ impl TravelGraph {
             return HashMap::new();
         }
 
-        while let Some(State { cost, node, lines }) = heap.pop() {
+        while let Some(State {
+            cost, node, lines, ..
+        }) = heap.pop()
+        {
             let key = (node, line_key(&lines));
             if visited.get(&key).is_some_and(|v| *v <= cost) {
                 continue;
@@ -209,6 +214,8 @@ impl TravelGraph {
                         cost: next,
                         node: link.to,
                         lines: carried,
+                        changes: 0,
+                        in_vehicle: 0.0,
                     });
                 }
             }
@@ -219,6 +226,86 @@ impl TravelGraph {
             if self.adjacency.contains_key(start) {
                 let e = best.entry(*start).or_insert(f64::INFINITY);
                 *e = e.min(*offset);
+            }
+        }
+        best
+    }
+
+    /// Journeys from a set of access stations, with how they are made.
+    ///
+    /// The same search as [`Self::times_from_any`], but every station also
+    /// records how many changes the fastest journey to it takes and how much of
+    /// it is spent on board. Only journeys that ride at least one link count: a
+    /// start station is not "reached" by walking to it, since a trip between
+    /// two places that never boards a train is no public-transport trip.
+    pub fn journeys_from_any(&self, starts: &[(NodeId, f64)]) -> HashMap<NodeId, Journey> {
+        let mut best: HashMap<NodeId, Journey> = HashMap::new();
+        let mut heap: BinaryHeap<State> = BinaryHeap::new();
+        let mut visited: HashMap<(NodeId, u64), f64> = HashMap::new();
+        for (start, offset) in starts {
+            if self.adjacency.contains_key(start) {
+                heap.push(State {
+                    cost: BOARDING_PENALTY_MIN + offset,
+                    node: *start,
+                    lines: Vec::new(),
+                    changes: 0,
+                    in_vehicle: 0.0,
+                });
+            }
+        }
+        while let Some(State {
+            cost,
+            node,
+            lines,
+            changes,
+            in_vehicle,
+        }) = heap.pop()
+        {
+            let key = (node, line_key(&lines));
+            if visited.get(&key).is_some_and(|v| *v <= cost) {
+                continue;
+            }
+            visited.insert(key, cost);
+            if !lines.is_empty() {
+                let entry = best.entry(node).or_insert(Journey {
+                    minutes: f64::INFINITY,
+                    changes: 0,
+                    in_vehicle_min: 0.0,
+                });
+                if cost < entry.minutes {
+                    *entry = Journey {
+                        minutes: cost,
+                        changes,
+                        in_vehicle_min: in_vehicle,
+                    };
+                }
+            }
+            let Some(links) = self.adjacency.get(&node) else {
+                continue;
+            };
+            for link in links {
+                let shares = lines.is_empty() || link.lines.iter().any(|l| lines.contains(l));
+                let penalty = if shares { 0.0 } else { TRANSFER_PENALTY_MIN };
+                let next = cost + link.minutes + penalty;
+                let carried: Vec<LineId> = if shares && !lines.is_empty() {
+                    link.lines
+                        .iter()
+                        .copied()
+                        .filter(|l| lines.contains(l))
+                        .collect()
+                } else {
+                    link.lines.clone()
+                };
+                let nkey = (link.to, line_key(&carried));
+                if visited.get(&nkey).map_or(true, |v| *v > next + 1e-9) {
+                    heap.push(State {
+                        cost: next,
+                        node: link.to,
+                        lines: carried,
+                        changes: changes + u32::from(!shares),
+                        in_vehicle: in_vehicle + link.minutes,
+                    });
+                }
             }
         }
         best
@@ -262,6 +349,21 @@ struct State {
     cost: f64,
     node: NodeId,
     lines: Vec<LineId>,
+    /// Changes so far, for [`TravelGraph::journeys_from_any`].
+    changes: u32,
+    /// Minutes on board so far, likewise.
+    in_vehicle: f64,
+}
+
+/// The fastest journey to a station.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Journey {
+    /// Generalised minutes: walk to the first station, boarding, ride and
+    /// change penalties.
+    pub minutes: f64,
+    pub changes: u32,
+    /// Minutes on board, dwell included.
+    pub in_vehicle_min: f64,
 }
 
 impl PartialEq for State {

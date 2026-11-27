@@ -82,9 +82,11 @@ export default function EditorPage() {
         // Pick up an unfinished draft from a previous visit.
         let restored: string | null = null;
         let staleModel: string | null = null;
+        let brokenDraft = false;
         let templateId = 'beschlossen';
+        const draftKey = `${DRAFT_KEY}-${city.id}`;
         try {
-          const saved = localStorage.getItem(`${DRAFT_KEY}-${city.id}`);
+          const saved = localStorage.getItem(draftKey);
           if (saved) {
             const info = engine.loadDocument(saved);
             restored = info.title;
@@ -101,6 +103,17 @@ export default function EditorPage() {
           }
         } catch {
           restored = null;
+          // A draft that no longer loads would be overwritten by the next
+          // autosave. It is put aside instead, so that the work is not lost
+          // without a word and can still be recovered from the browser.
+          try {
+            const bad = localStorage.getItem(draftKey);
+            if (bad) {
+              localStorage.setItem(`${draftKey}-broken`, bad);
+              localStorage.removeItem(draftKey);
+              brokenDraft = true;
+            }
+          } catch {}
         }
         // A template id saved for another city will not exist here. An *empty*
         // one is different: it means a document was loaded rather than a
@@ -115,8 +128,7 @@ export default function EditorPage() {
         // come from `cityParams()` rather than `params()`. The two differ the
         // moment a document is loaded: restoring the draft above replaces the
         // engine's working parameters with the ones that draft was computed
-        // with, and a draft carrying none falls back to the built-in defaults.
-        // Reading those here would have made the explanations describe a city
+        // with. Reading those here would have made the explanations describe a city
         // nobody had opened.
         ui.set({
           ready: true,
@@ -135,6 +147,11 @@ export default function EditorPage() {
             staleModel
               ? `„${restored}" wiederhergestellt und mit dem aktuellen Modell neu gerechnet (vorher ${staleModel})`
               : `„${restored}" wiederhergestellt`
+          );
+        } else if (brokenDraft) {
+          showToast(
+            'Der zuletzt gespeicherte Entwurf ließ sich nicht öffnen und wurde im Browser beiseitegelegt.',
+            'warn'
           );
         }
         scheduleSimulation();
@@ -510,10 +527,14 @@ export default function EditorPage() {
             if (!info.current) engine.recalculateWithCurrentModel();
             useUi.setState({ scenarioTitle: info.title, templateId: '' });
             refresh(null);
+            const loaded = info.current
+              ? `„${info.title}" geladen`
+              : `„${info.title}" geladen und mit dem aktuellen Modell neu gerechnet (vorher ${info.calculationVersion})`;
             showToast(
-              info.current
-                ? `„${info.title}" geladen`
-                : `„${info.title}" geladen und mit dem aktuellen Modell neu gerechnet (vorher ${info.calculationVersion})`
+              info.olderData
+                ? `${loaded}; weil er auf dem Datenstand ${info.dataVersion} gezeichnet wurde, kann das heutige Netz von ihm abweichen.`
+                : loaded,
+              info.olderData ? 'warn' : undefined
             );
           } catch (e) {
             showToast(String((e as Error).message), 'warn');

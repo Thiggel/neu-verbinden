@@ -22,6 +22,8 @@ pub struct City {
     /// its subsoil costs to dig — so one shared default gets them wrong for
     /// every city but the one they were calibrated on.
     pub params: Arc<Params>,
+    /// The published network of today and of what is being built.
+    pub base: Arc<hh_core::model::Network>,
 }
 
 #[derive(Clone)]

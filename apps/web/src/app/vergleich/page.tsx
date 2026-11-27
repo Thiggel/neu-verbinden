@@ -125,7 +125,7 @@ function ComparePageInner() {
                   const [da, db] = await Promise.all([api.get(a), api.get(b)]);
                   const { engine, city } = await loadEngine(undefined, da.city);
                   const load = (d: typeof da) => {
-                    engine.loadDocument(JSON.stringify(d.document));
+                    engine.showDocument(JSON.stringify(d.document));
                     return engine.renderState();
                   };
                   const renderA = load(da);

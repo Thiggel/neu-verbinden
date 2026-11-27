@@ -21,7 +21,9 @@ export function SiteHeader() {
   useEffect(() => {
     const token = session.get();
     if (!token) return;
-    api.me(token).then(setUser).catch(() => session.set(null));
+    // An expired token is cleared by `api` itself; an unreachable server says
+    // nothing about the session, so it is kept.
+    api.me(token).then(setUser).catch(() => {});
   }, []);
 
   const auth = async (mode: 'login' | 'register') => {

@@ -66,7 +66,7 @@ export function PlanMap({
         const bundle = await loadEngine(undefined, city);
         report.current?.(cityFiguresFrom(bundle));
         // The published document is JSON; the engine takes it as text.
-        bundle.engine.loadDocument(typeof doc === 'string' ? doc : JSON.stringify(doc));
+        bundle.engine.showDocument(typeof doc === 'string' ? doc : JSON.stringify(doc));
         if (cancelled) return;
         setState({
           engine: bundle.engine,

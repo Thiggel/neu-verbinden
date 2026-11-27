@@ -175,8 +175,8 @@ vorliegen, wird mit den 305 Werktagsäquivalenten des Modells umgerechnet:
 
 | | veröffentlicht | Modell | `k` U-Bahn / S-Bahn / Straßenbahn |
 | --- | ---: | ---: | --- |
-| Hamburg | 571 Mio. (U-Bahn 291 Mio., S-Bahn rund 280 Mio.) | 572 Mio. | 0,78 / 0,63 / 0,34 |
-| Berlin | 1 249 Mio. (U-Bahn 556 Mio., Straßenbahn 211 Mio., S-Bahn rund 482 Mio.) | 1 244 Mio. | 0,65 / 0,52 / 0,34 |
+| Hamburg | 571 Mio. (U-Bahn 291 Mio., S-Bahn rund 280 Mio.) | 572 Mio. | 0,55 / 0,80 / 0,40 |
+| Berlin | 1 249 Mio. (U-Bahn 556 Mio., Straßenbahn 211 Mio., S-Bahn rund 482 Mio.) | 1 241 Mio. | 0,38 / 0,62 / 0,40 |
 
 Die Raten für U- und S-Bahn sind je Stadt bestimmt, während die Rate der
 Straßenbahn aus Berlin stammt, weil nur dort eine Straßenbahn zu beobachten
@@ -190,13 +190,58 @@ und Haltezeiten. Für jede bewohnte Rasterzelle wird die beste Kombination aus
 Fußweg zur Station und Fahrt zu jedem Zentrum bestimmt, gewichtet mit den
 Arbeitsplätzen des Zentrums.
 
-Der Vergleich läuft gegen dasselbe Netz **ohne** die neuen Abschnitte. Die
-Differenz ist die Reisezeitersparnis, und die trägt den größten Teil des
-Nutzens.
+Diese Erreichbarkeit der Zentren wird ausgewiesen, trägt den Nutzen aber
+nicht mehr, weil sie Fahrten zwischen zwei Stadtteilen, von denen keiner ein
+Zentrum ist, nicht erfasst.
 
-Das ist ein Einzugsbereichs- und Erreichbarkeitsmodell, **kein
-Verkehrsmodell**: keine Quelle-Ziel-Matrix, keine Wegeketten, keine
-Kapazitätsrestriktionen.
+**Verbindungen** (seit Modell 0.17.0) messen, wie schnell jeder Stadtteil
+jeden anderen erreicht, Umstiege eingerechnet:
+
+* **Zonen** sind die Stadtteile und, darüber hinaus, Kacheln von 5 km im
+  Umland, jeweils mit den Einwohnern und Arbeitsplätzen der Rasterzellen
+  darin und nach dem bedeutendsten Ort darin benannt. Sie hängen nur von den
+  Daten ab, sodass beide Seiten eines Vergleichs dieselben Zonen nutzen.
+* **Fahrten** werden von jeder Zone mit einer Station in höchstens 1,2 km
+  Fußweg zu jeder anderen Zone gesucht: Fußweg, Warten, Fahrt, Umstieg und
+  wieder Fußweg, von Tür zu Tür.
+* **Wahl** von Ziel und Verkehrsmittel folgt einem Logit-Modell, in dem ein
+  Ziel mit seinen Einwohnern und Arbeitsplätzen anzieht und mit der Reisezeit
+  abstößt, während alle anderen Verkehrsmittel einen festen Nutzen haben.
+* **Nutzen** ist die Änderung der Logsumme: Wer ohnehin fährt, erhält die
+  volle Ersparnis, wer neu gewonnen wird, etwa die Hälfte. Ein Anteil an
+  Neuverkehr wird nicht gesondert angenommen; Verschlechterungen zählen
+  negativ.
+
+Zwei Größen eichen das Modell am heutigen Netz. Der Nutzen der anderen
+Verkehrsmittel ist so gesetzt, dass die vorhergesagten Fahrten die heutigen
+Einsteiger ergeben. Die Zeitempfindlichkeit ist so gesetzt, dass die
+Nachfrage mit einer Elastizität von −0,5 auf die Fahrzeit reagiert, wie
+Balcombe u. a. (2004, TRL593, §3.2.4 und §6) es für den städtischen ÖPNV
+angeben. Die Wegezahl je Person und Tag stammt aus MiD 2023 (Hamburg 3,0, über alle Wochentage gemittelt)
+und SrV 2023 (Berlin 3,3).
+
+| | β je min | Bahnanteil heute | Zonen (davon Umland) |
+| --- | ---: | ---: | ---: |
+| Hamburg | 0,053 | 33 % | 121 (22) |
+| Berlin | 0,060 | 29 % | 130 (33) |
+
+Je Zone werden die mittlere Reisezeit zu allen Stadtteilen (ohne Verbindung
+mit 180 Minuten angesetzt) und die in 45 Minuten erreichbaren Einwohner und
+Arbeitsplätze ausgewiesen, je Relation Reisezeit, Umstiege, Fahrten und
+gewonnene Stunden.
+
+**Neue Fahrgäste** sind die Einsteiger über dem heutigen Netz, höchstens
+aber so viele, wie die Fahrten tragen, die nach dem Wahlmodell neu auf die
+Bahn wechseln, umgerechnet mit den heutigen Einsteigern je Fahrt. Die
+Schranke ist nötig, weil jede Station ihren Einzugsbereich zählt, als läge
+keine andere in der Nähe: Zwei Straßenbahnhalte zwischen Holstenwall und
+Neustadt, in einem Gebiet, das die U-Bahn bereits erschließt, ergaben sonst
+8 200 neue Einsteiger am Tag und ein Nutzen-Kosten-Verhältnis von fast vier.
+Aus den neuen Fahrgästen folgen die ersetzten Autofahrten und die
+zusätzlichen Fahrgeldeinnahmen.
+
+Auch das ist **kein vollständiges Verkehrsmodell**: Es gibt keine
+Kapazitätsrestriktionen, kein Straßennetz und keine Wegeketten.
 
 ---
 
@@ -282,7 +327,7 @@ Barwert des laufenden Betriebs.
 
 ## 10. Versionierung
 
-Jedes Szenario speichert `calculationVersion` (derzeit 0.16.0), einen
+Jedes Szenario speichert `calculationVersion` (derzeit 0.17.0), einen
 `parameterFingerprint` über die tatsächlichen Kennwerte und
 `dataVersion` (2026-09). Ändern sich die Modelle, bleiben veröffentlichte
 Ergebnisse unverändert; die Neuberechnung ist ein ausdrücklicher Schritt, und

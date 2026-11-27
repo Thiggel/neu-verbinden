@@ -534,8 +534,10 @@ pub async fn delete_account(
     let Some(hash) = hash else {
         return Err(ApiError::Unauthorized);
     };
+    // A mistyped password is not an expired session: answered with 401, the
+    // page would sign the person out instead of letting them try again.
     if !check_password(&body.password, &hash) {
-        return Err(ApiError::Unauthorized);
+        return Err(ApiError::BadRequest("Das Passwort stimmt nicht.".into()));
     }
 
     // One transaction: a half-deleted account is worse than none, because the

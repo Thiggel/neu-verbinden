@@ -144,8 +144,14 @@ impl ScenarioDocument {
         }
     }
 
-    pub fn params_or_default(&self) -> Params {
-        self.params.clone().unwrap_or_default()
+    /// The parameters to reproduce this document with: its own set when it
+    /// carries a usable one, otherwise the city's. Falling back to
+    /// `Params::default()` would compute a Berlin plan with Hamburg's figures.
+    pub fn params_or(&self, city: &Params) -> Params {
+        match &self.params {
+            Some(p) if p.validate().is_empty() => p.clone(),
+            _ => city.clone(),
+        }
     }
 }
 

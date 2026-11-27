@@ -100,7 +100,13 @@ async fn run_once(state: &AppState) -> Result<bool, sqlx::Error> {
         Err(e) => {
             let status = if attempts >= 4 { "failed" } else { "queued" };
             tracing::warn!(job = id, kind = %kind, error = %e, "Job fehlgeschlagen");
-            sqlx::query("UPDATE jobs SET status = $2, last_error = $3 WHERE id = $1")
+            // A job that has given up gets its finishing time too, so the
+            // cleanup that clears old finished jobs also reaches it.
+            sqlx::query(
+                "UPDATE jobs SET status = $2, last_error = $3,
+                        finished_at = CASE WHEN $2 = 'failed' THEN now() END
+                  WHERE id = $1",
+            )
                 .bind(id)
                 .bind(status)
                 .bind(e.to_string())
@@ -199,10 +205,23 @@ async fn handle(
         "requeue_stale" => {
             let mut queued = 0usize;
             for (key, city) in state.cities.iter() {
+                // A scenario that is already waiting, or whose recomputation
+                // failed within the past week, is left out. Without that, every
+                // sweep queued the same scenarios again while the earlier jobs
+                // were still pending, and one that can never be computed was
+                // retried every few minutes for ever.
                 let rows = sqlx::query(
-                    "SELECT id FROM scenarios
-                      WHERE city = $1 AND (calculation_version <> $2 OR parameter_fingerprint <> $3)
-                      ORDER BY created_at
+                    "SELECT s.id FROM scenarios s
+                      WHERE s.city = $1
+                        AND (s.calculation_version <> $2 OR s.parameter_fingerprint <> $3)
+                        AND NOT EXISTS (
+                            SELECT 1 FROM jobs j
+                             WHERE j.kind = 'scenario_indexed'
+                               AND j.payload->>'id' = s.id::text
+                               AND (j.status IN ('queued', 'running')
+                                    OR (j.status = 'failed'
+                                        AND j.finished_at > now() - interval '7 days')))
+                      ORDER BY s.created_at
                       LIMIT $4",
                 )
                 .bind(key)
@@ -226,6 +245,20 @@ async fn handle(
             Ok(())
         }
         "cleanup" => {
+            // A worker that stopped mid-job leaves it marked as running, and
+            // nothing else would ever pick it up again. Every job here takes
+            // seconds, so one that has run for an hour has been abandoned. One that
+            // has been abandoned four times is given up, because it is likely the
+            // reason the worker stopped.
+            sqlx::query(
+                "UPDATE jobs
+                    SET status = CASE WHEN attempts >= 4 THEN 'failed' ELSE 'queued' END,
+                        finished_at = CASE WHEN attempts >= 4 THEN now() END,
+                        last_error = coalesce(last_error, 'abgebrochen')
+                  WHERE status = 'running' AND started_at < now() - interval '1 hour'",
+            )
+            .execute(&state.db)
+            .await?;
             sqlx::query("DELETE FROM rate_limits WHERE window_at < now() - interval '1 day'")
                 .execute(&state.db)
                 .await?;
