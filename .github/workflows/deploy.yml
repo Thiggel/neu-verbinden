@@ -27,6 +27,8 @@ concurrency:
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_CLI: vercel@67.0.0
+  API_PROJECT: neu-verbinden-api
+  WEB_PROJECT: neu-verbinden
 
 jobs:
   deploy:
@@ -63,6 +65,26 @@ jobs:
       - run: npm run data:publish
       - run: npm run lint
       - run: npm run test:ui
+
+      # The two project IDs are secrets and cannot be read back once set, so a
+      # swapped or duplicated ID would only show after the API had already
+      # replaced the web app. Their names are asked of Vercel before anything
+      # is uploaded.
+      - name: Check Vercel projects
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          API_ID: ${{ secrets.VERCEL_PROJECT_ID_API }}
+          WEB_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+        run: |
+          case "$VERCEL_ORG_ID" in team_*) TEAM="?teamId=$VERCEL_ORG_ID" ;; *) TEAM="" ;; esac
+          name() {
+            curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v9/projects/$1$TEAM" | jq -r .name
+          }
+          api=$(name "$API_ID"); web=$(name "$WEB_ID")
+          echo "API project: $api, web project: $web"
+          [ "$api" = "${{ env.API_PROJECT }}" ] || { echo "VERCEL_PROJECT_ID_API must belong to ${{ env.API_PROJECT }}"; exit 1; }
+          [ "$web" = "${{ env.WEB_PROJECT }}" ] || { echo "VERCEL_PROJECT_ID_WEB must belong to ${{ env.WEB_PROJECT }}"; exit 1; }
 
       # Only what the Dockerfile reads is uploaded. The checkout by now also
       # holds rust/target, node_modules and the built web assets.

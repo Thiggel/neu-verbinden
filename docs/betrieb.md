@@ -93,8 +93,8 @@ Zwei Vercel-Projekte aus demselben Repository:
 
 | Projekt | Root Directory | Framework | Variablen |
 | --- | --- | --- | --- |
-| Oberfläche | `apps/web` | Next.js | `NEXT_PUBLIC_API_URL` |
-| API | Wurzel | Container | alle aus der Tabelle oben, dazu `PORT=8080`, `HH_TRUST_PROXY=1`, `HH_WORKER_IDLE_SECS=600`, `HH_DB_IDLE_SECS=60` |
+| Oberfläche, `neu-verbinden` | `apps/web` | Next.js | `NEXT_PUBLIC_API_URL` |
+| API, `neu-verbinden-api` | Wurzel | Container | alle aus der Tabelle oben, dazu `PORT=8080`, `HH_TRUST_PROXY=1`, `HH_WORKER_IDLE_SECS=600`, `HH_DB_IDLE_SECS=60` |
 
 `DATABASE_URL` setzt die Neon-Integration aus dem Vercel Marketplace, wenn
 dort der Free-Tarif gewählt wird. Bei der Einrichtung: Region Frankfurt, Auth
@@ -104,7 +104,10 @@ dann auch `DATABASE_URL_UNPOOLED`, die der Server vorzieht, weil die
 Migrationen eine Sitzungssperre brauchen, die der Pooler nicht hält. In GitHub stehen als Secrets
 `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_WEB` und
 `VERCEL_PROJECT_ID_API`, als Variable optional `API_URL`. Ist `API_URL` gesetzt,
-geht die Oberfläche erst hinaus, wenn die neue API antwortet.
+geht die Oberfläche erst hinaus, wenn die neue API antwortet. Vor dem Hochladen fragt der
+Ablauf bei Vercel die Namen der beiden Projekte ab und bricht ab, wenn sie
+nicht zu den in `deploy.yml` hinterlegten passen, weil eine vertauschte ID
+sonst die Oberfläche durch die API ersetzt.
 
 Der Hobby-Tarif kennt keine Nachzahlung, weil ihm keine Zahlungsart hinterlegt
 ist: Wird ein Kontingent überschritten, ruht der betroffene Dienst bis zum
