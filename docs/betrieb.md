@@ -135,7 +135,15 @@ und vercel.com/legal/terms).
 einem eigenen Konto und ersetzt dabei, was dasselbe Konto zuvor veröffentlicht
 hat. `HH_SEED_PASSWORD` ist dafür erforderlich, während `HH_SEED_PURGE=1`
 zusätzlich alle übrigen Entwürfe entfernt und ein Konto mit Moderatorrechten
-voraussetzt.
+voraussetzt. Die gezeichneten Linien stehen als Folge ihrer Stationen in
+`tools/examples/` und werden bei jedem Lauf mit dem aktuellen Rechenkern neu
+gezeichnet, damit die Beispiele auch nach einer Änderung der Stadtdaten noch
+geladen werden können. Mit `HH_SEED_DRY=1` werden sie nur berechnet und
+ausgegeben, ohne dass etwas veröffentlicht wird.
+
+Da der Lauf die Kennzahlen mit dem Rechenkern und den Daten des lokalen
+Arbeitsstands berechnet, sollte er erst nach dem Ausrollen und mit demselben
+Stand ausgeführt werden, den die API verwendet.
 
 ## Offene Punkte
 

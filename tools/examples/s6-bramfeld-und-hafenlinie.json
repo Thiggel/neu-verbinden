@@ -1,0 +1,45 @@
+{
+ "city": "hamburg",
+ "lines": [
+  {
+   "label": "S6",
+   "mode": "sbahn",
+   "color": "#16A34A",
+   "service": {
+    "cars_per_train": 6,
+    "headway_offpeak_min": 10,
+    "headway_peak_min": 5,
+    "service_hours": 20
+   },
+   "stations": [
+    { "name": "Meßberg", "lat": 53.54759, "lon": 10.00089 },
+    { "name": "Hauptbahnhof", "lat": 53.55188, "lon": 10.00939 },
+    { "name": "HAW Hamburg, Design", "lat": 53.564761, "lon": 10.01692 },
+    { "name": "Winterhuder Weg", "lat": 53.573201, "lon": 10.023748 },
+    { "name": "Biedermannplatz", "lat": 53.581191, "lon": 10.033347 },
+    { "name": "Schwalbenstraße", "lat": 53.590933, "lon": 10.047038 },
+    { "name": "Richeystraße", "lat": 53.602386, "lon": 10.053819 },
+    { "name": "Erich-Ziegel-Ring", "lat": 53.613137, "lon": 10.066797 },
+    { "name": "Bramfeld", "lat": 53.61683, "lon": 10.07892 },
+    { "name": "Pfirsichweg", "lat": 53.623302, "lon": 10.106501 }
+   ]
+  },
+  {
+   "label": "U6",
+   "mode": "ubahn",
+   "color": "#2563EB",
+   "service": {
+    "cars_per_train": 3,
+    "headway_offpeak_min": 5,
+    "headway_peak_min": 3.3,
+    "service_hours": 20
+   },
+   "stations": [
+    { "name": "Am Genter Ufer", "lat": 53.514885, "lon": 9.904909 },
+    { "name": "Altenwerder", "lat": 53.504753, "lon": 9.920623 },
+    { "name": "Moorburg/Altenwerder", "lat": 53.501321, "lon": 9.934074 },
+    { "name": "Kattwykstraße", "lat": 53.496834, "lon": 9.952022 }
+   ]
+  }
+ ]
+}

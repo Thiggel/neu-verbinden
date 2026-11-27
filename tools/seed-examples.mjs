@@ -9,14 +9,15 @@
 // Two rules they all follow, both learned from the state this replaced:
 //
 //   * A plan contains its author's own work and the network that exists, and
-//     nothing else. "Elbtangente und Ostring" carried Hamburg's U5, U4 and S4
-//     because those were switched on in the editor when it was published, so it
-//     claimed 74 km of new track for two lines that are 24 km long, and its map
+//     nothing else. the first version of the Bramfeld plan carried Hamburg's U5, U4 and
+//     S4 because those were switched on in the editor when it was published, so
+//     it claimed 74 km of new track for two lines that are 15 km long, and its map
 //     showed somebody else's projects.
 //   * Every line has a name a person chose. "Meßberg – Pfirsichweg" is what the
 //     editor calls a line when nobody has said what it is.
 //
 //   HH_SEED_PASSWORD=… node tools/seed-examples.mjs
+//   HH_SEED_DRY=1 node tools/seed-examples.mjs
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,8 +27,11 @@ const API = process.env.HH_API ?? 'http://localhost:8080';
 const V = process.env.HH_DATA_VERSION ?? '2026-09';
 const HANDLE = process.env.HH_SEED_HANDLE ?? 'beispiele';
 const PASSWORD = process.env.HH_SEED_PASSWORD;
+// With HH_SEED_DRY=1 the plans are only calculated and printed, so their
+// figures can be checked before anything is published.
+const DRY = process.env.HH_SEED_DRY === '1';
 
-if (!PASSWORD) {
+if (!PASSWORD && !DRY) {
   console.error(
     'HH_SEED_PASSWORD fehlt. Das Konto, unter dem die Beispiele stehen, braucht\n' +
       'ein Passwort, damit sie später wieder ersetzt werden können.'
@@ -75,28 +79,30 @@ async function engineFor(city) {
 /**
  * Each example says where its network comes from and what to call things.
  *
- * `from` is either a template the engine ships or the slug of something already
- * published, whose drawn routes are worth keeping even when everything around
- * them needed fixing.
+ * `from` names a template the engine ships and, for drawn plans, a file in
+ * `tools/examples/` that lists each line's stations in order. The lines are
+ * drawn anew from those stations rather than loaded as a stored document,
+ * because a document records the existing network as it was when it was saved
+ * and no longer loads once the city data has changed.
  */
 const EXAMPLES = [
   {
     city: 'hamburg',
-    from: { template: 'bestand', borrow: 'elbtangente-und-ostring-zgh52q' },
-    title: 'Elbtangente und Ostring',
+    from: { template: 'bestand', draw: 's6-bramfeld-und-hafenlinie' },
+    title: 'S6 nach Bramfeld und Hafenlinie',
     description:
-      'Hamburgs Schnellbahnen laufen fast alle durch die Mitte. Wer von Bramfeld nach Eppendorf will, fährt über den Hauptbahnhof. Dieser Entwurf legt zwei Querverbindungen an: einen Ostring von der Innenstadt über Barmbek nach Bramfeld und eine Elbtangente nach Wilhelmsburg, die den Süden erschließt, statt ihn zu überqueren.',
+      'Dieser Entwurf ergänzt zwei Linien, nämlich eine S-Bahn vom Meßberg über den Hauptbahnhof, Uhlenhorst, Barmbek und Steilshoop nach Bramfeld und eine kurze U-Bahn durch den Hafen von Waltershof über Altenwerder nach Moorburg. Da beide Linien durch sehr unterschiedlich dicht besiedelte Gebiete fahren, zeigt der Vergleich, wie stark der Nutzen einer Strecke von ihrem Einzugsgebiet abhängt.',
     rename: [
-      { label: 'S6', name: 'Ostring: Meßberg – Barmbek – Bramfeld' },
-      { label: 'U6', name: 'Elbtangente: Innenstadt – Kleiner Grasbrook – Wilhelmsburg' },
+      { label: 'S6', name: 'S6: Meßberg – Barmbek – Bramfeld' },
+      { label: 'U6', name: 'U6: Waltershof – Altenwerder – Moorburg' },
     ],
   },
   {
     city: 'hamburg',
-    from: { template: 'bestand', borrow: 'u6-quer-durch-eimsbuettel-sz8scz' },
+    from: { template: 'bestand', draw: 'u6-quer-durch-eimsbuettel' },
     title: 'U6 quer durch Eimsbüttel',
     description:
-      'Zwischen Altona und der Alster liegen dichte Gründerzeitviertel ohne eigene U-Bahn: Eimsbüttel, Hoheluft, Harvestehude. Wer dort wohnt, fährt mit dem Bus zur nächsten Linie. Diese U6 verbindet sie direkt und nimmt der Innenstadt einen Teil der Umsteiger ab.',
+      'Zwischen Altona und der Alster liegen mit Eimsbüttel, Hoheluft und Harvestehude dicht bebaute Viertel, deren Bewohner großenteils mit dem Bus zur nächsten Schnellbahn fahren. Diese U6 verbindet sie unmittelbar miteinander und soll zugleich die Umsteigeknoten der Innenstadt entlasten.',
     rename: [{ label: 'U6', name: 'U6: Altona – Eimsbüttel – Alster' }],
   },
   {
@@ -107,22 +113,66 @@ const EXAMPLES = [
     from: { template: 'strassenbahn', keep: ['proposal'] },
     title: 'Straßenbahn statt U5',
     description:
-      'Dasselbe Geld, anders ausgegeben: vier Straßenbahnlinien quer durch Hamburg statt der U5. Schneller fertig, deutlich billiger, dafür weniger Kapazität und im Straßenraum statt darunter. Der Vergleich ist der Sinn der Sache, nicht die Empfehlung.',
+      'Dieser Entwurf ersetzt die U5 durch vier Straßenbahnlinien quer durch Hamburg, die früher fertig und deutlich günstiger wären, dafür aber weniger Fahrgäste aufnehmen und im Straßenraum statt im Tunnel fahren. Er soll den Vergleich beider Ansätze ermöglichen und ist nicht als Empfehlung gemeint.',
     rename: [],
   },
   {
     city: 'berlin',
-    from: { template: 'bestand', borrow: 'u10-steglitz-weissensee-tkgkkt' },
+    from: { template: 'bestand', draw: 'u10-steglitz-weissensee' },
     title: 'U10 Steglitz – Weißensee',
     description:
-      'Die alte Berliner Planung: eine zehnte U-Bahn-Linie quer durch die Stadt, vom Rathaus Steglitz über den Potsdamer Platz nach Weißensee. Aufgegeben, aber in den Trassen mancher Bahnhöfe bis heute sichtbar. Hier gerechnet, als würde sie gebaut.',
-    rename: [{ label: 'U10', name: 'U10: Rathaus Steglitz – Potsdamer Platz – Weißensee' }],
+      'Die Berliner Planung einer U10 sah eine Linie vom Rathaus Steglitz über den Potsdamer Platz nach Weißensee vor, die zwar aufgegeben wurde, für die aber in einigen Bahnhöfen bereits Bauvorleistungen bestehen. Der Entwurf folgt dieser Strecke bis zur Greifswalder Straße und rechnet sie so, als würde sie heute gebaut.',
+    rename: [{ label: 'U10', name: 'U10: Rathaus Steglitz – Potsdamer Platz – Greifswalder Straße' }],
   },
 ];
 
+// A line is drawn through its stations without automatic stops. The engine
+// rounds the corners of the alignment and adds a node at every bend, so each
+// listed station keeps the node nearest to it and every other new node becomes
+// a plain vertex of the track.
+function drawLine(engine, line, rename) {
+  const points = line.stations.map(({ lat, lon }) => ({ lat, lon }));
+  engine.apply({
+    type: 'drawLine',
+    mode: line.mode,
+    infrastructure: null,
+    points,
+    label: line.label,
+    color: line.color,
+    autoStations: false,
+    anchors: points,
+  });
+  const net = JSON.parse(engine.toDocument('')).network;
+  const [id, drawn] = Object.entries(net.lines).find(([, l]) => l.source === 'user' && l.label === line.label);
+  const ids = [net.edges[drawn.edges[0]].from, ...drawn.edges.map((e) => net.edges[e].to)];
+  const stops = ids.filter((n) => net.nodes[n].kind === 'station');
+  const keep = new Set();
+  line.stations.forEach((s, i) => {
+    const nearest = stops.reduce((a, b) => (metres(s, net.nodes[a].geo) <= metres(s, net.nodes[b].geo) ? a : b));
+    keep.add(nearest);
+    const node = net.nodes[nearest];
+    if (node.source === 'user' && node.name !== s.name) {
+      engine.apply({ type: 'renameNode', node: Number(nearest), name: s.name });
+    }
+  });
+  for (const n of stops) {
+    if (!keep.has(n) && net.nodes[n].source === 'user') {
+      engine.apply({ type: 'setNodeKind', node: Number(n), kind: 'waypoint' });
+    }
+  }
+  const name = rename.find((r) => r.label === line.label)?.name;
+  if (name) engine.apply({ type: 'setLineStyle', line: Number(id), label: null, name, color: null });
+  if (line.service) engine.apply({ type: 'setService', line: Number(id), service: line.service });
+}
+
+function metres(a, b) {
+  const k = Math.PI / 180;
+  return Math.hypot((b.lon - a.lon) * Math.cos(a.lat * k) * 111320, (b.lat - a.lat) * 110540);
+}
+
 // ---------------------------------------------------------------- publish --
 
-const token = await (async () => {
+const token = DRY ? null : await (async () => {
   const login = await call('/api/auth/login', {
     method: 'POST',
     body: { handle: HANDLE, password: PASSWORD },
@@ -152,7 +202,7 @@ const token = await (async () => {
 //
 //   psql "$DATABASE_URL" -c "UPDATE users SET role='moderator' WHERE handle='…'"
 const purge = process.env.HH_SEED_PURGE === '1';
-const existing = (await call('/api/scenarios?limit=100')).json ?? [];
+const existing = DRY ? [] : ((await call('/api/scenarios?limit=100')).json ?? []);
 for (const s of existing) {
   if (s.author !== HANDLE && !purge) continue;
   const r = await call(`/api/scenarios/${s.slug}`, { method: 'DELETE', token });
@@ -165,29 +215,9 @@ for (const ex of EXAMPLES) {
   const engine = await engineFor(ex.city);
   engine.loadTemplate(ex.from.template);
 
-  if (ex.from.borrow) {
-    // The routes are worth keeping; everything that was switched on around them
-    // is not. Loading the published document and then switching off what the
-    // author did not draw is simpler than redrawing the geometry by hand.
-    const source = await call(`/api/scenarios/${ex.from.borrow}`);
-    if (source.status !== 200) {
-      console.log(`  übersprungen: ${ex.title} — ${ex.from.borrow} ist nicht abrufbar`);
-      continue;
-    }
-    const doc = source.json.document;
-    for (const line of Object.values(doc.network.lines)) {
-      if (line.included && line.source !== 'existing' && line.source !== 'user') {
-        line.included = false;
-      }
-    }
-    for (const r of ex.rename) {
-      for (const line of Object.values(doc.network.lines)) {
-        if (line.source === 'user' && line.label === r.label) line.name = r.name;
-      }
-    }
-    doc.title = ex.title;
-    engine.loadDocument(JSON.stringify(doc));
-    engine.recalculateWithCurrentModel();
+  if (ex.from.draw) {
+    const plan = JSON.parse(await readFile(resolve(ROOT, `tools/examples/${ex.from.draw}.json`), 'utf8'));
+    for (const line of plan.lines) drawLine(engine, line, ex.rename);
   } else if (ex.from.keep) {
     const keep = new Set(ex.from.keep);
     for (const line of engine.renderState().lines) {
@@ -199,6 +229,14 @@ for (const ex of EXAMPLES) {
 
   const document = engine.toDocument(ex.title);
   const result = engine.simulate();
+  const h = result.headline;
+  const summary =
+    `  ${ex.title.padEnd(30)} ${h.newKm.toFixed(1).padStart(6)} km neu · ${h.newStations} Stationen · ` +
+    `${(h.investmentEur / 1e9).toFixed(2)} Mrd. € · NKV ${h.benefitCostRatio.toFixed(2)}`;
+  if (DRY) {
+    console.log(summary);
+    continue;
+  }
   const created = await call('/api/scenarios', {
     method: 'POST',
     token,
@@ -214,11 +252,7 @@ for (const ex of EXAMPLES) {
     console.error(`  FEHLER bei ${ex.title}: ${created.text.slice(0, 200)}`);
     continue;
   }
-  const h = result.headline;
-  console.log(
-    `  ${ex.title.padEnd(30)} ${h.newKm.toFixed(1).padStart(6)} km neu · ` +
-      `${(h.investmentEur / 1e9).toFixed(2)} Mrd. € · NKV ${h.benefitCostRatio.toFixed(2)} · /${created.json.slug}`
-  );
+  console.log(`${summary} · /${created.json.slug}`);
 }
 
 console.log('\nFertig.');

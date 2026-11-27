@@ -1,0 +1,37 @@
+{
+ "city": "berlin",
+ "lines": [
+  {
+   "label": "U10",
+   "mode": "ubahn",
+   "color": "#2563EB",
+   "service": {
+    "cars_per_train": 3,
+    "headway_offpeak_min": 5,
+    "headway_peak_min": 3.3,
+    "service_hours": 20
+   },
+   "stations": [
+    { "name": "Rathaus Steglitz", "lat": 52.45683, "lon": 13.32082 },
+    { "name": "Schloßstraße", "lat": 52.46149, "lon": 13.32508 },
+    { "name": "Feuerbachstraße", "lat": 52.46371, "lon": 13.33262 },
+    { "name": "Friedenau", "lat": 52.470108, "lon": 13.335583 },
+    { "name": "Innsbrucker Platz", "lat": 52.47902, "lon": 13.34375 },
+    { "name": "Dominicusstraße", "lat": 52.483665, "lon": 13.347674 },
+    { "name": "Eisenacher Straße", "lat": 52.48951, "lon": 13.35018 },
+    { "name": "Elßholzstraße", "lat": 52.492997, "lon": 13.356007 },
+    { "name": "Bülowstraße", "lat": 52.49757, "lon": 13.36321 },
+    { "name": "Lützowstraße", "lat": 52.502646, "lon": 13.367348 },
+    { "name": "Potsdamer Platz", "lat": 52.50912, "lon": 13.37827 },
+    { "name": "Hertie School", "lat": 52.514525, "lon": 13.387487 },
+    { "name": "Museumsinsel", "lat": 52.5172, "lon": 13.39887 },
+    { "name": "Rosa-Luxemburg-Straße", "lat": 52.523007, "lon": 13.408991 },
+    { "name": "Mollstraße/Prenzlauer Allee", "lat": 52.52784, "lon": 13.41651 },
+    { "name": "Knaackstraße", "lat": 52.53298, "lon": 13.42053 },
+    { "name": "Winsstraße", "lat": 52.53744, "lon": 13.42942 },
+    { "name": "Greifswalder Straße", "lat": 52.5402, "lon": 13.43893 },
+    { "name": "Mühlenviertel", "lat": 52.543, "lon": 13.445 }
+   ]
+  }
+ ]
+}

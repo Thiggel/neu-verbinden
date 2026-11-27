@@ -1,0 +1,27 @@
+{
+ "city": "hamburg",
+ "lines": [
+  {
+   "label": "U6",
+   "mode": "ubahn",
+   "color": "#2563EB",
+   "service": {
+    "cars_per_train": 3,
+    "headway_offpeak_min": 5,
+    "headway_peak_min": 3.3,
+    "service_hours": 20
+   },
+   "stations": [
+    { "name": "Altona", "lat": 53.55215, "lon": 9.93437 },
+    { "name": "Julius-Leber-Straße", "lat": 53.555298, "lon": 9.941852 },
+    { "name": "Holstenstraße", "lat": 53.559047, "lon": 9.949043 },
+    { "name": "Oelkersallee", "lat": 53.562564, "lon": 9.954892 },
+    { "name": "Christuskirche", "lat": 53.56961, "lon": 9.96244 },
+    { "name": "Kaiser-Friedrich-Ufer", "lat": 53.576, "lon": 9.971027 },
+    { "name": "Hoheluftbrücke", "lat": 53.57746, "lon": 9.97617 },
+    { "name": "Eppendorfer Baum", "lat": 53.58376, "lon": 9.98536 },
+    { "name": "Bellevue", "lat": 53.576, "lon": 10.006 }
+   ]
+  }
+ ]
+}
