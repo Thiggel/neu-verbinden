@@ -24,8 +24,15 @@ export const OPERATOR = {
   /** Postcode and town. */
   city: '21031 Hamburg',
   country: 'Deutschland',
-  /** Must actually be read: it is also the contact point under Art. 12 DSA. */
-  email: 'f.laitenberger@gmail.com',
+  /**
+   * Must actually be read: it is also the contact point under Art. 12 DSA.
+   *
+   * Written out with words instead of the symbols, so that harvesters scanning
+   * the page or the public repository for addresses do not pick it up, while a
+   * person can still read and type it. It is deliberately never put into a
+   * mailto link, which would undo exactly that.
+   */
+  email: 'f [punkt] laitenberger [at] gmail [punkt] com',
   /**
    * Only needed where journalistic or editorial content is published. A tool
    * that computes transport figures is not that, so this stays empty unless the

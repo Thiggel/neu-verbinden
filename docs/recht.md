@@ -58,7 +58,8 @@ veröffentlichen und kommentieren, nicht gehört.
 ## Speichern im Browser ohne Einwilligung
 
 Im Browser werden ausschließlich das gewählte Erscheinungsbild, die zuletzt
-geöffnete Stadt, der eigene Entwurf und nach einer Anmeldung das
+geöffnete Stadt, der eigene Entwurf, der Vermerk, dass die Begrüßung gezeigt
+wurde, der Zeitpunkt der letzten Rückmeldung und nach einer Anmeldung das
 Sitzungsmerkmal gespeichert, während Analyse, Tracking, Werbung, fremde
 Schriftarten und beim Aufruf nachgeladene Inhalte Dritter nicht vorkommen.
 Deshalb greift die Ausnahme des § 25 Abs. 2 Nr. 2 TDDDG, sodass kein
@@ -80,6 +81,15 @@ auf die Betriebsdokumentation, wobei hier nicht festgehalten ist, ob die
 Verträge beider Anbieter tatsächlich angenommen wurden, und zu prüfen bleibt,
 ob der Verweis die Empfänger nach Art. 13 Abs. 1 lit. e DSGVO hinreichend
 bezeichnet.
+
+Das **Rückmeldeformular** sendet unmittelbar aus dem Browser an Web3Forms, das
+die Nachricht per E-Mail weiterleitet und dabei die IP-Adresse des Absenders
+erhält. Zu prüfen ist, ob mit Web3Forms ein Vertrag zur Auftragsverarbeitung
+geschlossen werden kann, wo der Dienst die Daten verarbeitet und ob die Nennung
+in der Datenschutzerklärung genügt. Die E-Mail-Adresse des Betreibers steht im
+Impressum ausgeschrieben und ohne `mailto`-Verweis, was § 5 DDG genügen dürfte,
+da sie für Menschen lesbar bleibt und das Formular eine zweite unmittelbare
+Kontaktmöglichkeit bietet.
 
 Ein **Verzeichnis von Verarbeitungstätigkeiten nach Art. 30 DSGVO** fehlt,
 obwohl die Ausnahme für Stellen mit weniger als 250 Beschäftigten nicht

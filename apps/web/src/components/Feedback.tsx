@@ -7,15 +7,19 @@
 // bug report is not the place to start collecting them; there is a field for
 // anyone who wants an answer, and it is plainly optional.
 //
-// The spam defence is a proof of work rather than a captcha. The browser hashes
-// until it finds a nonce whose digest begins with enough zero bits — about a
-// second of the sender's processor, no clicking, no third party told who is
-// writing, nothing to read out of a distorted picture. It runs in a worker, so
-// the window stays responsive while it happens.
+// The message goes to Web3Forms, which forwards it by mail, so that the
+// operator's address appears nowhere in the page or in the source code, where
+// harvesters would find it. The access key is public by design, since it only
+// lets a form deliver to the one inbox it was created for, and a build can
+// replace it with NEXT_PUBLIC_WEB3FORMS_KEY.
+//
+// The spam defence asks nothing of a person: a hidden checkbox that only a bot
+// ticks, a few seconds that have to pass between opening the window and
+// sending, a minute between two messages from the same browser and an upper
+// bound on the length.
 
 import { useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { API_BASE } from '@/lib/api';
 
 type Kind = 'fehler' | 'wunsch' | 'sonstiges';
 
@@ -25,50 +29,26 @@ const KINDS: { id: Kind; label: string; hint: string }[] = [
   { id: 'sonstiges', label: 'Etwas anderes', hint: 'Alles, was weder ein Fehler noch ein Wunsch ist.' },
 ];
 
-/**
- * The work the server asks for, done off the main thread.
- *
- * Written into a Blob worker rather than a file: it is fifteen lines, it has no
- * imports, and a separate entry point in the build for fifteen lines would be
- * harder to find than this.
- */
-function solve(challenge: string, difficulty: number, onProgress: (n: number) => void) {
-  const source = `
-    self.onmessage = async (e) => {
-      const { challenge, difficulty } = e.data;
-      const enc = new TextEncoder();
-      const need = difficulty;
-      for (let n = 0; ; n++) {
-        const digest = new Uint8Array(
-          await crypto.subtle.digest('SHA-256', enc.encode(challenge + n))
-        );
-        let bits = 0;
-        for (const b of digest) {
-          bits += Math.clz32(b) - 24;
-          if (b !== 0) break;
-        }
-        if (bits >= need) { self.postMessage({ nonce: String(n) }); return; }
-        if (n % 20000 === 0 && n > 0) self.postMessage({ tried: n });
-      }
-    };
-  `;
-  const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
-  const worker = new Worker(url);
-  const done = new Promise<string>((resolve, reject) => {
-    worker.onmessage = (e) => {
-      if (e.data.nonce !== undefined) resolve(e.data.nonce);
-      else onProgress(e.data.tried);
-    };
-    worker.onerror = () => reject(new Error('Die Prüfaufgabe konnte nicht berechnet werden.'));
-  });
-  worker.postMessage({ challenge, difficulty });
-  return {
-    done: done.finally(() => {
-      worker.terminate();
-      URL.revokeObjectURL(url);
-    }),
-    cancel: () => worker.terminate(),
-  };
+const ENDPOINT = 'https://api.web3forms.com/submit';
+const ACCESS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_KEY || 'b95e413d-02de-4a1f-8bf8-406c224ca081';
+const MIN_OPEN_MS = 3000;
+const COOLDOWN_MS = 60_000;
+const MAX_LEN = 4000;
+const SENT_KEY = 'hh-feedback-sent';
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function lastSent(): number {
+  try {
+    return Number(localStorage.getItem(SENT_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function markSent() {
+  try {
+    localStorage.setItem(SENT_KEY, String(Date.now()));
+  } catch {}
 }
 
 function FeedbackDialog({ onDone }: { onDone: () => void }) {
@@ -78,6 +58,8 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
   const [state, setState] = useState<'schreiben' | 'sendet' | 'fertig'>('schreiben');
   const [error, setError] = useState<string | null>(null);
   const area = useRef<HTMLTextAreaElement>(null);
+  const trap = useRef<HTMLInputElement>(null);
+  const opened = useRef(Date.now());
 
   useEffect(() => {
     area.current?.focus();
@@ -89,38 +71,58 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   const send = async () => {
+    if (trap.current?.checked) {
+      // Looks like success to whatever ticked it, and sends nothing.
+      setState('fertig');
+      setTimeout(onDone, 2200);
+      return;
+    }
+    if (Date.now() - opened.current < MIN_OPEN_MS) {
+      setError('Einen Moment noch, dann bitte erneut auf „Absenden“ drücken.');
+      return;
+    }
+    const wait = COOLDOWN_MS - (Date.now() - lastSent());
+    if (wait > 0) {
+      setError(`Bitte warte noch ${Math.ceil(wait / 1000)} Sekunden bis zur nächsten Rückmeldung.`);
+      return;
+    }
+    const reply = replyTo.trim();
+    if (reply && !EMAIL.test(reply)) {
+      setError('Die Antwortadresse sieht nicht wie eine E-Mail-Adresse aus.');
+      return;
+    }
     setState('sendet');
     setError(null);
     try {
-      const c = await fetch(`${API_BASE}/api/feedback/challenge`).then((r) => {
-        if (!r.ok) throw new Error('Der Server ist gerade nicht erreichbar.');
-        return r.json();
-      });
-      const { done } = solve(c.challenge, c.difficulty, () => {});
-      const nonce = await done;
-      const res = await fetch(`${API_BASE}/api/feedback`, {
+      const label = KINDS.find((k) => k.id === kind)!.label;
+      const payload: Record<string, unknown> = {
+        access_key: ACCESS_KEY,
+        subject: `neu verbinden: ${label}`,
+        from_name: 'neu verbinden',
+        botcheck: false,
+        Art: label,
+        Nachricht: message.trim().slice(0, MAX_LEN),
+        Seite: window.location.pathname + window.location.search,
+      };
+      if (reply) payload.replyto = reply;
+      const res = await fetch(ENDPOINT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          kind,
-          message,
-          replyTo: replyTo || null,
-          page: typeof window === 'undefined' ? '' : window.location.pathname,
-          challenge: c.challenge,
-          signature: c.signature,
-          nonce,
-        }),
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? `Fehler ${res.status}`);
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error('Die Rückmeldung konnte gerade nicht gesendet werden, bitte versuche es später erneut.');
       }
+      markSent();
       setState('fertig');
       setTimeout(onDone, 2200);
     } catch (e) {
-      setError((e as Error).message);
+      setError(
+        e instanceof TypeError
+          ? 'Der Dienst für Rückmeldungen ist gerade nicht erreichbar.'
+          : (e as Error).message
+      );
       setState('schreiben');
     }
   };
@@ -136,7 +138,7 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Rückmeldung geben"
-        className="w-full max-w-[520px] rounded-t-3xl border border-line bg-paper p-4 shadow-2xl sm:rounded-2xl"
+        className="relative w-full max-w-[520px] rounded-t-3xl border border-line bg-paper p-4 shadow-2xl sm:rounded-2xl"
       >
         {state === 'fertig' ? (
           <div className="py-6 text-center">
@@ -191,6 +193,7 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={5}
+                maxLength={MAX_LEN}
                 placeholder={hint}
                 className="w-full rounded-xl border border-line bg-surface p-3 text-[14px] leading-relaxed"
               />
@@ -209,6 +212,13 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
               />
             </label>
 
+            {/* Out of sight and out of the tab order, so that only a bot that
+                fills in every field it finds ticks it. */}
+            <label aria-hidden className="absolute -left-[9999px] top-0 h-px w-px overflow-hidden">
+              Nicht ankreuzen
+              <input ref={trap} type="checkbox" name="botcheck" tabIndex={-1} autoComplete="off" />
+            </label>
+
             {error && (
               <p className="mt-2 rounded-lg border border-rose-500/40 bg-rose-500/10 p-2 text-[13px]">
                 {error}
@@ -221,15 +231,15 @@ function FeedbackDialog({ onDone }: { onDone: () => void }) {
                 disabled={[...message.trim()].length < 5 || state === 'sendet'}
                 onClick={send}
               >
-                {state === 'sendet' ? 'Wird geprüft und gesendet …' : 'Absenden'}
+                {state === 'sendet' ? 'Wird gesendet …' : 'Absenden'}
               </button>
               <button className="btn" onClick={onDone}>
                 Abbrechen
               </button>
             </div>
             <p className="mt-2 text-[11.5px] leading-snug text-muted">
-              Statt eines Captchas löst dein Browser eine Rechenaufgabe, was etwa eine Sekunde
-              dauert, keinen Klick erfordert und niemandem verrät, wer du bist.
+              Die Nachricht wird über den Dienst Web3Forms per E-Mail an mich weitergeleitet,
+              wobei weder ein Captcha noch eine Anmeldung nötig ist.
             </p>
           </>
         )}

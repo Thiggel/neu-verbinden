@@ -70,10 +70,8 @@ export default function LegalPage() {
               {OPERATOR.country}
             </address>
             <p>
-              Kontakt:{' '}
-              <a className="underline" href={`mailto:${OPERATOR.email}`}>
-                {OPERATOR.email}
-              </a>
+              Kontakt: <span className="text-ink">{OPERATOR.email}</span>, wobei die Adresse zum
+              Schutz vor Spam ausgeschrieben ist, oder über das Rückmeldeformular in der Fußzeile.
             </p>
             {OPERATOR.vatId && <p>Umsatzsteuer-Identifikationsnummer: {OPERATOR.vatId}</p>}
             {OPERATOR.responsibleForContent && (
@@ -110,8 +108,8 @@ export default function LegalPage() {
             <p>
               Im lokalen Speicher des Browsers liegen das gewählte Erscheinungsbild, die zuletzt
               geöffnete Stadt, der eigene unveröffentlichte Entwurf mit seiner Ausgangsvorlage, der
-              Vermerk, dass die Begrüßung bereits gezeigt wurde, und, nach einer Anmeldung, das
-              Sitzungsmerkmal. Weil diese Angaben für die ausdrücklich gewünschte Funktion
+              Vermerk, dass die Begrüßung bereits gezeigt wurde, der Zeitpunkt der letzten
+              Rückmeldung und, nach einer Anmeldung, das Sitzungsmerkmal. Weil diese Angaben für die ausdrücklich gewünschte Funktion
               erforderlich sind (§ 25 Abs. 2 Nr. 2 TDDDG), gibt es hier kein Einwilligungsbanner.
               Sie lassen sich jederzeit über die Browsereinstellungen löschen.
             </p>
@@ -142,11 +140,14 @@ export default function LegalPage() {
             <p>
               Wer über das Rückmeldeformular schreibt, schickt die gewählte Art, den Text, die Seite,
               auf der das Formular geöffnet wurde, und, nur wenn angegeben, eine Antwortadresse.
-              Die Rückmeldung wird nicht mit einem Konto verknüpft, sondern gespeichert und per
-              E-Mail an den Betreiber weitergeleitet, damit sie gelesen und beantwortet werden kann
-              (Art. 6 Abs. 1 lit. f DSGVO), während die IP-Adresse nur dem oben beschriebenen
-              Missbrauchszähler dient. Gespeicherte Rückmeldungen werden nach spätestens zwölf
-              Monaten gelöscht.
+              Die Rückmeldung wird nicht mit einem Konto verknüpft, sondern unmittelbar aus dem
+              Browser an den Formulardienst Web3Forms übermittelt, der sie per E-Mail an den
+              Betreiber weiterleitet, damit sie gelesen und beantwortet werden kann (Art. 6 Abs. 1
+              lit. f DSGVO). Web3Forms erhält dabei technisch bedingt auch die IP-Adresse des
+              Browsers, während der Betreiber die E-Mails löscht, sobald sie erledigt sind, und
+              spätestens nach zwölf Monaten. Im Browser wird lediglich der Zeitpunkt der letzten
+              Rückmeldung gespeichert, damit nicht mehrere Meldungen in kurzer Folge abgeschickt
+              werden.
             </p>
 
             <h3 className="text-[14px] font-semibold text-ink">Rechte</h3>
@@ -168,7 +169,8 @@ export default function LegalPage() {
             <p>
               Der Betrieb erfolgt bei Dienstleistern für Hosting und Datenbank, mit denen Verträge
               zur Auftragsverarbeitung nach Art. 28 DSGVO bestehen. Welche das sind, steht in der
-              Betriebsdokumentation des Projekts. Soweit eine Verarbeitung außerhalb der EU
+              Betriebsdokumentation des Projekts. Rückmeldungen laufen, wie oben beschrieben,
+              zusätzlich über den Formulardienst Web3Forms. Soweit eine Verarbeitung außerhalb der EU
               erfolgt, geschieht dies auf Grundlage der Standardvertragsklauseln beziehungsweise
               eines Angemessenheitsbeschlusses.
             </p>

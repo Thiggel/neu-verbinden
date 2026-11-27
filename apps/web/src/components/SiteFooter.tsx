@@ -29,9 +29,11 @@ export function SiteFooter() {
     <footer className="shrink-0 border-t border-line bg-surface">
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-[12px] text-muted">
         <span className="font-medium text-ink">Von {OPERATOR.name}</span>
-        <a className="hover:text-ink hover:underline" href={`mailto:${OPERATOR.email}`}>
+        {/* No mailto: the address is only ever shown written out, on the legal
+            page, so that nothing here hands it to a harvester. */}
+        <button className="hover:text-ink hover:underline" onClick={() => openFeedback()}>
           kontaktiere mich
-        </a>
+        </button>
         <a
           className="hover:text-ink hover:underline"
           href="https://buymeacoffee.com/filipelaitenberger"

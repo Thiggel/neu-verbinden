@@ -35,11 +35,18 @@ laufen.
 | `HH_WORKER_IDLE_SECS` | bei schlafender Datenbank | Wartezeit des Arbeiters, wenn nichts zu tun ist (Vorgabe 60 s) |
 | `HH_DB_IDLE_SECS` | bei schlafender Datenbank | Zeit, nach der ungenutzte Verbindungen geschlossen werden (Vorgabe 120 s) |
 | `HH_CITIES`, `HH_DATA_DIR`, `HH_DATA_VERSION` | nein | Auswahl der Städte, Ort und Stand der Daten |
-| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | für Rückmeldungen | Programm und Empfänger für das Rückmeldefenster. Aufgerufen wird `HH_SENDMAIL -i -- HH_FEEDBACK_TO` mit der Nachricht auf der Standardeingabe, sodass der Empfänger nie in Kopfzeilen steht, die ein Absender beeinflussen könnte. Fehlen beide Angaben, bleibt die Rückmeldung in der Tabelle `feedback` erhalten, deren Einträge der Aufräumjob nach zwölf Monaten löscht |
+| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | nein | Programm und Empfänger für den Rückmeldeweg der API, den die Oberfläche nicht mehr verwendet. Aufgerufen wird `HH_SENDMAIL -i -- HH_FEEDBACK_TO` mit der Nachricht auf der Standardeingabe, und fehlen beide Angaben, bleibt die Rückmeldung in der Tabelle `feedback`, deren Einträge der Aufräumjob nach zwölf Monaten löscht |
 
 Die Oberfläche benötigt zur *Bauzeit* `NEXT_PUBLIC_API_URL=https://…` mit der
 Adresse der API, die anschließend im ausgelieferten JavaScript steht und sich
 nur durch einen neuen Bau ändern lässt.
+
+Das Rückmeldefenster sendet unmittelbar aus dem Browser an Web3Forms, das die
+Nachricht an das Postfach weiterleitet, für das der Zugangsschlüssel angelegt
+wurde, sodass die Adresse des Betreibers weder in der Seite noch im Quelltext
+steht. Der Schlüssel ist in `apps/web/src/components/Feedback.tsx` hinterlegt
+und lässt sich zur Bauzeit mit `NEXT_PUBLIC_WEB3FORMS_KEY` ersetzen, wobei er
+öffentlich sein darf, da er nur an dieses eine Postfach zustellt.
 
 ## Freikontingente
 

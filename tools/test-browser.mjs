@@ -816,8 +816,14 @@ await check('der Fuß nennt den Betreiber, den Kontakt und den Kaffee', async ()
   const links = await page.evaluate(() =>
     [...document.querySelectorAll('footer a')].map((a) => ({ t: a.textContent?.trim(), h: a.getAttribute('href') }))
   );
+  // The address must not be machine-readable anywhere, so contact is a button
+  // that opens the form, and no mailto link may appear at all.
   const mail = links.find((l) => l.h?.startsWith('mailto:'));
-  assert(mail, 'kein Kontaktlink im Fuß');
+  assert(!mail, `der Fuß verrät die Adresse: ${mail?.h}`);
+  assert(
+    await page.locator('footer').getByRole('button', { name: 'kontaktiere mich' }).count(),
+    'kein Kontakt im Fuß'
+  );
   const coffee = links.find((l) => l.h?.includes('buymeacoffee.com'));
   assert(coffee, 'kein Kaffeelink im Fuß');
   const text = await page.evaluate(() => document.querySelector('footer').innerText);
@@ -850,10 +856,20 @@ await check('die Rückmeldung lässt sich in drei Schritten abschicken', async (
   await sheet.locator('textarea').fill('Ein Testwunsch aus der Browserprüfung, bitte ignorieren.');
   const send = sheet.getByRole('button', { name: 'Absenden' });
   assert(await send.isEnabled(), 'Absenden bleibt gesperrt');
+  // A check must not fill the operator's inbox, so Web3Forms is answered here,
+  // which also lets the payload be inspected.
+  let sent = null;
+  await page.route('https://api.web3forms.com/**', async (route) => {
+    sent = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"success":true}' });
+  });
+  // Sending within three seconds of opening is refused as a bot would be.
+  await page.waitForTimeout(3100);
   await send.click();
-  // The proof of work runs in a worker; the confirmation is what proves the
-  // whole path worked, challenge and all.
-  await page.getByText('Angekommen', { exact: false }).waitFor({ timeout: 40_000 });
+  await page.getByText('Angekommen', { exact: false }).waitFor({ timeout: 20_000 });
+  assert(sent?.access_key && sent?.botcheck === false, 'die Nachricht trägt keinen Schlüssel');
+  assert(sent?.Nachricht?.includes('Testwunsch'), 'der Text fehlt in der Nachricht');
+  assert(!JSON.stringify(sent).includes('@'), 'ohne Antwortadresse steht eine Adresse in der Nachricht');
   assert(errors.length === 0, `Fehler in der Konsole: ${errors.slice(0, 2).join(' | ')}`);
   await context.close();
 });
