@@ -8,10 +8,6 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 ## Offen
 
 ### Modell und Daten
-* **[F]** Die Grundlagenzeilen des Fiskaleffekts, die der Rust-Kern als Text
-  liefert, schreiben Dezimalzahlen mit Punkt („18.5 %“, „2.31 %“), während die
-  übrige Oberfläche das Komma verwendet.
-
 * **[P]** Die übrigen Steuersätze des Fiskaleffekts haben noch keine Quelle:
   Einkommensteuer 18,5 % der Wertschöpfung, Länderanteil an der Umsatzsteuer
   45,9 %, Grundsteuer 0,35 % und Wertschöpfung je Erwerbstätigem 92.000 €.
@@ -218,6 +214,11 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 
 ## Erledigt
+
+* **[F]** 2026-11-27 Zahlen in den Erläuterungstexten des Rust-Kerns, etwa in
+  den Grundlagenzeilen des Fiskaleffekts, standen mit Dezimalpunkt („2.31 %“),
+  während die Oberfläche das Komma verwendet. Kosten, Wirkung, Machbarkeit und
+  Bauablauf formatieren sie jetzt über `fmt::de` deutsch („2,31 %“, „1.500 m“).
 
 * **[F]** 2026-11-27 Gewerbesteuer im Fiskaleffekt, Modell 0.18.0. Angesetzt
   waren 4,8 % der Wertschöpfung ohne Quelle, und die Erklärung behauptete, ein

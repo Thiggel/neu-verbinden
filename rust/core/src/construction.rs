@@ -4,6 +4,7 @@
 //! fronts a project can realistically open at once, and the result is reported
 //! with a range rather than a single year.
 
+use crate::fmt::de;
 use crate::model::{BuildStatus, Infrastructure, Mode, Network};
 use crate::params::Params;
 use serde::{Deserialize, Serialize};
@@ -313,10 +314,10 @@ pub fn calculate(net: &Network, city: &crate::city::CityData, params: &Params) -
         "Bauausführung",
         remaining_construction,
         format!(
-            "{:.1} km, {} neue Stationen, rechnerisch {:.1} Baufelder parallel{}{}",
-            total_km,
+            "{} km, {} neue Stationen, rechnerisch {} Baufelder parallel{}{}",
+            de(total_km, 1),
             new_stations,
-            fronts,
+            de(fronts, 1),
             if in_corridor > 0.05 {
                 format!(
                     " ({:.0} % im Bestandskorridor, dort wird unter laufendem Betrieb gebaut)",

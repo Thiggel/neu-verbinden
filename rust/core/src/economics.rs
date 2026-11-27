@@ -10,6 +10,7 @@
 //! * annual **operating result** — fare revenue minus running cost;
 //! * the one-off **investment**.
 
+use crate::fmt::de;
 use crate::city::CityData;
 use crate::demand::DemandResult;
 use crate::model::{BuildStatus, Infrastructure, Network};
@@ -57,8 +58,9 @@ pub fn benefits(
         label: "Reisezeitgewinne".into(),
         amount_eur_per_year: time,
         basis: format!(
-            "{:.0} Personenstunden pro Werktag × {:.2} €/h",
-            demand.hours_saved_per_day, e.value_of_time_eur_h
+            "{} Personenstunden pro Werktag × {} €/h",
+            de(demand.hours_saved_per_day, 0),
+            de(e.value_of_time_eur_h, 2)
         ),
     });
 
@@ -87,10 +89,10 @@ pub fn benefits(
         label: "Produktivität und Arbeitsmarkt".into(),
         amount_eur_per_year: agglomeration,
         basis: format!(
-            "Elastizität {:.2} auf {:.1} % kürzere Wege für {:.0} Erwerbstätige im Einzugsbereich",
-            e.agglomeration_elasticity,
-            density_gain * 100.0,
-            workforce
+            "Elastizität {} auf {} % kürzere Wege für {} Erwerbstätige im Einzugsbereich",
+            de(e.agglomeration_elasticity, 2),
+            de(density_gain * 100.0, 1),
+            de(workforce, 0)
         ),
     });
     let _ = served_gain;
@@ -105,22 +107,22 @@ pub fn benefits(
         label: "Entlastung des Straßenverkehrs".into(),
         amount_eur_per_year: congestion,
         basis: format!(
-            "{:.0} Mio. vermiedene Pkw-km × {:.3} €/km",
-            car_km / 1e6,
-            e.congestion_eur_per_car_km
+            "{} Mio. vermiedene Pkw-km × {} €/km",
+            de(car_km / 1e6, 0),
+            de(e.congestion_eur_per_car_km, 3)
         ),
     });
     items.push(BenefitItem {
         key: "accidents".into(),
         label: "Vermiedene Unfälle".into(),
         amount_eur_per_year: accidents,
-        basis: format!("{:.3} €/Pkw-km", e.accident_eur_per_car_km),
+        basis: format!("{} €/Pkw-km", de(e.accident_eur_per_car_km, 3)),
     });
     items.push(BenefitItem {
         key: "air".into(),
         label: "Luftschadstoffe und Lärm".into(),
         amount_eur_per_year: air,
-        basis: format!("{:.3} €/Pkw-km", e.air_noise_eur_per_car_km),
+        basis: format!("{} €/Pkw-km", de(e.air_noise_eur_per_car_km, 3)),
     });
 
     // 4. Climate: car emissions avoided minus the traction emissions caused.
@@ -147,7 +149,7 @@ pub fn benefits(
         key: "health".into(),
         label: "Gesundheitseffekte des Zu- und Abgangs".into(),
         amount_eur_per_year: health,
-        basis: format!("{:.3} € je Einsteiger", e.health_eur_per_boarding),
+        basis: format!("{} € je Einsteiger", de(e.health_eur_per_boarding, 3)),
     });
 
     // 6. Location quality, expressed as an annualised land value uplift.
@@ -158,9 +160,9 @@ pub fn benefits(
         label: "Standort- und Bodenwerteffekte".into(),
         amount_eur_per_year: location,
         basis: format!(
-            "{:.1} % Wertzuwachs auf {:.0} neu erschlossene Einwohner, annuisiert",
-            e.land_value_uplift_share * 100.0,
-            served_gain
+            "{} % Wertzuwachs auf {} neu erschlossene Einwohner, annuisiert",
+            de(e.land_value_uplift_share * 100.0, 1),
+            de(served_gain, 0)
         ),
     });
     let _ = city;
@@ -249,10 +251,10 @@ pub fn fiscal(
         amount_eur_per_year: income * f.income_tax_city_share,
         level: format!("{city_name} (Land + Gemeinde)"),
         basis: format!(
-            "{:.1} % auf {:.0} Mio. € zusätzliche Wertschöpfung, davon {:.1} % Anteil des Landes",
-            f.income_tax_rate * 100.0,
-            productive / 1e6,
-            f.income_tax_city_share * 100.0
+            "{} % auf {} Mio. € zusätzliche Wertschöpfung, davon {} % Anteil des Landes",
+            de(f.income_tax_rate * 100.0, 1),
+            de(productive / 1e6, 0),
+            de(f.income_tax_city_share * 100.0, 1)
         ),
     });
 
@@ -263,9 +265,9 @@ pub fn fiscal(
         amount_eur_per_year: trade,
         level: city_name.to_string(),
         basis: format!(
-            "{:.2} % der zusätzlichen Wertschöpfung, davon {:.1} % nach Abzug der Bundesumlage",
-            f.trade_tax_rate * 100.0,
-            f.trade_tax_city_share * 100.0
+            "{} % der zusätzlichen Wertschöpfung, davon {} % nach Abzug der Bundesumlage",
+            de(f.trade_tax_rate * 100.0, 2),
+            de(f.trade_tax_city_share * 100.0, 1)
         ),
     });
 
@@ -277,11 +279,11 @@ pub fn fiscal(
         amount_eur_per_year: vat_city,
         level: format!("{city_name} (Länderanteil)"),
         basis: format!(
-            "{:.0} % Konsumquote, {:.0} % USt, Länderanteil {:.1} %, Schlüssel des Landes {:.2} %",
-            f.consumption_share * 100.0,
-            f.vat_rate * 100.0,
-            f.vat_laender_share * 100.0,
-            f.vat_city_share * 100.0
+            "{} % Konsumquote, {} % USt, Länderanteil {} %, Schlüssel des Landes {} %",
+            de(f.consumption_share * 100.0, 0),
+            de(f.vat_rate * 100.0, 0),
+            de(f.vat_laender_share * 100.0, 1),
+            de(f.vat_city_share * 100.0, 2)
         ),
     });
 
@@ -298,9 +300,9 @@ pub fn fiscal(
         amount_eur_per_year: property,
         level: city_name.to_string(),
         basis: format!(
-            "{:.2} % auf {:.0} Mio. € Bodenwertzuwachs",
-            f.property_tax_rate * 100.0,
-            uplift_stock / 1e6
+            "{} % auf {} Mio. € Bodenwertzuwachs",
+            de(f.property_tax_rate * 100.0, 2),
+            de(uplift_stock / 1e6, 0)
         ),
     });
     items.push(FiscalItem {
@@ -309,9 +311,9 @@ pub fn fiscal(
         amount_eur_per_year: transfer,
         level: city_name.to_string(),
         basis: format!(
-            "{:.1} % auf {:.1} % jährlichen Eigentümerwechsel",
-            f.transfer_tax_rate * 100.0,
-            f.annual_property_turnover * 100.0
+            "{} % auf {} % jährlichen Eigentümerwechsel",
+            de(f.transfer_tax_rate * 100.0, 1),
+            de(f.annual_property_turnover * 100.0, 1)
         ),
     });
 
@@ -328,8 +330,9 @@ pub fn fiscal(
         federal_funding_eligible: eligible,
         notes: vec![
             format!(
-                "Eine Bundesförderung nach dem GVFG setzt unter anderem ein Nutzen-Kosten-Verhältnis über {:.1} voraus, während es hier bei {:.2} liegt.",
-                f.federal_funding_min_bcr, benefit_cost_ratio
+                "Eine Bundesförderung nach dem GVFG setzt unter anderem ein Nutzen-Kosten-Verhältnis über {} voraus, während es hier bei {} liegt.",
+                de(f.federal_funding_min_bcr, 1),
+                de(benefit_cost_ratio, 2)
             ),
             "Fiskaleffekte sind Rückflüsse an öffentliche Haushalte und damit etwas anderes als der volkswirtschaftliche Nutzen.".to_string(),
         ],
@@ -406,16 +409,16 @@ pub fn operations_for_rides(net: &Network, annual_rides: f64, params: &Params) -
             label: "Fahrgeldeinnahmen".into(),
             amount_eur_per_year: revenue,
             basis: format!(
-                "{:.0} Mio. Fahrten × {:.2} € Durchschnittserlös",
-                annual_rides / 1e6,
-                o.revenue_per_boarding_eur
+                "{} Mio. Fahrten × {} € Durchschnittserlös",
+                de(annual_rides / 1e6, 0),
+                de(o.revenue_per_boarding_eur, 2)
             ),
         },
         BenefitItem {
             key: "vehicle_cost".into(),
             label: "Fahrbetrieb".into(),
             amount_eur_per_year: -vehicle_cost,
-            basis: format!("{:.1} Mio. Zug-km pro Jahr", train_km / 1e6),
+            basis: format!("{} Mio. Zug-km pro Jahr", de(train_km / 1e6, 1)),
         },
         BenefitItem {
             key: "infra_cost".into(),
@@ -536,8 +539,8 @@ pub fn appraise(
         series,
         notes: vec![
             format!(
-                "Barwerte mit {:.1} % realem Diskontsatz über {} Jahre nach Eröffnung.",
-                e.discount_rate * 100.0,
+                "Barwerte mit {} % realem Diskontsatz über {} Jahre nach Eröffnung.",
+                de(e.discount_rate * 100.0, 1),
                 e.appraisal_period_years
             ),
             "Die Kennzahlen ersetzen keine Standardisierte Bewertung, sondern dienen dazu, Entwürfe untereinander zu vergleichen."

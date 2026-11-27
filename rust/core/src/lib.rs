@@ -15,6 +15,7 @@ pub mod demand;
 pub mod economics;
 pub mod editor;
 pub mod feasibility;
+pub mod fmt;
 pub mod geo;
 pub mod model;
 pub mod params;

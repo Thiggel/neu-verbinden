@@ -4,6 +4,7 @@
 //! junctions and the indirect cost blocks are added on top, and the result is
 //! reported as a range, never as a single falsely precise figure.
 
+use crate::fmt::de;
 use crate::city::CityData;
 use crate::model::{BuildStatus, EdgeId, Infrastructure, Mode, Network, NodeId};
 use crate::params::Params;
@@ -184,11 +185,11 @@ pub fn calculate(
         track_items.push(CostItem {
             label: format!("{from} – {to}"),
             detail: format!(
-                "{:.1} km · {}{}",
-                km,
+                "{} km · {}{}",
+                de(km, 1),
                 e.infrastructure.label_de(),
                 if water_m > 20.0 {
-                    format!(" · {:.0} m Wasserquerung", water_m)
+                    format!(" · {} m Wasserquerung", de(water_m, 0))
                 } else {
                     String::new()
                 }
@@ -400,11 +401,11 @@ pub fn calculate(
         vehicle_items.push(CostItem {
             label: format!("{label} · {}", mode.label_de()),
             detail: format!(
-                "{:.0} Wagen inkl. {:.0} % Reserve, Takt {:.1} min auf {:.1} km Laufweg",
-                attributable,
-                c.vehicle_reserve_share * 100.0,
-                headway,
-                route_km
+                "{} Wagen inkl. {} % Reserve, Takt {} min auf {} km Laufweg",
+                de(attributable, 0),
+                de(c.vehicle_reserve_share * 100.0, 0),
+                de(headway, 1),
+                de(route_km, 1)
             ),
             amount_eur: amount,
             quantity: Some(attributable),
@@ -518,7 +519,7 @@ pub fn calculate(
             amount_eur: land,
             items: vec![CostItem {
                 label: "Grunderwerb, Leitungsumlegungen, Baustelleneinrichtung".into(),
-                detail: format!("{:.1} % der Baukosten", land_share * 100.0),
+                detail: format!("{} % der Baukosten", de(land_share * 100.0, 1)),
                 amount_eur: land,
                 quantity: None,
                 unit: None,
@@ -551,8 +552,8 @@ pub fn calculate(
             items: vec![CostItem {
                 label: "Baupreisentwicklung".into(),
                 detail: format!(
-                    "{:.1} % p. a. über {:.0} Jahre bis zur Bauzeitmitte",
-                    c.price_escalation_per_year * 100.0,
+                    "{} % p. a. über {:.0} Jahre bis zur Bauzeitmitte",
+                    de(c.price_escalation_per_year * 100.0, 1),
                     years
                 ),
                 amount_eur: escalation,

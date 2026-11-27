@@ -3,6 +3,7 @@
 //! The engine returns a classification with reasons, never a bare yes/no. Each
 //! finding names the object it applies to so the UI can highlight it on the map.
 
+use crate::fmt::de;
 use crate::city::CityData;
 use crate::geo::{polyline_length, Point};
 use crate::model::{BuildStatus, EdgeId, Infrastructure, Mode, Network, NodeId};
@@ -142,7 +143,7 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
             findings.push(Finding {
                 severity: Severity::Warning,
                 title: format!("Abschnitt {label} ist zu kurz"),
-                detail: format!("{:.0} m, unterhalb einer sinnvollen Streckenlänge.", len),
+                detail: format!("{} m, unterhalb einer sinnvollen Streckenlänge.", de(len, 0)),
                 edge: Some(eid),
                 node: None,
             });
@@ -171,18 +172,18 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
                     title: format!("Enger Bogen bei {label}"),
                     detail: if traced {
                         format!(
-                            "Rechnerischer Radius {:.0} m; für {} wären mindestens {:.0} m üblich. Die Trasse ist aus offenen Daten nachgezeichnet, nicht entworfen, der Wert sagt hier mehr über die Vorlage als über die Planung.",
-                            r,
+                            "Rechnerischer Radius {} m; für {} wären mindestens {} m üblich. Die Trasse ist aus offenen Daten nachgezeichnet, nicht entworfen, der Wert sagt hier mehr über die Vorlage als über die Planung.",
+                            de(r, 0),
                             e.mode.label_de(),
-                            min_r
+                            de(min_r, 0)
                         )
                     } else {
                         format!(
-                            "Rechnerischer Radius {:.0} m bei {:.0}° Richtungswechsel; für {} sind mindestens {:.0} m üblich.",
-                            r,
+                            "Rechnerischer Radius {} m bei {:.0}° Richtungswechsel; für {} sind mindestens {} m üblich.",
+                            de(r, 0),
                             180.0 - ang,
                             e.mode.label_de(),
-                            min_r
+                            de(min_r, 0)
                         )
                     },
                     edge: Some(eid),
@@ -205,8 +206,8 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
                 severity,
                 title: format!("Gewässerquerung bei {label}"),
                 detail: format!(
-                    "{:.0} m über oder unter Wasser{}. {}",
-                    wet,
+                    "{} m über oder unter Wasser{}. {}",
+                    de(wet, 0),
                     if major { " (Hauptgewässer)" } else { "" },
                     match e.infrastructure {
                         Infrastructure::DeepTunnel =>
@@ -258,8 +259,8 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
                     severity: Severity::Caution,
                     title: format!("Straßenbahn ohne Straßenkorridor bei {label}"),
                     detail: format!(
-                        "Rund {:.0} m verlaufen abseits erfasster Straßen. Es wäre ein eigener Bahnkörper mit Grunderwerb nötig.",
-                        offstreet
+                        "Rund {} m verlaufen abseits erfasster Straßen. Es wäre ein eigener Bahnkörper mit Grunderwerb nötig.",
+                        de(offstreet, 0)
                     ),
                     edge: Some(eid),
                     node: None,
@@ -311,9 +312,9 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
                         }
                     ),
                     detail: format!(
-                        "Bebauungsdichte-Index {:.2} auf {:.1} km. {}",
-                        d,
-                        len / 1000.0,
+                        "Bebauungsdichte-Index {} auf {} km. {}",
+                        de(d, 2),
+                        de(len / 1000.0, 1),
                         if severe {
                             "Ein eigener Bahnkörper an der Oberfläche wäre hier nur mit umfangreichen Abrissen zu haben, real würde diese Strecke im Tunnel gebaut."
                         } else {
@@ -335,8 +336,8 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
                     severity: Severity::Caution,
                     title: format!("Offene Bauweise in dichter Bebauung bei {label}"),
                     detail: format!(
-                        "Bebauungsdichte-Index {:.2}. Offene Bauweise bedeutet hier lange Vollsperrungen und hohe Umlegungskosten; bergmännischer Vortrieb ist meist vorzuziehen.",
-                        d
+                        "Bebauungsdichte-Index {}. Offene Bauweise bedeutet hier lange Vollsperrungen und hohe Umlegungskosten; bergmännischer Vortrieb ist meist vorzuziehen.",
+                        de(d, 2)
                     ),
                     edge: Some(eid),
                     node: None,
@@ -359,7 +360,7 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
                 findings.push(Finding {
                     severity: Severity::Caution,
                     title: format!("Sehr enger Stationsabstand auf {}", l.label),
-                    detail: format!("{} – {}: {:.0} m.", a.name, b.name, d),
+                    detail: format!("{} – {}: {} m.", a.name, b.name, de(d, 0)),
                     edge: l.edges.get(i).copied(),
                     node: None,
                 });
@@ -439,7 +440,7 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
     if coarse_km > 2.0 {
         findings.push(Finding {
             severity: Severity::Info,
-            title: format!("{coarse_km:.1} km liegen im Umland, wo die Daten gröber sind"),
+            title: format!("{} km liegen im Umland, wo die Daten gröber sind", de(coarse_km, 1)),
             detail:
                 "Außerhalb der Stadt stammen die Einwohnerzahlen aus den Ortsangaben von \
                  OpenStreetMap auf einem Ein-Kilometer-Raster, innerhalb aus amtlicher Statistik \
@@ -482,9 +483,9 @@ pub fn calculate(net: &Network, city: &CityData, params: &Params) -> Feasibility
         "Keine baulichen Auffälligkeiten erkannt. Das Modell prüft Geometrie, Gewässer, Bauweise und Netzlogik, keinen Baugrund und keine Leitungslage.".to_string()
     } else {
         format!(
-            "{} Hinweis(e) auf {:.1} km neuer Infrastruktur. {}",
+            "{} Hinweis(e) auf {} km neuer Infrastruktur. {}",
             findings.len(),
-            to_build_km,
+            de(to_build_km, 1),
             if blocking {
                 "Mindestens ein Punkt schließt die Umsetzung in dieser Form aus."
             } else {
