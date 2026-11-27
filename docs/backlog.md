@@ -64,6 +64,13 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
   Datenstand bekommen; die Beispiele müssen nach den Korrekturen dieses Laufs
   mit `npm run examples:seed` neu angelegt werden.
 
+* **[F]** Der Modellvorschlag Harburg–Winsen–Lüneburg hieß S5, obwohl die
+  S5 nach Stade fährt. Weil die Fahrzeugkosten je Liniennamen berechnet
+  werden, zählte das Modell beide Linien als einen Betrieb, und die Karte
+  zeigte zwei verschiedene Linien unter demselben Namen. Der Vorschlag heißt
+  jetzt S8, und ein Test hält fest, dass kein Vorschlag einen vergebenen
+  Liniennamen trägt.
+
 
 ### Karte
 * **[F]** `map.loaded()` bleibt auf dieser Karte dauerhaft `false`, obwohl der

@@ -2,7 +2,7 @@
 //! because every scenario starts from them and the server refuses a document
 //! that fails `Network::validate`.
 
-use hh_core::model::Network;
+use hh_core::model::{Network, Source};
 use std::path::PathBuf;
 
 fn dist(rel: &str) -> PathBuf {
@@ -130,4 +130,39 @@ fn a_stub_in_a_served_area_gains_no_riders() {
         "der Stummel kommt auf ein Nutzen-Kosten-Verhältnis von {:.2}",
         r.appraisal.benefit_cost_ratio
     );
+}
+
+/// A proposal's label must not be one already in use for a line in service
+/// or in planning. The fleet is sized per label, so a model proposal "S5"
+/// to Lüneburg was counted together with the real S5 to Stade, and the map
+/// showed two different lines under one name.
+fn proposals_have_own_labels(rel: &str) {
+    let Ok(text) = std::fs::read_to_string(dist(rel)) else {
+        eprintln!("{rel} fehlt, Test übersprungen");
+        return;
+    };
+    let net: Network = serde_json::from_str(&text).expect("network parses");
+    let taken: std::collections::HashSet<_> = net
+        .lines
+        .values()
+        .filter(|l| l.source != Source::Proposal)
+        .map(|l| (l.label.clone(), l.mode))
+        .collect();
+    let clashes: Vec<String> = net
+        .lines
+        .values()
+        .filter(|l| l.source == Source::Proposal && taken.contains(&(l.label.clone(), l.mode)))
+        .map(|l| format!("{} ({})", l.label, l.name))
+        .collect();
+    assert!(clashes.is_empty(), "{rel}: Vorschläge mit vergebenen Liniennamen: {clashes:?}");
+}
+
+#[test]
+fn hamburg_proposals_have_own_labels() {
+    proposals_have_own_labels("network-2026-09.json");
+}
+
+#[test]
+fn berlin_proposals_have_own_labels() {
+    proposals_have_own_labels("berlin/network-2026-09.json");
 }
