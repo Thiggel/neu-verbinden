@@ -22,7 +22,13 @@ RUN mkdir -p core/src cli/src server/src wasm/src \
 COPY rust/ ./
 # The migrations are read at compile time by `sqlx::migrate!`, so they have to
 # be present before this build, not only at runtime.
-RUN touch server/src/main.rs && cargo build --release -p hh-server
+#
+# Every source file is touched, not only the server's: COPY keeps the files'
+# original times, which are older than the placeholder build above, so cargo
+# would otherwise take the empty `hh_core` from that build for current and the
+# server would not find a single one of its modules.
+RUN find core cli server wasm -name '*.rs' -exec touch {} + \
+ && cargo build --release -p hh-server
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
