@@ -595,13 +595,14 @@ console.log(`Rechenkern gestartet in ${bootMs.toFixed(0)} ms\n`);
   // *before* the error in it was corrected, and quoted a ridership figure and a
   // calculation version that had both moved on. Prose that explains a model has
   // to be checked against the model.
-  const doc = await readFile(resolve(ROOT, 'docs/modell.md'), 'utf8');
+  // Line breaks in wrapped prose count as plain spaces.
+  const doc = (await readFile(resolve(ROOT, 'docs/modell.md'), 'utf8')).replace(/\s+/g, ' ');
   const docClaims = [
     ['Zeitwert', `${de(params.economics.valueOfTimeEurH)} €/h`],
     ['Stau je Pkw-km', `${de(params.economics.congestionEurPerCarKm, 3)} €/km`],
     ['CO₂ je Pkw-km', `${de(params.economics.co2KgPerCarKm, 3)} kg`],
     ['Planungsanteil', `Planung (${Math.round(params.cost.planningShare * 100)} %)`],
-    ['Baupreissteigerung', `(${Math.round(params.cost.priceEscalationPerYear * 100)} % p. a.)`],
+    ['Baupreissteigerung', `Bauzeit mit ${Math.round(params.cost.priceEscalationPerYear * 100)} % im Jahr`],
     ['Genehmigungsüberlappung', `${Math.round(params.timeline.designOverlap * 100)} % parallel`],
     ['Modellversion', `\`calculationVersion\` (derzeit ${params.version})`],
   ];
