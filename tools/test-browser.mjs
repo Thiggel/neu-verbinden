@@ -81,7 +81,7 @@ async function open(path = '/', { city = 'hamburg' } = {}) {
 
 /** Dismiss the welcome sheet, choosing a starting point by its visible text. */
 async function start(page, choice = 'Geplante Vorhaben') {
-  const heading = page.getByRole('heading', { name: /Wie soll/ });
+  const heading = page.getByRole('heading', { name: /Netzentwurf für/ });
   await heading.waitFor({ state: 'visible', timeout: READY });
   // Scoped to the sheet's own buttons. Matching on text alone picked the hidden
   // <option> of the scenario <select> behind it, which is never clickable.
@@ -640,7 +640,7 @@ await check('die Sprungmarken bringen die Tastatur an die Karte', async () => {
 
 await check('die Wunschkarte zeigt eine Hitzekarte und wechselt die Stadt', async () => {
   const { page, context, errors } = await open('/wuensche');
-  await page.getByRole('heading', { name: 'Wo Verbindungen fehlen' }).waitFor({ timeout: 30_000 });
+  await page.getByRole('heading', { name: 'Fehlende Verbindungen' }).waitFor({ timeout: 30_000 });
   // The map has to carry data, not just exist: a heat layer over an empty
   // source is a grey rectangle that looks like a working map.
   await page.waitForFunction(
@@ -686,7 +686,7 @@ await check('die Wunschkarte lädt den Rechenkern nicht mit', async () => {
     if (/hh_wasm_bg.*\.wasm|\/data\/city-|\/data\/berlin\/city-/.test(u)) heavy.push(u.slice(-40));
   });
   await page.goto(`${WEB}/wuensche`, { waitUntil: 'domcontentloaded', timeout: READY });
-  await page.getByRole('heading', { name: 'Wo Verbindungen fehlen' }).waitFor({ timeout: 30_000 });
+  await page.getByRole('heading', { name: 'Fehlende Verbindungen' }).waitFor({ timeout: 30_000 });
   await page.waitForTimeout(4000);
   assert(heavy.length === 0, `unnötig geladen: ${heavy.join(', ')}`);
   await context.close();

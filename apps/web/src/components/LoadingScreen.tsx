@@ -26,7 +26,7 @@ export function LoadingScreen({
             />
           ))}
         </div>
-        <h1 className="text-[17px] font-semibold">Netz neu denken</h1>
+        <h1 className="text-[17px] font-semibold">{city?.name ? `${city.name} neu verbinden` : 'Neu verbinden'}</h1>
         <p className="mt-1 text-[13px] text-muted">{stage} …</p>
         <div className="mx-auto mt-4 h-1 w-56 overflow-hidden rounded-full bg-subtle">
           <div

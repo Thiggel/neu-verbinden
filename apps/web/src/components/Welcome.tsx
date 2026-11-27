@@ -57,7 +57,7 @@ export function Welcome({
             />
           ))}
         </div>
-        <h1 className="text-[21px] font-semibold leading-tight">Wie soll {city} fahren?</h1>
+        <h1 className="text-[21px] font-semibold leading-tight">Netzentwurf für {city}</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-muted">
           Während du die U-Bahn, S-Bahn oder Straßenbahn zeichnest, die du dir wünschst, rechnet
           die App mit, was sie kosten würde, wann sie fertig wäre und wem sie nützt. Den
@@ -66,7 +66,7 @@ export function Welcome({
 
         <div className="mt-4 space-y-1.5">
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            Oder schau dir erst an, was schon geplant ist
+            Bereits geplante Vorhaben
           </div>
           {highlights.map((t) => (
             <button

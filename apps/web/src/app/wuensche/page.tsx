@@ -83,7 +83,7 @@ export default function WishesPage() {
       <SiteHeader />
       <main className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 px-4 py-5 lg:flex-row">
         <section className="flex min-w-0 flex-1 flex-col">
-          <h1 className="text-[22px] font-semibold">Wo Verbindungen fehlen</h1>
+          <h1 className="text-[22px] font-semibold">Fehlende Verbindungen</h1>
           <p className="mt-1 max-w-3xl text-[14px] leading-relaxed text-muted">
             Die Karte legt alle veröffentlichten Entwürfe übereinander, wobei nur zählt, was gebaut
             werden müsste, und nicht das Netz, das schon fährt. Je wärmer die Farbe ist, desto mehr

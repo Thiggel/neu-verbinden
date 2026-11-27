@@ -99,7 +99,7 @@ export default function LegalPage() {
               so gebaut, dass sie möglichst wenige Daten erhebt.
             </p>
 
-            <h3 className="text-[14px] font-semibold text-ink">Was ohne Konto passiert</h3>
+            <h3 className="text-[14px] font-semibold text-ink">Nutzung ohne Konto</h3>
             <p>
               Das Zeichnen läuft vollständig im Browser, weil der Rechenkern als WebAssembly-Modul
               mit der Seite heruntergeladen wird, sodass Netzentwürfe, die nicht veröffentlicht
