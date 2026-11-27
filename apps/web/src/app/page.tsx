@@ -11,6 +11,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { ScenarioBar } from '@/components/editor/ScenarioBar';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { Welcome } from '@/components/Welcome';
+import { Tour } from '@/components/Tour';
 import { cityFiguresFrom, cmd, loadEngine, type WasmEngine } from '@/lib/engine';
 import { existingSwitchedOff, ownWorkOnly, scopeOf } from '@/lib/publish-scope';
 import type { DrawEstimate, EditorController } from '@/lib/controller';
@@ -53,6 +54,7 @@ export default function EditorPage() {
   const [dark, setDark] = useState(false);
   const [sidebar, setSidebar] = useState<'layers' | 'analysis'>('analysis');
   const [drawing, setDrawing] = useState(0);
+  const [tour, setTour] = useState(false);
   const [estimate, setEstimate] = useState<DrawEstimate | null>(null);
   const [lastDiff, setLastDiff] = useState<Diff | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -553,14 +555,16 @@ export default function EditorPage() {
             className="flex w-[336px] shrink-0 flex-col border-r border-line bg-paper"
           >
             <div className="border-b border-line p-3">
-              <ModeSwitch
-                mode={ui.mode}
-                onMode={(m) => {
-                  useUi.setState({ mode: m });
-                  controllerRef.current?.setMode(m);
-                }}
-              />
-              <div className="mt-2">
+              <div data-tour="mode">
+                <ModeSwitch
+                  mode={ui.mode}
+                  onMode={(m) => {
+                    useUi.setState({ mode: m });
+                    controllerRef.current?.setMode(m);
+                  }}
+                />
+              </div>
+              <div className="mt-2" data-tour="tools">
                 <ToolRail tool={ui.tool} onTool={setTool} />
               </div>
               <p className="mt-2 text-[11px] leading-snug text-muted">
@@ -570,7 +574,7 @@ export default function EditorPage() {
                     : 'Beim Zeichnen setzt jeder Klick eine Station, während die App dazwischen weitere ergänzt.')}
               </p>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto" data-tour="lines">
               <Layers
                 lines={ui.render?.lines ?? []}
                 onToggle={toggleLine}
@@ -582,7 +586,7 @@ export default function EditorPage() {
           </aside>
         )}
 
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1" data-tour="map">
           <MapCanvas
             engine={engineRef.current}
             basemap={basemap}
@@ -694,16 +698,21 @@ export default function EditorPage() {
                   </div>
                 )}
                 <div className="rounded-2xl border border-line bg-surface/95 p-2 shadow-lg backdrop-blur">
-                  <ModeSwitch
-                    mode={ui.mode}
-                    onMode={(m) => {
-                      useUi.setState({ mode: m });
-                      controllerRef.current?.setMode(m);
-                    }}
-                  />
+                  <div data-tour="mode">
+                    <ModeSwitch
+                      mode={ui.mode}
+                      onMode={(m) => {
+                        useUi.setState({ mode: m });
+                        controllerRef.current?.setMode(m);
+                      }}
+                    />
+                  </div>
                   <div className="mt-2 flex items-center gap-1">
-                    <ToolRail tool={ui.tool} onTool={setTool} variant="compact" />
+                    <div data-tour="tools">
+                      <ToolRail tool={ui.tool} onTool={setTool} variant="compact" />
+                    </div>
                     <button
+                      data-tour="analysis"
                       className="ml-auto btn shrink-0"
                       onClick={() => useUi.setState({ sheet: ui.sheet === 'closed' ? 'half' : 'closed', selection: null })}
                     >
@@ -714,6 +723,7 @@ export default function EditorPage() {
               </div>
               <button
                 onClick={() => setSidebar(sidebar === 'layers' ? 'analysis' : 'layers')}
+                data-tour="lines"
                 className="absolute right-3 top-3 z-20 btn bg-surface/90 backdrop-blur"
               >
                 Linien
@@ -737,8 +747,6 @@ export default function EditorPage() {
               )}
             </>
           )}
-
-          <Welcome templates={ui.templates} onPick={loadTemplate} city={ui.city?.name} />
 
           {toast && (
             <div
@@ -772,6 +780,7 @@ export default function EditorPage() {
         {isDesktop && (
           <aside
             id="analyse-panel"
+            data-tour="analysis"
             tabIndex={-1}
             aria-label="Analyse"
             className="flex w-[360px] shrink-0 flex-col border-l border-line bg-paper"
@@ -799,6 +808,16 @@ export default function EditorPage() {
           </aside>
         )}
       </div>
+
+      {/* Outside the map, so that the note covers the whole page and not just
+          the map between the two panels. */}
+      <Welcome
+        templates={ui.templates}
+        onPick={loadTemplate}
+        onTour={() => setTour(true)}
+        city={ui.city?.name}
+      />
+      <Tour open={tour} onClose={() => setTour(false)} desktop={isDesktop} />
     </main>
   );
 }

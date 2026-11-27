@@ -69,6 +69,7 @@ export function ScenarioBar({
         </label>
         <select
           id="scenario"
+          data-tour="scenario"
           value={templateId}
           onChange={(e) => onTemplate(e.target.value)}
           className="w-full max-w-[280px] rounded-lg border border-line bg-surface px-2 py-1.5 text-[13px]"
@@ -89,7 +90,7 @@ export function ScenarioBar({
       <div className="flex min-w-0 items-center gap-2 sm:justify-center">
         <h1 className="flex items-baseline gap-1.5 whitespace-nowrap text-[14px] font-semibold">
           {cities.length > 1 ? (
-            <span className="group relative inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 ring-1 ring-line transition-colors hover:bg-subtle focus-within:ring-2 focus-within:ring-ink/40">
+            <span data-tour="city" className="group relative inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 ring-1 ring-line transition-colors hover:bg-subtle focus-within:ring-2 focus-within:ring-ink/40">
               <span>{cities.find((c) => c.id === cityId)?.name ?? cityId}</span>
               <span aria-hidden className="text-[9px] text-muted transition-transform group-hover:translate-y-[1px]">
                 ▾
@@ -145,10 +146,10 @@ export function ScenarioBar({
             e.target.value = '';
           }}
         />
-        <button className="btn btn-primary" onClick={onPublish} title="Deinen Entwurf für andere sichtbar machen">
+        <button data-tour="share" className="btn btn-primary" onClick={onPublish} title="Deinen Entwurf für andere sichtbar machen">
           Teilen
         </button>
-        <Link href="/entdecken" className="btn btn-discover hidden lg:inline-flex">
+        <Link href="/entdecken" data-tour="discover" className="btn btn-discover hidden lg:inline-flex">
           Entdecken
         </Link>
         <button
