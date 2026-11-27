@@ -39,6 +39,7 @@
   "overrides": {
     "next": {
       "postcss": "^8.5.26"
-    }
+    },
+    "@typescript-eslint/typescript-estree": "^8.74.0"
   }
 }
