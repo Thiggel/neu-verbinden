@@ -80,6 +80,38 @@ nichts, worauf jemand wartet.
    Der Sicherheitslauf prüft echte Limits und unterliegt ihnen selbst; zweimal
    kurz hintereinander gestartet sagt er weniger, und sagt das auch.
 
+## Mit Vercel und Neon
+
+Ausgerollt wird nur, wenn auf GitHub ein Release veröffentlicht wird
+(`.github/workflows/deploy.yml`); ein Vorab-Release bleibt offline. Die
+Git-Anbindung von Vercel ist in beiden `vercel.json` abgeschaltet, damit ein
+Push auf `main` nichts verändert. Die Oberfläche wird in GitHub Actions gebaut,
+weil Rechenkern und Stadtdaten nicht im Repository liegen, und fertig
+hochgeladen. Die API baut Vercel aus dem `Dockerfile`.
+
+Zwei Vercel-Projekte aus demselben Repository:
+
+| Projekt | Root Directory | Framework | Variablen |
+| --- | --- | --- | --- |
+| Oberfläche | `apps/web` | Next.js | `NEXT_PUBLIC_API_URL` |
+| API | Wurzel | Container | alle aus der Tabelle oben, dazu `PORT=8080`, `HH_TRUST_PROXY=1`, `HH_WORKER_IDLE_SECS=600`, `HH_DB_IDLE_SECS=60` |
+
+`DATABASE_URL` setzt die Neon-Integration aus dem Vercel Marketplace, wenn
+dort der Free-Tarif gewählt wird. In GitHub stehen als Secrets
+`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_WEB` und
+`VERCEL_PROJECT_ID_API`, als Variable optional `API_URL`. Ist `API_URL` gesetzt,
+geht die Oberfläche erst hinaus, wenn die neue API antwortet.
+
+Der Hobby-Tarif kennt keine Nachzahlung, weil ihm keine Zahlungsart hinterlegt
+ist: Wird ein Kontingent überschritten, ruht der betroffene Dienst bis zum
+nächsten Abrechnungszeitraum. Kosten entstehen erst nach einem Wechsel zu Pro,
+der eine Karte verlangt. Die Grenzen, die hier zuerst greifen dürften, sind
+die 100 GB Datenverkehr (siehe oben) und der bereitgestellte Speicher des
+Containers, der nach jedem Aufruf mindestens fünf Minuten wach bleibt. Der
+Hobby-Tarif ist auf persönliche, nicht kommerzielle Nutzung beschränkt.
+Stand 2026-11-27, Quelle: vercel.com/docs/plans/hobby und
+vercel.com/legal/terms.
+
 ## Die Beispiele auf der Entdecken-Seite
 
 `npm run examples:seed` veröffentlicht sie unter einem eigenen Konto und ersetzt

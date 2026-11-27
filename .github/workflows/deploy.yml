@@ -1,0 +1,97 @@
+# Publishes the site when a GitHub release is published, and only then.
+#
+# Vercel's own Git integration is switched off in both vercel.json files, so a
+# push to main changes nothing online. The web app needs the WebAssembly engine
+# and the city data, neither of which is in git, so it is built here and
+# uploaded finished ("prebuilt"). The API is built by Vercel from the
+# Dockerfile, which already carries the data.
+name: Deploy
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tag or commit to deploy
+        required: true
+
+permissions:
+  contents: read
+
+# Never two deployments at once, and a running one is not cut off halfway.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_CLI: vercel@67.0.0
+
+jobs:
+  deploy:
+    # A pre-release is for trying things out, not for going live.
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      # Must match the wasm-bindgen version in rust/Cargo.lock exactly.
+      - name: Install wasm-bindgen
+        run: |
+          wasm-bindgen --version 2>/dev/null | grep -q ' 0.2.127$' \
+            || cargo install wasm-bindgen-cli --version 0.2.127 --locked
+
+      - run: npm ci
+      - run: npm run wasm:build
+      - run: npm run data:publish
+      - run: npm run lint
+      - run: npm run test:ui
+
+      # Only what the Dockerfile reads is uploaded. The checkout by now also
+      # holds rust/target, node_modules and the built web assets.
+      - name: Deploy API
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_API }}
+        run: |
+          API="$RUNNER_TEMP/api"
+          mkdir -p "$API/data"
+          cp Dockerfile .dockerignore vercel.json "$API/"
+          rsync -a --exclude target rust "$API/"
+          cp -R data/dist "$API/data/dist"
+          npx --yes $VERCEL_CLI deploy "$API" --prod --yes --archive=tgz --token="${{ secrets.VERCEL_TOKEN }}"
+
+      # The web app goes out only when the API answers, so a new front end
+      # never talks to an API that failed to start.
+      - name: Check API health
+        if: vars.API_URL != ''
+        run: |
+          for i in $(seq 1 12); do
+            curl -fsS "${{ vars.API_URL }}/api/health" && exit 0
+            echo "not healthy yet ($i)"; sleep 10
+          done
+          exit 1
+
+      - name: Deploy web app
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+        run: |
+          npx --yes $VERCEL_CLI pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+          npx --yes $VERCEL_CLI build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          npx --yes $VERCEL_CLI deploy --prebuilt --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"
