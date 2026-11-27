@@ -50,7 +50,7 @@ Hamburger Projektangaben:
 | --- | ---: | ---: | ---: |
 | U5 City Nord – Jarrestraße | 1,42 Mrd. € | 1,50 Mrd. € | −5 % |
 | S4 | 1,70 Mrd. € | 1,85 Mrd. € | −8 % |
-| U5 Ost (Bramfeld – City Nord) | 1,96 Mrd. € | 2,86 Mrd. € | −31 % |
+| U5 Ost (Bramfeld – City Nord) | 1,97 Mrd. € | 2,86 Mrd. € | −31 % |
 | U4 Horner Geest | 779 Mio. € | 561 Mio. € | +39 % |
 | Straßenbahnnetz der Studie, Länge | 43,0 km | 43,7 km | −2 % |
 | Fahrten im Jahr, Bestandsnetz | 572 Mio. | 571 Mio. | +0 % |
@@ -75,7 +75,7 @@ fehlt nur der Rechenkern, den der Browser braucht, weil er kompiliert wird und
 deshalb nicht mitliegt.
 
 ```bash
-git clone git@github.com:Thiggel/neu-verbinden.git
+git clone https://github.com/Thiggel/neu-verbinden.git
 cd neu-verbinden
 npm install
 
