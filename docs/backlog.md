@@ -52,9 +52,11 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
   klären — kurze U-Bahn-Abschnitte mit veröffentlichtem Termin, aus Berlin,
   München oder Nürnberg. Bis dahin steht die Abweichung sichtbar in der
   Kalibrierung.
-* **[P]** Preisstand fehlt noch für U5 Ost (2,6 Mrd. €), U5 City
-  Nord–Jarrestraße (1,5 Mrd. €) und S4 Ost (2,1 Mrd. €) — zu erheben aus den
-  Bürgerschafts-Drucksachen. Das Feld und die Auswertung stehen bereits.
+* **[P]** Offen ist, auf welchen Preisstand sich die 1,5 Mrd. € für U5 City
+  Nord–Jarrestraße beziehen und ob die 1,847 Mrd. € der S4 künftige
+  Preissteigerungen enthalten, da die Finanzierungsvereinbarung nach
+  s-bahn-4.de nur „alle Risiken“ nennt. Solange beides nicht belegt ist, bleibt
+  `priceBaseYear` leer.
 * **[I]** Amtlichen Baupreisindex hinterlegen (Destatis, Ingenieurbau), damit
   eine ältere Angabe auf heutige Preise umgerechnet statt nur beschriftet wird.
   Die Vorausannahme des Modells (2 %/Jahr) taugt dafür nicht: die deutschen
@@ -215,6 +217,17 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 
 ## Erledigt
+
+* **[P]** 2026-11-27 Preisstand der Hamburger Vorhaben. Die HOCHBAHN gibt die
+  Kosten der U5 als nominale Gesamtsummen an, in die die Preissteigerung bis
+  zur Fertigstellung eingerechnet ist (Presseinformation vom 19.09.2023: 7,7
+  Mrd. € Bau und Planung, 1,1 Mrd. € Risiken und 5,3 bis 7,7 Mrd. €
+  Preissteigerung). Weil auch das Modell die Kosten auf die Bauzeit
+  fortschreibt, sind beide Angaben vergleichbar, sodass `priceBaseYear` für
+  die U5 Ost bewusst leer bleibt. Die Erläuterung der S4 behauptete, die
+  Finanzierungsvereinbarung von 2019 schließe Preissteigerungen ein, was
+  s-bahn-4.de nicht bestätigt, weshalb sie jetzt nur noch „alle Risiken“
+  nennt.
 
 * **[F]** 2026-11-27 Zahlen in den Erläuterungstexten des Rust-Kerns, etwa in
   den Grundlagenzeilen des Fiskaleffekts, standen mit Dezimalpunkt („2.31 %“),
