@@ -194,12 +194,13 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
   leer. Zu prüfen, ob 1 200 m für eine so dichte Stadt zu großzügig ist.
 
 * **[P]** Das Modell rechnet für die *beschlossenen* Vorhaben (S4, U4, U5) ein
-  NKV von 0,30. Diese Projekte sind beschlossen und gefördert, was nach
-  amtlicher Methode ein NKV über 1,0 voraussetzt. Der Erklärtext nennt 0,30
-  jetzt ausdrücklich als Bezugspunkt statt als Absage, und ein Test hält Text
-  und Modell zusammen. Offen bleibt die eigentliche Frage: die
-  veröffentlichten Nutzen-Kosten-Untersuchungen zu U5 und S4 beschaffen und
-  Posten für Posten vergleichen, statt den Faktor drei zu vermuten.
+  NKV von rund 0,60 (Modell 0.19.0, vorher 0,30). Diese Projekte sind
+  beschlossen und gefördert, was nach amtlicher Methode ein NKV über 1,0
+  voraussetzt. Der Erklärtext nennt den Wert ausdrücklich als Bezugspunkt
+  statt als Absage, und ein Test hält Text und Modell zusammen. Offen bleibt
+  die eigentliche Frage: die veröffentlichten Nutzen-Kosten-Untersuchungen zu
+  U5 und S4 beschaffen und Posten für Posten vergleichen, statt den Abstand zu
+  vermuten.
 
 * **[P]** Die mittlere Detailstufe deckt vierzehn Orte ab, nicht die Strecken
   dazwischen. Zwischen den Orten bleibt es bei Flüssen, Wäldern und
