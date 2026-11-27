@@ -267,6 +267,14 @@ Standardisierten Bewertung 2016+, Preisstand 2016. Weil das Modell in Preisen vo
 2025 = 121,9, 2026 mit 2 % fortgeschrieben): Faktor 1,309. Stau, Luft und Lärm
 sowie Gesundheit und Standort sind eigene Ansätze.
 
+Die Produktivitätswirkung bewertet jeden Erwerbstätigen mit der
+Wertschöpfung, die in seiner Stadt je Erwerbstätigem entsteht: 2025 in Hamburg
+152.295 Mio. € auf 1.370.500 Erwerbstätige, also 111.100 €, in Berlin
+197.529 Mio. € auf 2.195.000, also 90.000 € (Statistikamt Nord, Statistik
+informiert Nr. 16/2026 und 56/2026; Amt für Statistik Berlin-Brandenburg,
+P I 1 – j/25). Die Werte sind in Preisen von 2025 angegeben und nicht
+fortgeschrieben.
+
 Ausgewiesene Unsicherheit: ±35 %.
 
 ---
@@ -282,11 +290,28 @@ Sie erhalten den Landesanteil (42,5 %) **und** den Gemeindeanteil (15 %) der
 Einkommensteuer, von der Gewerbesteuerumlage den Landesanteil, sodass nur der
 Bundesvervielfältiger von 14,5 Punkten abfließt (§ 6 GemFinRefG; Hamburg bei
 470 % Hebesatz 96,9 %, Berlin bei 410 % 96,5 %), und über den Länderanteil der
-Umsatzsteuer den Einwohnerschlüssel des jeweiligen Landes — Hamburg 2,24 %,
-Berlin 4,43 % des Länderaufkommens, denn Berlin hat knapp doppelt so viele
-Einwohner. Der Schlüssel steht deshalb je Stadt unter `modelParams` in
-`data/cities/<id>.json`, nicht als Konstante im Modell. Dazu Grundsteuer auf den
-Bodenwertzuwachs und Grunderwerbsteuer auf den jährlich umgeschlagenen Anteil.
+Umsatzsteuer den Einwohnerschlüssel des jeweiligen Landes. Den Ländern standen
+2025 nach § 1 FAG 48,85 % des Umsatzsteueraufkommens zu (151.520 von
+310.206 Mio. €), davon Hamburg 3.385 Mio. € oder 2,23 % und Berlin 6.701 Mio. €
+oder 4,42 % (Bericht der Bundesregierung zum Finanzkraftausgleich 2025,
+BT-Drs. 21/6860, Tabellen 2 und 4a). Der Finanzkraftausgleich selbst bleibt
+unberücksichtigt. Der Schlüssel steht je Stadt unter `modelParams` in
+`data/cities/<id>.json`, nicht als Konstante im Modell.
+
+Die Grundsteuer wächst nur, soweit ihre Bemessung nach Landesrecht dem Wert
+folgt. Hamburg erhebt sie nach Fläche und Wohnlage (Hamburgisches
+Grundsteuergesetz), sodass ein Wertzuwachs sie nicht erhöht und das Modell
+0 % ansetzt. Berlin wendet das Bundesmodell mit einer Messzahl von 0,31 ‰ für
+Wohngrundstücke und einem Hebesatz von 470 % an. Weil der Ertragswert einer
+Wohnung mit der Mietniveaustufe ganz Berlins gerechnet wird und nur der
+abgezinste Bodenwert der Lage folgt, setzt das Modell 0,03 % des Wertzuwachses
+im Jahr an, eine Schätzung, die erst mit der nächsten Hauptfeststellung
+wirksam würde. Die Grunderwerbsteuer beträgt in Hamburg seit 2023 5,5 %, in
+Berlin seit 2014 6,0 % und fällt auf den Anteil der Grundstücke an, der jährlich
+den Eigentümer wechselt (3,5 %).
+
+Der Satz der Lohn- und Einkommensteuer von 18,5 % der zusätzlichen
+Wertschöpfung hat noch keine Quelle; siehe `docs/backlog.md`.
 
 Die Förderfähigkeit nach GVFG-Bundesprogramm wird an ein Nutzen-Kosten-
 Verhältnis über 1,0 geknüpft und mit 75 % Bundesanteil ausgewiesen, dem
@@ -328,7 +353,7 @@ Barwert des laufenden Betriebs.
 
 ## 10. Versionierung
 
-Jedes Szenario speichert `calculationVersion` (derzeit 0.18.0), einen
+Jedes Szenario speichert `calculationVersion` (derzeit 0.19.0), einen
 `parameterFingerprint` über die tatsächlichen Kennwerte und
 `dataVersion` (2026-09). Ändern sich die Modelle, bleiben veröffentlichte
 Ergebnisse unverändert; die Neuberechnung ist ein ausdrücklicher Schritt, und

@@ -81,8 +81,8 @@ export const EXPLAIN: Record<string, Explanation> = {
       'Besteuert wird nur der <b>produktive</b> Teil des Nutzens, also die Produktivitätswirkung und 35 % der Reisezeitgewinne, die auf Geschäfts- und Pendelwege entfallen.',
       'Von der Lohn- und Einkommensteuer (18,5 %) erhält {Stadt} als Stadtstaat den Landes- <b>und</b> den Gemeindeanteil, zusammen 57,5 %.',
       'Die Gewerbesteuer wird mit {gewerbesteuer} der Wertschöpfung angesetzt, was dem tatsächlichen Aufkommen im Verhältnis zur Wertschöpfung der Stadt entspricht. Davon bleiben {gewerbesteuerAnteil} bei {Stadt}, weil ein Stadtstaat den Landesanteil der Gewerbesteuerumlage behält und nur den Bundesanteil abführt.',
-      'Von der Umsatzsteuer erhält {Stadt} über den Länderanteil (45,9 %) den Teil, der seinem Einwohnerschlüssel entspricht ({ustSchluessel}).',
-      'Hinzu kommen Grundsteuer auf den Bodenwertzuwachs und Grunderwerbsteuer auf den Anteil der Grundstücke, der jährlich den Eigentümer wechselt.',
+      'Von der Umsatzsteuer erhält {Stadt} über den Länderanteil ({ustLaender}) den Teil, der seinem Einwohnerschlüssel entspricht ({ustSchluessel}).',
+      'Die Grundsteuer steigt nur so weit, wie ihre Bemessung nach Landesrecht dem Wert folgt, weshalb sie mit {grundsteuer} des Wertzuwachses im Jahr angesetzt wird. Hinzu kommt Grunderwerbsteuer von {grunderwerbsteuer} auf den Anteil der Grundstücke, der jährlich den Eigentümer wechselt.',
       'Der Fiskaleffekt lässt sich <b>nicht</b> zum Nutzen addieren, weil beide dieselbe Wirkung aus zwei Blickwinkeln beschreiben.',
     ],
   },
@@ -112,7 +112,7 @@ export const EXPLAIN: Record<string, Explanation> = {
       'Im Nutzen stecken auch <b>weitere volkswirtschaftliche Wirkungen</b> (Produktivität, Bodenwerte), die eine amtliche Bewertung nicht mitzählt, weshalb der Reiter „Wirkung" den Nutzen auch ohne sie ausweist.',
     ],
     caveat:
-      'Wirkungen, die nur die amtliche Standardisierte Bewertung erfasst, weshalb sich die Zahl nicht mit veröffentlichten Nutzen-Kosten-Verhältnissen vergleichen lässt. Zur Einordnung: Die in Hamburg geplanten Vorhaben S4, U4 und U5 zusammen kommen in diesem Modell auf rund 0,58, während die amtliche Bewertung der U5 allein 1,27 ergibt. Die Zahl eignet sich deshalb vor allem dazu, Entwürfe untereinander zu vergleichen.',
+      'Wirkungen, die nur die amtliche Standardisierte Bewertung erfasst, weshalb sich die Zahl nicht mit veröffentlichten Nutzen-Kosten-Verhältnissen vergleichen lässt. Zur Einordnung: Die in Hamburg geplanten Vorhaben S4, U4 und U5 zusammen kommen in diesem Modell auf rund 0,60, während die amtliche Bewertung der U5 allein 1,27 ergibt. Die Zahl eignet sich deshalb vor allem dazu, Entwürfe untereinander zu vergleichen.',
   },
   feasibility: {
     title: 'Baubarkeit',
@@ -190,6 +190,9 @@ export interface CityFigures {
   vatCityShare: number;
   tradeTaxRate: number;
   tradeTaxCityShare: number;
+  vatLaenderShare: number;
+  propertyTaxRate: number;
+  transferTaxRate: number;
   groundConditionsFactor: number;
   provenance?: {
     districtTerm: string;
@@ -219,6 +222,9 @@ export function localise(info: Explanation, city: CityFigures | null): Explanati
     '{ustSchluessel}': pct(city.vatCityShare),
     '{gewerbesteuer}': pct(city.tradeTaxRate),
     '{gewerbesteuerAnteil}': pct(city.tradeTaxCityShare, 1),
+    '{ustLaender}': pct(city.vatLaenderShare, 1),
+    '{grundsteuer}': pct(city.propertyTaxRate),
+    '{grunderwerbsteuer}': pct(city.transferTaxRate, 1),
     '{baugrund}': `+${pct(city.groundConditionsFactor - 1, 0)}`,
     // "Amtlich" is a claim about the source, not a decoration: a city whose
     // figures came from anywhere but the statistical office must not say so.

@@ -652,7 +652,7 @@ console.log(`Rechenkern gestartet in ${bootMs.toFixed(0)} ms\n`);
   });
 
   const FILLERS = ['Stadt', 'stadtAdj', 'ustSchluessel', 'gewerbesteuer', 'gewerbesteuerAnteil', 'baugrund', 'einwohnerzahlen',
-    'stadtteilzahl', 'stadtteile', 'gebaeude', 'quelle'];
+    'stadtteilzahl', 'stadtteile', 'gebaeude', 'quelle', 'ustLaender', 'grundsteuer', 'grunderwerbsteuer'];
   check('jeder Platzhalter in den Erläuterungen ist auch belegt', () => {
     // Only the explanation table itself; below it sits the code that does the
     // filling in, whose own template literals are not placeholders.

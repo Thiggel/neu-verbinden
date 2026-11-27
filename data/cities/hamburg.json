@@ -55,13 +55,18 @@
   },
   "modelParams": {
     "fiscal": {
-      "vatCityShare": 0.0224,
+      "vatCityShare": 0.0223,
       "tradeTaxRate": 0.0231,
-      "tradeTaxCityShare": 0.969
+      "tradeTaxCityShare": 0.969,
+      "propertyTaxRate": 0.0,
+      "transferTaxRate": 0.055
     },
-    "calibratedOn": "Hamburg"
+    "calibratedOn": "Hamburg",
+    "economics": {
+      "gvaPerWorkerEur": 111100
+    }
   },
-  "modelParamsNote": "Hamburg hat 1,98 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 2,24 % des Umsatzsteueraufkommens der Länder zustehen. Die Gewerbesteuer brachte 2025 bei einem Hebesatz von 470 % 3.514 Mio. € ein, was 2,31 % der Bruttowertschöpfung von 152.295 Mio. € entspricht (Statistikamt Nord, Statistik informiert Nr. 52/2026 und 56/2026). Von der Gewerbesteuerumlage behält Hamburg als Stadtstaat den Landesanteil, während der Bundesanteil mit einem Vervielfältiger von 14,5 Punkten abfließt (§ 6 GemFinRefG), sodass 96,9 % in der Stadt bleiben. Die Einsteigerraten und Betriebskosten des Modells sind auf die für 2025 veröffentlichten Zahlen von HOCHBAHN und S-Bahn Hamburg kalibriert.",
+  "modelParamsNote": "Hamburg hat 1,86 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 2025 3.385 Mio. € oder 2,23 % des Umsatzsteueraufkommens der Länder zustanden (BT-Drs. 21/6860, Tabelle 4a). Die Gewerbesteuer brachte 2025 bei einem Hebesatz von 470 % 3.514 Mio. € ein, was 2,31 % der Bruttowertschöpfung von 152.295 Mio. € entspricht (Statistikamt Nord, Statistik informiert Nr. 52/2026 und 56/2026). Von der Gewerbesteuerumlage behält Hamburg als Stadtstaat den Landesanteil, während der Bundesanteil mit einem Vervielfältiger von 14,5 Punkten abfließt (§ 6 GemFinRefG), sodass 96,9 % in der Stadt bleiben. In Hamburg arbeiteten 2025 1.370.500 Menschen, weshalb auf jeden 111.100 € Wertschöpfung kommen (Statistik informiert Nr. 16/2026). Die Grundsteuer bemisst sich in Hamburg nach Fläche und Wohnlage, nicht nach dem Wert (Hamburgisches Grundsteuergesetz), sodass ein Wertzuwachs sie nicht erhöht. Die Grunderwerbsteuer beträgt seit 2023 5,5 %. Die Einsteigerraten und Betriebskosten des Modells sind auf die für 2025 veröffentlichten Zahlen von HOCHBAHN und S-Bahn Hamburg kalibriert.",
   "districtTerm": "Stadtteile",
   "majorWater": "(elbe|alster|bille|köhlbrand|hafen|este|dove|gose|norderelbe|süderelbe)"
 }

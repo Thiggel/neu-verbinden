@@ -348,7 +348,14 @@ export const cmd = {
  */
 export function cityFiguresFrom(bundle: EngineBundle): CityFigures {
   const params = bundle.engine.cityParams() as {
-    fiscal?: { vatCityShare?: number; tradeTaxRate?: number; tradeTaxCityShare?: number };
+    fiscal?: {
+      vatCityShare?: number;
+      vatLaenderShare?: number;
+      tradeTaxRate?: number;
+      tradeTaxCityShare?: number;
+      propertyTaxRate?: number;
+      transferTaxRate?: number;
+    };
     cost?: { groundConditionsFactor?: number };
   };
   const city = bundle.city;
@@ -358,6 +365,9 @@ export function cityFiguresFrom(bundle: EngineBundle): CityFigures {
     vatCityShare: params?.fiscal?.vatCityShare ?? 0,
     tradeTaxRate: params?.fiscal?.tradeTaxRate ?? 0,
     tradeTaxCityShare: params?.fiscal?.tradeTaxCityShare ?? 0,
+    vatLaenderShare: params?.fiscal?.vatLaenderShare ?? 0,
+    propertyTaxRate: params?.fiscal?.propertyTaxRate ?? 0,
+    transferTaxRate: params?.fiscal?.transferTaxRate ?? 0,
     groundConditionsFactor: params?.cost?.groundConditionsFactor ?? 1,
     provenance: bundle.engine.provenance(),
   };

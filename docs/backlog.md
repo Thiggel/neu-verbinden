@@ -8,15 +8,15 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 ## Offen
 
 ### Modell und Daten
-* **[P]** Die übrigen Steuersätze des Fiskaleffekts haben noch keine Quelle:
-  Einkommensteuer 18,5 % der Wertschöpfung, Länderanteil an der Umsatzsteuer
-  45,9 %, Grundsteuer 0,35 % und Wertschöpfung je Erwerbstätigem 92.000 €.
-  Bei der Einkommensteuer ist zu entscheiden, ob der Durchschnittssatz gilt,
-  der nach grober Überschlagsrechnung deutlich unter 18,5 % liegen dürfte, oder
-  ein Grenzsatz, weil zusätzliche Wertschöpfung höher besteuert wird als die
-  bestehende. Der
-  Länderfinanzausgleich bleibt unberücksichtigt, was in der Erklärung stehen
-  sollte.
+* **[P]** Der Satz der Lohn- und Einkommensteuer im Fiskaleffekt (18,5 % der
+  zusätzlichen Wertschöpfung) hat noch keine Quelle. Zu entscheiden ist, ob
+  der Durchschnittssatz gilt, der bei rund 8 % der Wertschöpfung liegen dürfte,
+  oder ein Grenzsatz, weil zusätzliche Wertschöpfung über Lohnquote und
+  Progression höher besteuert wird als die bestehende. Ebenso ohne Quelle sind
+  der jährliche Eigentümerwechsel von 3,5 % und die Konsumquote von 48 %.
+  Länderanteil und Schlüssel der Umsatzsteuer, Grund- und Grunderwerbsteuer
+  sowie die Wertschöpfung je Erwerbstätigem sind seit Modell 0.19.0 belegt
+  (2026-11-27).
 
 * **[F]** Ein veröffentlichter Entwurf mit abgeschaltetem Bestand steht in den
   Ranglisten neben Entwürfen, die auf dem vollen Netz aufbauen. "S4 Ringbahn"

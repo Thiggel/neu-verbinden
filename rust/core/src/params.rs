@@ -22,6 +22,16 @@ use serde::{Deserialize, Serialize};
 
 /// Bump this whenever a change moves the numbers.
 ///
+/// 0.19.0: the remaining fiscal and productivity figures follow published
+/// sources. Value added per worker was 92,000 € without a source and is now
+/// the city's own: 111,100 € in Hamburg, 90,000 € in Berlin (GVA 2025 over
+/// people working in the city), which moves the productivity benefit and with
+/// it the benefit-cost ratio. The Länder share of VAT is the 48.85 % of 2025
+/// instead of 45.9 %, the population keys are 2.23 % and 4.42 %. The property
+/// tax no longer charges 0.35 % of every euro of uplift: Hamburg's tax does
+/// not follow value at all, Berlin's only through the discounted land value
+/// (0.03 %). Berlin's transfer tax is its own 6.0 %.
+///
 /// 0.18.0: the trade tax follows the revenue the cities report. The old 4.8 %
 /// of value added had no source and was about twice what Hamburg collects
 /// (2025: 3,514 M€ on 152,295 M€ GVA = 2.31 %; Berlin 1.67 %). And a city
@@ -114,7 +124,7 @@ use serde::{Deserialize, Serialize};
 /// construction stages of one line no longer count as an interchange or buy
 /// their own fleet; planning phases are scaled by the share not already under
 /// construction; corners are filleted, so alignments are slightly shorter.
-pub const CALCULATION_VERSION: &str = "0.18.0";
+pub const CALCULATION_VERSION: &str = "0.19.0";
 
 /// Reference price level of all monetary parameters.
 pub const PRICE_BASE_YEAR: i32 = 2026;
@@ -751,7 +761,11 @@ pub struct EconomicsParams {
     pub agglomeration_elasticity: f64,
     /// Share of residents in work, for the agglomeration base.
     pub employment_rate: f64,
-    /// Gross value added per employed person in Hamburg, €/year.
+    /// Gross value added per person employed in the city, €/year, at 2025
+    /// prices. Hamburg 2025: 152,295 M€ GVA over 1,370,500 people working in
+    /// the city = 111,100 € (Statistikamt Nord, Statistik informiert 16/2026
+    /// and 56/2026); Berlin 197,529 M€ over 2,195,000 = 90,000 €. Set per
+    /// city in `data/cities/<id>.json`.
     pub gva_per_worker_eur: f64,
     /// External congestion cost avoided, €/car-km.
     pub congestion_eur_per_car_km: f64,
@@ -792,7 +806,7 @@ impl Default for EconomicsParams {
             value_of_time_eur_h: 8.64,
             agglomeration_elasticity: 0.04,
             employment_rate: 0.52,
-            gva_per_worker_eur: 92_000.0,
+            gva_per_worker_eur: 111_100.0,
             congestion_eur_per_car_km: 0.108,
             accident_eur_per_car_km: 0.111,
             air_noise_eur_per_car_km: 0.019,
@@ -836,16 +850,25 @@ pub struct FiscalParams {
     pub vat_rate: f64,
     /// Share of additional value added that becomes taxed consumption.
     pub consumption_share: f64,
-    /// Länder share of VAT.
+    /// Länder share of VAT after the fixed amounts of § 1 FAG: 48.85 % in
+    /// 2025, 151,520 of 310,206 M€ (Bericht der Bundesregierung zum
+    /// Finanzkraftausgleich 2025, BT-Drs. 21/6860, Tabelle 2).
     pub vat_laender_share: f64,
-    /// The city's share of the Länder VAT pot (population key). Hamburg 2.24 %,
-    /// Berlin 4.43 % — the figure follows the city, so it is set per city in
+    /// The city's share of the Länder VAT pot (population key). Hamburg
+    /// 3,385 of 151,520 M€ = 2.23 %, Berlin 6,701 = 4.42 % (BT-Drs. 21/6860,
+    /// Tabelle 4a). The figure follows the city, so it is set per city in
     /// `data/cities/<id>.json` rather than being a constant of the model.
     #[serde(alias = "vatHamburgShare", alias = "vat_hamburg_share")]
     pub vat_city_share: f64,
-    /// Annual property tax on the uplifted land value.
+    /// Annual property tax per euro of value uplift — only as far as the
+    /// Land's Grundsteuer law lets the assessment follow value. Hamburg taxes
+    /// floor area and Wohnlage, not value (HmbGrStG), so 0. Berlin uses the
+    /// federal model, in which a dwelling's Ertragswert takes the statutory
+    /// rent of the whole city and only the land value, discounted, varies
+    /// with location; at 0.31 ‰ × 470 % that is about 0.03 %. Set per city.
     pub property_tax_rate: f64,
     /// Real-estate transfer tax rate, applied to the churned share per year.
+    /// Hamburg 5.5 % since 2023, Berlin 6.0 % since 2014. Set per city.
     pub transfer_tax_rate: f64,
     pub annual_property_turnover: f64,
     /// Share of the investment that flows back as tax during construction.
@@ -865,9 +888,9 @@ impl Default for FiscalParams {
             trade_tax_city_share: 0.969,
             vat_rate: 0.19,
             consumption_share: 0.48,
-            vat_laender_share: 0.459,
-            vat_city_share: 0.0224,
-            property_tax_rate: 0.0035,
+            vat_laender_share: 0.4885,
+            vat_city_share: 0.0223,
+            property_tax_rate: 0.0,
             transfer_tax_rate: 0.055,
             annual_property_turnover: 0.035,
             construction_tax_return_share: 0.24,
