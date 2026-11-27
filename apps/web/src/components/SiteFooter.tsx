@@ -40,6 +40,14 @@ export function SiteFooter() {
         >
           kauf mir einen Kaffee
         </a>
+        <a
+          className="hover:text-ink hover:underline"
+          href="https://github.com/Thiggel/neu-verbinden"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Quellcode auf GitHub
+        </a>
         <button
           onClick={() => openFeedback()}
           className="rounded-full border border-line px-2.5 py-0.5 font-medium text-ink transition-colors hover:bg-subtle"
