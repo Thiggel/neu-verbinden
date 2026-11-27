@@ -56,7 +56,9 @@
   },
   "modelParams": {
     "fiscal": {
-      "vatCityShare": 0.0443
+      "vatCityShare": 0.0443,
+      "tradeTaxRate": 0.0167,
+      "tradeTaxCityShare": 0.965
     },
     "cost": {
       "groundConditionsFactor": 1.05
@@ -72,7 +74,7 @@
       "tripsPerPersonDay": 3.3
     }
   },
-  "modelParamsNote": "Berlin hat 3,9 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 4,43 % des Umsatzsteueraufkommens der Länder zustehen. Der Baugrund aus Sand mit hoch anstehendem Grundwasser ist anspruchsvoll, aber leichter als die Hamburger Marsch. Die Einsteigerraten sind so gewählt, dass das heutige Netz die für 2025 veröffentlichten Fahrgastzahlen von BVG und S-Bahn Berlin ergibt.",
+  "modelParamsNote": "Berlin hat 3,9 Mio. Einwohner, weshalb ihm nach dem Einwohnerschlüssel 4,43 % des Umsatzsteueraufkommens der Länder zustehen. Die Gewerbesteuer brachte 2025 bei einem Hebesatz von 410 % 3.302 Mio. € ein, was 1,67 % der Bruttowertschöpfung von 197.529 Mio. € entspricht (Amt für Statistik Berlin-Brandenburg, L II 7 – j und P I 1 – j/25). Von der Gewerbesteuerumlage behält Berlin als Stadtstaat den Landesanteil, während der Bundesanteil mit einem Vervielfältiger von 14,5 Punkten abfließt (§ 6 GemFinRefG), sodass 96,5 % in der Stadt bleiben. Der Baugrund aus Sand mit hoch anstehendem Grundwasser ist anspruchsvoll, aber leichter als die Hamburger Marsch. Die Einsteigerraten sind so gewählt, dass das heutige Netz die für 2025 veröffentlichten Fahrgastzahlen von BVG und S-Bahn Berlin ergibt.",
   "districtTerm": "Ortsteile",
   "majorWater": "(spree|havel|dahme|müggel|wannsee|tegeler see|langer see|seddin|hafen|schifffahrtskanal|teltowkanal)"
 }

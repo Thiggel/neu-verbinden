@@ -279,8 +279,9 @@ der Reisezeitgewinne (der geschäftliche und Pendleranteil).
 
 Die Sonderrolle als Stadtstaat ist berücksichtigt — sie gilt für beide Städte:
 Sie erhalten den Landesanteil (42,5 %) **und** den Gemeindeanteil (15 %) der
-Einkommensteuer, die Gewerbesteuer vollständig ohne Umlage, und über den
-Länderanteil der
+Einkommensteuer, von der Gewerbesteuerumlage den Landesanteil, sodass nur der
+Bundesvervielfältiger von 14,5 Punkten abfließt (§ 6 GemFinRefG; Hamburg bei
+470 % Hebesatz 96,9 %, Berlin bei 410 % 96,5 %), und über den Länderanteil der
 Umsatzsteuer den Einwohnerschlüssel des jeweiligen Landes — Hamburg 2,24 %,
 Berlin 4,43 % des Länderaufkommens, denn Berlin hat knapp doppelt so viele
 Einwohner. Der Schlüssel steht deshalb je Stadt unter `modelParams` in
@@ -327,7 +328,7 @@ Barwert des laufenden Betriebs.
 
 ## 10. Versionierung
 
-Jedes Szenario speichert `calculationVersion` (derzeit 0.17.0), einen
+Jedes Szenario speichert `calculationVersion` (derzeit 0.18.0), einen
 `parameterFingerprint` über die tatsächlichen Kennwerte und
 `dataVersion` (2026-09). Ändern sich die Modelle, bleiben veröffentlichte
 Ergebnisse unverändert; die Neuberechnung ist ein ausdrücklicher Schritt, und

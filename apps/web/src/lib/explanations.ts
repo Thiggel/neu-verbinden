@@ -80,7 +80,7 @@ export const EXPLAIN: Record<string, Explanation> = {
     how: [
       'Besteuert wird nur der <b>produktive</b> Teil des Nutzens, also die Produktivitätswirkung und 35 % der Reisezeitgewinne, die auf Geschäfts- und Pendelwege entfallen.',
       'Von der Lohn- und Einkommensteuer (18,5 %) erhält {Stadt} als Stadtstaat den Landes- <b>und</b> den Gemeindeanteil, zusammen 57,5 %.',
-      'Die Gewerbesteuer (4,8 %) bleibt vollständig bei {Stadt}, weil ein Stadtstaat keine Umlage abführt.',
+      'Die Gewerbesteuer wird mit {gewerbesteuer} der Wertschöpfung angesetzt, was dem tatsächlichen Aufkommen im Verhältnis zur Wertschöpfung der Stadt entspricht. Davon bleiben {gewerbesteuerAnteil} bei {Stadt}, weil ein Stadtstaat den Landesanteil der Gewerbesteuerumlage behält und nur den Bundesanteil abführt.',
       'Von der Umsatzsteuer erhält {Stadt} über den Länderanteil (45,9 %) den Teil, der seinem Einwohnerschlüssel entspricht ({ustSchluessel}).',
       'Hinzu kommen Grundsteuer auf den Bodenwertzuwachs und Grunderwerbsteuer auf den Anteil der Grundstücke, der jährlich den Eigentümer wechselt.',
       'Der Fiskaleffekt lässt sich <b>nicht</b> zum Nutzen addieren, weil beide dieselbe Wirkung aus zwei Blickwinkeln beschreiben.',
@@ -188,6 +188,8 @@ export interface CityFigures {
   name: string;
   adjective: string;
   vatCityShare: number;
+  tradeTaxRate: number;
+  tradeTaxCityShare: number;
   groundConditionsFactor: number;
   provenance?: {
     districtTerm: string;
@@ -215,6 +217,8 @@ export function localise(info: Explanation, city: CityFigures | null): Explanati
     '{Stadt}': city.name,
     '{stadtAdj}': city.adjective,
     '{ustSchluessel}': pct(city.vatCityShare),
+    '{gewerbesteuer}': pct(city.tradeTaxRate),
+    '{gewerbesteuerAnteil}': pct(city.tradeTaxCityShare, 1),
     '{baugrund}': `+${pct(city.groundConditionsFactor - 1, 0)}`,
     // "Amtlich" is a claim about the source, not a decoration: a city whose
     // figures came from anywhere but the statistical office must not say so.

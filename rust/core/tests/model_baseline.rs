@@ -30,7 +30,7 @@ use hh_core::simulation;
 use hh_core::testing::{demo_city, demo_new_line};
 
 /// What the pinned figures below were produced with.
-const PINNED_FOR: &str = "0.17.0";
+const PINNED_FOR: &str = "0.18.0";
 
 #[test]
 fn the_models_answers_have_not_moved_unnoticed() {

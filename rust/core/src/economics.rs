@@ -263,8 +263,9 @@ pub fn fiscal(
         amount_eur_per_year: trade,
         level: city_name.to_string(),
         basis: format!(
-            "{:.1} % auf die zusätzliche Wertschöpfung",
-            f.trade_tax_rate * 100.0
+            "{:.2} % der zusätzlichen Wertschöpfung, davon {:.1} % nach Abzug der Bundesumlage",
+            f.trade_tax_rate * 100.0,
+            f.trade_tax_city_share * 100.0
         ),
     });
 

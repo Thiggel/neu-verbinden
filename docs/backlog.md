@@ -8,6 +8,20 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 ## Offen
 
 ### Modell und Daten
+* **[F]** Die Grundlagenzeilen des Fiskaleffekts, die der Rust-Kern als Text
+  liefert, schreiben Dezimalzahlen mit Punkt („18.5 %“, „2.31 %“), während die
+  übrige Oberfläche das Komma verwendet.
+
+* **[P]** Die übrigen Steuersätze des Fiskaleffekts haben noch keine Quelle:
+  Einkommensteuer 18,5 % der Wertschöpfung, Länderanteil an der Umsatzsteuer
+  45,9 %, Grundsteuer 0,35 % und Wertschöpfung je Erwerbstätigem 92.000 €.
+  Bei der Einkommensteuer ist zu entscheiden, ob der Durchschnittssatz gilt,
+  der nach grober Überschlagsrechnung deutlich unter 18,5 % liegen dürfte, oder
+  ein Grenzsatz, weil zusätzliche Wertschöpfung höher besteuert wird als die
+  bestehende. Der
+  Länderfinanzausgleich bleibt unberücksichtigt, was in der Erklärung stehen
+  sollte.
+
 * **[F]** Ein veröffentlichter Entwurf mit abgeschaltetem Bestand steht in den
   Ranglisten neben Entwürfen, die auf dem vollen Netz aufbauen. "S4 Ringbahn"
   hat deshalb ein Nutzen-Kosten-Verhältnis von −0,19 und liegt auf der
@@ -204,6 +218,22 @@ Legende: **[F]** Fehler · **[P]** zu prüfen · **[I]** Idee/Verbesserung
 
 
 ## Erledigt
+
+* **[F]** 2026-11-27 Gewerbesteuer im Fiskaleffekt, Modell 0.18.0. Angesetzt
+  waren 4,8 % der Wertschöpfung ohne Quelle, und die Erklärung behauptete, ein
+  Stadtstaat führe keine Umlage ab. Beides war falsch:
+  * **Satz** ist jetzt das tatsächliche Aufkommen je Euro Bruttowertschöpfung:
+    Hamburg 2,31 % (2025: 3.514 Mio. € auf 152.295 Mio. €, Statistikamt Nord,
+    Statistik informiert Nr. 52/2026 und 56/2026), Berlin 1,67 % (3.302 Mio. €
+    auf 197.529 Mio. €, Amt für Statistik Berlin-Brandenburg, L II 7 – j und
+    P I 1 – j/25).
+  * **Umlage:** Stadtstaaten behalten den Landesanteil, führen aber den
+    Bundesvervielfältiger von 14,5 Punkten ab (§ 6 Abs. 3 GemFinRefG). Bei
+    Hebesätzen von 470 % und 410 % bleiben 96,9 % und 96,5 % in der Stadt. Den
+    Abfluss bestätigt der Berliner Haushalt 2024 mit 262 Mio. €
+    Gewerbesteuerumlage.
+  * Beide Werte stehen je Stadt unter `modelParams`, und die Erklärung nennt
+    sie aus den Stadtparametern statt als feste Zahl.
 
 * **[F]** 2026-11-27 Verbindungen zwischen Stadtteilen und Umland, Modell
   0.17.0. Der Reisezeitnutzen kam vorher nur aus der Erreichbarkeit von 14

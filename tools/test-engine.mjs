@@ -651,7 +651,7 @@ console.log(`Rechenkern gestartet in ${bootMs.toFixed(0)} ms\n`);
     }
   });
 
-  const FILLERS = ['Stadt', 'stadtAdj', 'ustSchluessel', 'baugrund', 'einwohnerzahlen',
+  const FILLERS = ['Stadt', 'stadtAdj', 'ustSchluessel', 'gewerbesteuer', 'gewerbesteuerAnteil', 'baugrund', 'einwohnerzahlen',
     'stadtteilzahl', 'stadtteile', 'gebaeude', 'quelle'];
   check('jeder Platzhalter in den Erläuterungen ist auch belegt', () => {
     // Only the explanation table itself; below it sits the code that does the

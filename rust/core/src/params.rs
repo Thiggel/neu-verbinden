@@ -22,6 +22,13 @@ use serde::{Deserialize, Serialize};
 
 /// Bump this whenever a change moves the numbers.
 ///
+/// 0.18.0: the trade tax follows the revenue the cities report. The old 4.8 %
+/// of value added had no source and was about twice what Hamburg collects
+/// (2025: 3,514 M€ on 152,295 M€ GVA = 2.31 %; Berlin 1.67 %). And a city
+/// state does pay the Gewerbesteuerumlage — it keeps the Land part, but the
+/// federal 14.5 points leave (§ 6 GemFinRefG), so 96.9 % stays in Hamburg and
+/// 96.5 % in Berlin instead of all of it. Only the fiscal effect moves.
+///
 /// 0.17.0: travel-time benefit follows from a destination- and mode-choice
 /// model instead of a fixed induced share. Residents are grouped into the
 /// city's districts and five-kilometre tiles of the region, each district pair
@@ -107,7 +114,7 @@ use serde::{Deserialize, Serialize};
 /// construction stages of one line no longer count as an interchange or buy
 /// their own fleet; planning phases are scaled by the share not already under
 /// construction; corners are filleted, so alignments are slightly shorter.
-pub const CALCULATION_VERSION: &str = "0.17.0";
+pub const CALCULATION_VERSION: &str = "0.18.0";
 
 /// Reference price level of all monetary parameters.
 pub const PRICE_BASE_YEAR: i32 = 2026;
@@ -814,9 +821,16 @@ pub struct FiscalParams {
     /// Hamburg's share of income tax. As a city state it receives both the
     /// Land share (42.5 %) and the municipal share (15 %).
     pub income_tax_city_share: f64,
-    /// Effective trade tax rate on additional corporate value added.
+    /// Trade tax actually collected per euro of gross value added — the
+    /// city's revenue divided by its GVA, so the Hebesatz, the allowances
+    /// and the share of value added that is not trade income at all are in
+    /// it. Hamburg 2025: 3,514 / 152,295 Mio. € = 2.31 %; Berlin 1.67 %.
+    /// Set per city in `data/cities/<id>.json`.
     pub trade_tax_rate: f64,
-    /// Hamburg keeps the trade tax in full (no Kreisumlage).
+    /// Share of the trade tax that stays with the city. A city state pays
+    /// the Gewerbesteuerumlage but keeps its Land part, so only the federal
+    /// multiplier of 14.5 points leaves (§ 6 GemFinRefG):
+    /// 1 − 14.5 / Hebesatz — Hamburg (470 %) 96.9 %, Berlin (410 %) 96.5 %.
     pub trade_tax_city_share: f64,
     /// Effective VAT rate on additional consumption.
     pub vat_rate: f64,
@@ -847,8 +861,8 @@ impl Default for FiscalParams {
         Self {
             income_tax_rate: 0.185,
             income_tax_city_share: 0.575,
-            trade_tax_rate: 0.048,
-            trade_tax_city_share: 1.0,
+            trade_tax_rate: 0.0231,
+            trade_tax_city_share: 0.969,
             vat_rate: 0.19,
             consumption_share: 0.48,
             vat_laender_share: 0.459,
