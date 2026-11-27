@@ -1,24 +1,27 @@
 # Architektur
 
-## Die eine wichtige Trennung
+## Schichten
 
 ```
 Oberfläche  ≠  Rechenkern  ≠  Renderer  ≠  Persistenz
 ```
 
-* **`apps/web`** — Next.js. Panels, Formulare, Social, Responsivität. Kennt
-  keine Fachlogik.
-* **`rust/core`** — das gesamte Domänenwissen. Frei von Web-, Render- und
-  Datenbankbelangen.
-* **MapLibre** — Projektion, Kamera, WebGL. Bekommt fertige Geometrie.
-* **`rust/server`** — Speicherung, Social, autoritative Neuberechnung.
+Die Anwendung besteht aus vier Schichten, die voneinander getrennt bleiben.
+Die Oberfläche in `apps/web` ist eine Next.js-Anwendung, die Panels,
+Formulare, die gemeinschaftlichen Funktionen und die Anpassung an
+verschiedene Bildschirmgrößen umfasst, aber keine Fachlogik enthält. Das
+gesamte Domänenwissen liegt in `rust/core`, das keine Abhängigkeit zu Web,
+Darstellung oder Datenbank hat. MapLibre übernimmt Projektion, Kamera und
+WebGL und erhält dafür fertige Geometrie, während `rust/server` für die
+Speicherung, die gemeinschaftlichen Funktionen und die maßgebliche
+Neuberechnung zuständig ist.
 
-Der Rechenkern wird zweimal übersetzt: nach WebAssembly für den Browser und
-nativ für Server und Kommandozeile. Deshalb gibt es Kosten, Topologie und
-Nutzen genau einmal — und der Wert, den der Browser zeigt, ist derselbe, den
-der Server speichert.
+Der Rechenkern wird zweimal übersetzt, nämlich nach WebAssembly für den
+Browser und nativ für Server und Kommandozeile. Da Kosten, Topologie und
+Nutzen auf diese Weise nur an einer Stelle berechnet werden, stimmt der Wert,
+den der Browser anzeigt, mit dem überein, den der Server speichert.
 
-## Der Weg eines Zeigerereignisses
+## Verarbeitung eines Zeigerereignisses
 
 ```
 pointermove
@@ -28,10 +31,11 @@ pointermove
              └─ einen DOM-Knoten verschieben (Fangzeiger)
 ```
 
-Kein `setState`, kein React-Rendern, keine Neuberechnung des Netzes. React
-erfährt erst beim Bestätigen eines Kommandos davon.
+Eine Zeigerbewegung löst weder `setState` noch ein Rendern in React oder eine
+Neuberechnung des Netzes aus, weil React erst dann davon erfährt, wenn ein
+Kommando bestätigt wird.
 
-## Der Weg einer Änderung
+## Verarbeitung einer Änderung
 
 ```
 Nutzeraktion
@@ -42,13 +46,14 @@ Nutzeraktion
              └─ simulate()→ Analysepanel, entprellt, 21 ms
 ```
 
-Undo speichert keine Zeigerspuren, sondern den exakten Umkehr-Patch der
-Primitivoperationen. Ein Undo stellt den vorherigen Zustand bitgenau her —
-`editor::tests::undo_restores_the_previous_state_exactly` prüft das.
+Das Rückgängigmachen speichert keine Zeigerspuren, sondern den Umkehr-Patch
+der Primitivoperationen, sodass der vorherige Zustand bitgenau
+wiederhergestellt wird, was
+`editor::tests::undo_restores_the_previous_state_exactly` prüft.
 
-## Der Netzgraph
+## Netzgraph
 
-Ein Netz ist ein Graph, keine Sammlung von Linienzügen:
+Ein Netz ist als Graph und nicht als Sammlung von Linienzügen angelegt:
 
 ```
 Netz
@@ -58,44 +63,47 @@ Netz
 └── Linien   geordneter Pfad über Kanten
 ```
 
-Mehrere Linien können **dieselbe** Kante nutzen. Daraus ergeben sich
-gemeinsame Gleise, Verzweigungen, Umsteigepunkte und die korrekte
-Kostenaggregation von selbst, statt als Sonderfälle.
+Da mehrere Linien **dieselbe** Kante nutzen können, ergeben sich gemeinsame
+Gleise, Verzweigungen, Umsteigepunkte und die richtige Zusammenfassung der
+Kosten aus der Struktur selbst, statt als Sonderfälle behandelt werden zu
+müssen.
 
 Herkunft (`Existing`, `Planned`, `Proposal`, `User`) und Bauzustand
-(`InService`, `UnderConstruction`, `ToBuild`) sind getrennte Eigenschaften.
-Eine Linie ein- oder auszuschalten heißt, sie in das Szenario aufzunehmen —
-und damit auch ihre Kosten. Genau das macht die Ebenenliste zum eigentlichen
-Szenario-Werkzeug.
+(`InService`, `UnderConstruction`, `ToBuild`) sind voneinander getrennte
+Eigenschaften. Wer eine Linie ein- oder ausschaltet, nimmt sie samt ihren
+Kosten in das Szenario auf oder entfernt sie daraus, weshalb die Ebenenliste
+das eigentliche Werkzeug zum Zusammenstellen von Szenarien ist.
 
-## Warum die Karte keine Kacheln lädt
+## Grundkarte
 
-Der Kartenstil wird vollständig aus dem eigenen versionierten Datensatz
-gebaut: Wasser, Grün, Hauptstraßen, Stadtteilgrenzen. Keine Kachelserver,
-keine Schriftkacheln, keine externen Anfragen.
+Der Kartenstil wird vollständig aus dem eigenen, versionierten Datensatz mit
+Wasser, Grünflächen, Hauptstraßen und Stadtteilgrenzen gebaut, sodass weder
+Kachelserver noch Schriftkacheln noch andere externe Anfragen nötig sind.
 
-Das ist keine Sparmaßnahme, sondern eine Gestaltungsentscheidung. Eine
-gewöhnliche Straßenkarte würde optisch mit dem Netz konkurrieren; hier ist das
-Netz das einzige Element mit Farbe und Gewicht. Nebenbei kann die Anwendung
-dadurch vollständig offline laufen.
+Diese Entscheidung ist gestalterisch begründet, weil eine gewöhnliche
+Straßenkarte optisch mit dem Netz konkurrieren würde, während hier das Netz
+das einzige Element mit Farbe und Gewicht ist. Als Nebenwirkung kann die
+Anwendung vollständig offline laufen.
 
-Beschriftungen sind HTML über dem Canvas, nicht MapLibre-Symbolebenen: echte
-Web-Typografie, eine selbst kontrollierte Kollisionsregel nach Wichtigkeit,
-und keine Schriftkacheln.
+Beschriftungen werden als HTML über dem Canvas dargestellt und nicht als
+Symbolebenen von MapLibre, was Web-Typografie, eine eigene Kollisionsregel
+nach Wichtigkeit und den Verzicht auf Schriftkacheln ermöglicht.
 
-## Warum alles im Stil steht
+## Quellen und Ebenen im Stil
 
-Sämtliche Quellen und Ebenen — auch die für Vorschau, Hervorhebung und
-Animation — sind Teil des initialen MapLibre-Stils. Nachträglich hinzugefügte
-Ebenen setzen voraus, dass der Stil fertig geladen ist, und eine GeoJSON-Quelle
-ohne Objekte meldet sich bei MapLibre **nie** als geladen. Beides zusammen
-führt dazu, dass das Netz unsichtbar bleibt, solange die Grundkarte kachelt —
-und in einem gedrosselten Tab dauerhaft. Die Overlay-Quellen enthalten deshalb
-je ein unsichtbares Platzhalter-Objekt, das die Ebenen wegfiltern.
+Sämtliche Quellen und Ebenen, auch die für Vorschau, Hervorhebung und
+Animation, sind Teil des anfänglichen MapLibre-Stils. Nachträglich
+hinzugefügte Ebenen setzen voraus, dass der Stil vollständig geladen ist,
+während eine GeoJSON-Quelle ohne Objekte sich bei MapLibre **nie** als geladen
+meldet. Zusammen führen beide Eigenschaften dazu, dass das Netz unsichtbar
+bleibt, solange die Grundkarte lädt, und in einem gedrosselten Tab dauerhaft.
+Die Overlay-Quellen enthalten deshalb je ein unsichtbares Platzhalterobjekt,
+das die Ebenen herausfiltern.
 
 ## Kartenebenen
 
-Bewusst wenige, wegen mobiler GPUs:
+Die Zahl der Ebenen ist mit Rücksicht auf mobile Grafikprozessoren klein
+gehalten:
 
 ```
 Untergrund → Grün → Wasser → Wasserläufe → Bahn → Straßen → Stadtteile
@@ -103,45 +111,50 @@ Untergrund → Grün → Wasser → Wasserläufe → Bahn → Straßen → Stadt
   → Hervorhebung → Vorschau → Stationen → Umsteigepunkte → Vorschaustationen
 ```
 
-Gebaute und geplante Strecken brauchen zwei Ebenen, weil `line-dasharray` in
-MapLibre keinen datengetriebenen Ausdruck akzeptiert.
+Gebaute und geplante Strecken benötigen zwei Ebenen, weil `line-dasharray` in
+MapLibre keinen datengetriebenen Ausdruck annimmt.
 
 ## Server
 
-Axum mit sqlx. Die Netzdefinition liegt als JSONB, die Kennzahlen als Spalten —
-Entdecken und Ranglisten laufen über Indizes, nicht über JSON-Auswertung.
+Der Server beruht auf Axum und sqlx. Die Netzdefinition liegt als JSONB vor,
+die Kennzahlen dagegen als Spalten, damit die Entdecken-Seite und die
+Ranglisten über Indizes statt über die Auswertung von JSON abgefragt werden.
 
-Beim Veröffentlichen parst der Server das Dokument mit demselben Rechenkern,
-validiert die Struktur und **rechnet neu**. Behauptete Kennzahlen des Clients
-werden ignoriert; `tools/test-api.mjs` prüft das.
+Beim Veröffentlichen liest der Server das Dokument mit demselben Rechenkern
+ein, prüft seine Struktur und **rechnet die Kennzahlen neu**, wobei die vom
+Client mitgeschickten Werte unberücksichtigt bleiben, was
+`tools/test-api.mjs` prüft.
 
-PostGIS ist optional: Migration `0002` legt Geometriespalte und GiST-Index nur
-an, wenn die Erweiterung vorhanden ist, und meldet sonst einen Hinweis. Die
-Anwendung läuft auf einem einfachen PostgreSQL genauso.
+PostGIS ist optional, da die Migration `0002` Geometriespalte und GiST-Index
+nur anlegt, wenn die Erweiterung vorhanden ist, und andernfalls einen Hinweis
+ausgibt, sodass die Anwendung auch auf einem einfachen PostgreSQL läuft.
 
-Redis ist ebenfalls optional. Der Cache hält nur abgeleitete Werte; geht er
-verloren, kostet das eine Neuberechnung. Autoritativ ist PostgreSQL.
+Auch Redis ist optional, weil der Cache nur abgeleitete Werte enthält, deren
+Verlust lediglich eine Neuberechnung kostet, während PostgreSQL die
+maßgebliche Quelle bleibt.
 
-Hintergrundarbeit läuft über eine Job-Tabelle mit
-`FOR UPDATE SKIP LOCKED`, sodass mehrere Prozesse nebeneinander arbeiten
-können.
+Hintergrundarbeit läuft über eine Job-Tabelle mit `FOR UPDATE SKIP LOCKED`,
+sodass mehrere Prozesse nebeneinander arbeiten können.
 
-## Was fehlt, und wo es hingehört
+## Offene Erweiterungen
 
-* **Echtzeit-Zusammenarbeit.** Die Kommandostruktur trägt sie bereits: ein
-  Kommando ist klein, serialisierbar und auf dem Server nachvollziehbar. Es
-  fehlt der Transport und die Konfliktauflösung.
-* **Fahrgastmodell mit Quelle-Ziel-Matrix.** Der Netzgraph und die
-  Reisezeitrechnung liegen vor; es fehlen die Daten.
-* **Weitere Städte.** Erledigt für Berlin — und die Umstellung war lehrreicher
-  als erwartet. Der Rechenkern kennt tatsächlich nur `CityData`, aber „ein
-  zweiter Datensatz genügt" stimmte nicht: rundherum steckten Hamburg-Reste,
-  die sich nicht von selbst melden. Die metrische Projektion war eine
-  Konstante; der Importer las für jede Stadt Hamburgs Dateien; die
-  Szenariovorlagen waren fest einprogrammiert, samt „U5 im Vollausbau", das
-  Berlin dann auch angeboten bekam; eine Ergebniszeile hieß „Fiskaleffekt
-  Hamburg"; und der Umsatzsteuerschlüssel wie der Baugrundfaktor sind Aussagen
-  über die *Stadt*, nicht über Eisenbahn. Eine dritte Stadt kostet jetzt
-  wirklich nur noch einen Datensatz und eine Konfigurationsdatei — aber wer
-  sie anlegt, sollte trotzdem nach dem Muster suchen: alles, was geschrieben
-  wurde, als es eine Stadt gab.
+Für eine Zusammenarbeit in Echtzeit ist die Kommandostruktur bereits geeignet,
+weil ein Kommando klein und serialisierbar ist und sich auf dem Server
+nachvollziehen lässt; es fehlen jedoch der Transport und die Auflösung von
+Konflikten.
+
+Für ein Fahrgastmodell mit Quelle-Ziel-Matrix liegen der Netzgraph und die
+Reisezeitrechnung vor, während die erforderlichen Daten fehlen.
+
+Weitere Städte lassen sich ergänzen, wie die Aufnahme Berlins gezeigt hat,
+wobei die Annahme, ein zweiter Datensatz genüge, sich als unzutreffend erwies.
+Der Rechenkern kannte zwar nur `CityData`, in seiner Umgebung fanden sich aber
+Annahmen über Hamburg, die sich nicht von selbst bemerkbar machten: Die
+metrische Projektion war als Konstante hinterlegt, der Importer las für jede
+Stadt die Dateien Hamburgs, die Szenariovorlagen waren fest einprogrammiert,
+sodass auch Berlin die „U5 im Vollausbau“ angeboten bekam, eine Ergebniszeile
+hieß „Fiskaleffekt Hamburg“, und der Umsatzsteuerschlüssel ebenso wie der
+Baugrundfaktor beschreiben die Stadt und nicht die Eisenbahn. Eine dritte
+Stadt erfordert inzwischen nur noch einen Datensatz und eine
+Konfigurationsdatei, doch empfiehlt es sich, beim Anlegen nach allem zu suchen,
+was entstanden ist, als es nur eine Stadt gab.

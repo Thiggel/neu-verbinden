@@ -1,136 +1,150 @@
 # Betrieb
 
-Wie diese Anwendung ins Netz kommt, was sie dafür braucht und was dabei
-schiefgehen kann. Geschrieben für den Fall, dass nichts dafür bezahlt werden
-soll.
+Dieses Dokument beschreibt, wie die Anwendung veröffentlicht wird, welche
+Dienste sie dafür benötigt und welche Fehler dabei auftreten können, wobei
+vorausgesetzt ist, dass für den Betrieb keine Kosten entstehen sollen.
 
-## Woraus sie besteht
+## Bestandteile
 
-Drei Teile, die getrennt betrieben werden müssen:
+Die Anwendung besteht aus drei Teilen, die getrennt betrieben werden:
 
-| Teil | Was es ist | Was es braucht |
+| Teil | Beschreibung | Bedarf |
 | --- | --- | --- |
-| `apps/web` | Next.js, fast vollständig im Browser. Der Rechenkern läuft als WebAssembly beim Besucher. | Statisches Ausliefern, dazu **rund 12 MB Kartendaten je Erstbesuch** |
-| `rust/server` | Axum-API mit Hintergrundarbeiter | Ein Prozess, der dauerhaft läuft. 7 MB Arbeitsspeicher im Leerlauf |
-| Postgres | Konten, veröffentlichte Entwürfe, Kommentare, Limits | Muss bleiben. Eine Datenbank, die nach 30 Tagen abläuft, ist keine |
+| `apps/web` | Next.js-Anwendung, die fast vollständig im Browser läuft, wobei der Rechenkern als WebAssembly beim Besucher ausgeführt wird | Statische Auslieferung und **rund 12 MB Kartendaten je Erstbesuch** |
+| `rust/server` | Axum-API mit Hintergrundarbeiter | Ein dauerhaft laufender Prozess, der im Leerlauf 7 MB Arbeitsspeicher belegt |
+| Postgres | Konten, veröffentlichte Entwürfe, Kommentare und Limits | Eine dauerhafte Datenbank, weshalb Angebote, die nach 30 Tagen ablaufen, nicht in Frage kommen |
 
-Die Oberfläche spricht **direkt** mit der API, nicht über eine eigene
-Serverseite. Deshalb ist `HH_ALLOWED_ORIGIN` die gesamte Absicherung gegen
-fremde Seiten, und deshalb muss die API über HTTPS erreichbar sein.
+Da die Oberfläche **unmittelbar** mit der API spricht und keine eigene
+Serverseite dazwischen liegt, ist `HH_ALLOWED_ORIGIN` die einzige Absicherung
+gegen fremde Seiten, und die API muss über HTTPS erreichbar sein.
 
 ## Umgebungsvariablen
 
-`HH_ENV=production` schaltet die Startprüfung scharf: fehlt eines der drei
-ersten Dinge, startet der Server nicht, statt mit einer Warnung im Protokoll
-monatelang falsch zu laufen (`rust/server/src/preflight.rs`).
+Mit `HH_ENV=production` wird die Startprüfung in `rust/server/src/preflight.rs`
+wirksam, sodass der Server nicht startet, wenn eine der ersten drei Angaben
+fehlt, statt über längere Zeit mit einer Warnung im Protokoll fehlerhaft zu
+laufen.
 
-| Variable | Pflicht | Wofür |
+| Variable | Pflicht | Zweck |
 | --- | --- | --- |
-| `HH_ENV` | ja | `production` schaltet die Prüfungen unten scharf |
-| `HH_JWT_SECRET` | ja | Signiert die Anmeldungen. Mindestens 32 Zeichen, zufällig. Ohne feste Angabe erfindet der Server bei jedem Start ein neues und meldet alle ab |
-| `HH_ALLOWED_ORIGIN` | ja | Die Adresse der Oberfläche, mit `https://`. `*` wird im Betrieb abgelehnt |
+| `HH_ENV` | ja | Mit `production` werden die folgenden Prüfungen wirksam |
+| `HH_JWT_SECRET` | ja | Signiert die Anmeldungen und muss zufällig sein und mindestens 32 Zeichen haben. Fehlt eine feste Angabe, erzeugt der Server bei jedem Start ein neues Geheimnis und meldet damit alle Nutzer ab |
+| `HH_ALLOWED_ORIGIN` | ja | Die Adresse der Oberfläche einschließlich `https://`, wobei `*` im Betrieb abgelehnt wird |
 | `DATABASE_URL` | ja | Postgres |
-| `HH_TRUST_PROXY` | hinter jedem Proxy | Ohne dies sieht der Server nur die Adresse des Proxys. Alle Aufrufer teilen sich dann **ein** Limit, und der erste, der es erreicht, sperrt alle übrigen aus. Mit dies gesetzt und *ohne* Proxy davor kann jeder sein eigenes Limit durch einen erfundenen Kopfzeileneintrag zurücksetzen, also genau dann setzen, wenn wirklich einer davor steht. Der Wert ist die Zahl der eigenen Proxys hintereinander (`1` für einen einzelnen, `2` etwa für CDN plus Load Balancer); gezählt wird von rechts in `X-Forwarded-For`, denn nur diese Einträge hat ein eigener Proxy geschrieben |
-| `HH_WORKER_IDLE_SECS` | bei schlafender Datenbank | Wie lange der Arbeiter wartet, wenn nichts zu tun ist (Vorgabe 60 s) |
-| `HH_DB_IDLE_SECS` | bei schlafender Datenbank | Wann ungenutzte Verbindungen geschlossen werden (Vorgabe 120 s) |
-| `HH_CITIES`, `HH_DATA_DIR`, `HH_DATA_VERSION` | nein | Welche Städte, woher, welcher Stand |
-| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | für Rückmeldungen | Programm und Empfänger für das Feedback-Fenster. Aufgerufen wird `HH_SENDMAIL -i -- HH_FEEDBACK_TO`, die Nachricht kommt auf der Standardeingabe; der Empfänger steht also nie in den Kopfzeilen, die ein Absender beeinflussen kann. Ohne beides bleibt die Rückmeldung in der Tabelle `feedback` stehen, statt verloren zu gehen. Gespeicherte Rückmeldungen löscht der Aufräumjob nach zwölf Monaten |
+| `HH_TRUST_PROXY` | hinter jedem Proxy | Ohne diese Angabe sieht der Server nur die Adresse des Proxys, sodass sich alle Aufrufer **ein** Limit teilen und der erste, der es erreicht, alle übrigen aussperrt. Ist sie dagegen gesetzt, ohne dass ein Proxy vorgeschaltet ist, kann jeder sein Limit durch einen erfundenen Kopfzeileneintrag zurücksetzen, weshalb sie nur dann gesetzt werden sollte, wenn tatsächlich ein Proxy davor steht. Der Wert gibt die Zahl der eigenen Proxys in Folge an (`1` für einen einzelnen, `2` etwa für CDN und Load Balancer), und gezählt wird von rechts in `X-Forwarded-For`, weil nur diese Einträge von einem eigenen Proxy stammen |
+| `HH_WORKER_IDLE_SECS` | bei schlafender Datenbank | Wartezeit des Arbeiters, wenn nichts zu tun ist (Vorgabe 60 s) |
+| `HH_DB_IDLE_SECS` | bei schlafender Datenbank | Zeit, nach der ungenutzte Verbindungen geschlossen werden (Vorgabe 120 s) |
+| `HH_CITIES`, `HH_DATA_DIR`, `HH_DATA_VERSION` | nein | Auswahl der Städte, Ort und Stand der Daten |
+| `HH_SENDMAIL`, `HH_FEEDBACK_TO` | für Rückmeldungen | Programm und Empfänger für das Rückmeldefenster. Aufgerufen wird `HH_SENDMAIL -i -- HH_FEEDBACK_TO` mit der Nachricht auf der Standardeingabe, sodass der Empfänger nie in Kopfzeilen steht, die ein Absender beeinflussen könnte. Fehlen beide Angaben, bleibt die Rückmeldung in der Tabelle `feedback` erhalten, deren Einträge der Aufräumjob nach zwölf Monaten löscht |
 
-Für die Oberfläche zur *Bauzeit*: `NEXT_PUBLIC_API_URL=https://…`, die Adresse
-der API. Sie steht danach im ausgelieferten JavaScript und lässt sich ohne
-neuen Bau nicht ändern.
+Die Oberfläche benötigt zur *Bauzeit* `NEXT_PUBLIC_API_URL=https://…` mit der
+Adresse der API, die anschließend im ausgelieferten JavaScript steht und sich
+nur durch einen neuen Bau ändern lässt.
 
-## Was das Freikontingent entscheidet
+## Freikontingente
 
-Die Zahl, an der die Wahl hängt, ist nicht der Arbeitsspeicher, sondern
-**Datenverkehr**: Hamburg sind rund 12 MB beim ersten Besuch (Grundkarte,
-Stadtraster, Netz, dazu 1,3 MB WebAssembly). Alles trägt seine Version im
-Namen und wird ein Jahr lang zwischengespeichert, ein zweiter Besuch kostet
-also fast nichts. Aber 100 GB im Monat sind damit rund 8 000 Erstbesuche,
-komprimiert etwa das Drei- bis Vierfache.
+Für die Wahl des Anbieters ist nicht der Arbeitsspeicher, sondern der
+**Datenverkehr** entscheidend, da ein erster Besuch in Hamburg rund 12 MB
+überträgt, die sich auf Grundkarte, Stadtraster, Netz und 1,3 MB WebAssembly
+verteilen. Weil jede Datei ihre Version im Namen trägt und ein Jahr lang
+zwischengespeichert wird, verursacht ein zweiter Besuch kaum Verkehr, doch
+entsprechen 100 GB im Monat dennoch nur rund 8 000 Erstbesuchen,
+beziehungsweise etwa dem Drei- bis Vierfachen bei komprimierter Übertragung.
 
-Deshalb: **die Oberfläche gehört auf einen Anbieter ohne Verkehrsdeckel.** Bei
-einem Deckel ohne Nachzahlung steht die Seite still, wenn sie einmal irgendwo
-verlinkt wird, also genau dann, wenn sie zum ersten Mal jemanden interessiert.
+Die Oberfläche sollte deshalb **bei einem Anbieter ohne Obergrenze für den
+Datenverkehr** liegen, weil eine Obergrenze ohne Nachzahlung die Seite
+gerade dann stilllegt, wenn sie an anderer Stelle verlinkt wird und damit zum
+ersten Mal Aufmerksamkeit erhält.
 
-Für die Datenbank zählt etwas anderes: Anbieter mit Freikontingent rechnen in
-*Rechenstunden* und schlafen im Leerlauf ein. Der Hintergrundarbeiter fragte
-früher alle zwei Sekunden nach Arbeit und hielt sie damit rund um die Uhr wach;
-ein Kontingent von 100 Stunden im Monat war nach vier Tagen aufgebraucht. Er
-verdoppelt seine Wartezeit jetzt bis `HH_WORKER_IDLE_SECS`. Bei einer
-schlafenden Datenbank ist ein hoher Wert richtig (etwa 600), und die
-Neuberechnung nach einer Modelländerung dauert entsprechend länger. Sie ist
-nichts, worauf jemand wartet.
+Für die Datenbank gilt eine andere Rechnung, weil Anbieter mit
+Freikontingent nach *Rechenstunden* abrechnen und die Datenbank im Leerlauf
+schlafen legen. Der Hintergrundarbeiter fragte früher alle zwei Sekunden nach
+Arbeit und hielt sie damit ständig wach, sodass ein Kontingent von 100 Stunden
+im Monat nach vier Tagen erschöpft war. Inzwischen verdoppelt er seine
+Wartezeit bis zum Wert von `HH_WORKER_IDLE_SECS`, für den bei einer schlafenden
+Datenbank ein hoher Wert wie 600 angemessen ist, wobei die Neuberechnung nach
+einer Modelländerung entsprechend länger dauert, was jedoch unerheblich ist,
+da niemand auf sie wartet.
 
-## Der Reihe nach
+## Einrichtung
 
-1. **Datenbank** anlegen, `DATABASE_URL` notieren. Die Migrationen laufen beim
-   Start des Servers von selbst.
-2. **API** aus dem `Dockerfile` im Wurzelverzeichnis bauen und ausrollen. Die
-   Stadtdaten liegen im Abbild, damit ein Behälter nicht auf einen anderen
-   Datenstand trifft als den, gegen den er gebaut wurde. Die Variablen oben
-   setzen, `HH_ALLOWED_ORIGIN` zeigt auf die Oberfläche.
-3. **Oberfläche** mit `NEXT_PUBLIC_API_URL` bauen und ausrollen.
-4. **Nachsehen**, ob es gestimmt hat:
+1. Zuerst wird die **Datenbank** angelegt und `DATABASE_URL` notiert, während
+   die Migrationen beim Start des Servers selbsttätig laufen.
+2. Danach wird die **API** aus dem `Dockerfile` im Wurzelverzeichnis gebaut
+   und ausgerollt. Die Stadtdaten sind Teil des Abbilds, damit ein Container
+   nicht auf einen anderen Datenstand trifft als den, gegen den er gebaut
+   wurde. Zu setzen sind die oben genannten Variablen, wobei
+   `HH_ALLOWED_ORIGIN` auf die Oberfläche verweist.
+3. Anschließend wird die **Oberfläche** mit `NEXT_PUBLIC_API_URL` gebaut und
+   ausgerollt.
+4. Zuletzt wird das Ergebnis **geprüft**:
    ```
    curl https://api…/api/health
    HH_API=https://api… HH_WEB=https://… npm run test:api
    HH_API=https://api… npm run test:security
    ```
-   Der Sicherheitslauf prüft echte Limits und unterliegt ihnen selbst; zweimal
-   kurz hintereinander gestartet sagt er weniger, und sagt das auch.
+   Da der Sicherheitslauf die tatsächlichen Limits prüft und ihnen selbst
+   unterliegt, ist ein zweiter Lauf kurz nach dem ersten weniger aussagekräftig,
+   worauf der Lauf in diesem Fall auch hinweist.
 
-## Mit Vercel und Neon
+## Vercel und Neon
 
 Ausgerollt wird nur, wenn auf GitHub ein Release veröffentlicht wird
-(`.github/workflows/deploy.yml`); ein Vorab-Release bleibt offline. Die
-Git-Anbindung von Vercel ist in beiden `vercel.json` abgeschaltet, damit ein
-Push auf `main` nichts verändert. Die Oberfläche wird in GitHub Actions gebaut,
-weil Rechenkern und Stadtdaten nicht im Repository liegen, und fertig
-hochgeladen. Die API baut Vercel aus dem `Dockerfile`.
+(`.github/workflows/deploy.yml`), während ein Vorab-Release nicht online geht.
+Die Git-Anbindung von Vercel ist in beiden `vercel.json` abgeschaltet, damit
+ein Push auf `main` nichts verändert. Die Oberfläche wird in GitHub Actions
+gebaut und fertig hochgeladen, weil Rechenkern und Stadtdaten nicht im
+Repository liegen, während Vercel die API aus dem `Dockerfile` baut.
 
-Zwei Vercel-Projekte aus demselben Repository:
+Aus demselben Repository werden zwei Vercel-Projekte gespeist:
 
 | Projekt | Root Directory | Framework | Variablen |
 | --- | --- | --- | --- |
 | Oberfläche, `neu-verbinden` | `apps/web` | Next.js | `NEXT_PUBLIC_API_URL` |
 | API, `neu-verbinden-api` | Wurzel | Container | alle aus der Tabelle oben, dazu `PORT=8080`, `HH_TRUST_PROXY=1`, `HH_WORKER_IDLE_SECS=600`, `HH_DB_IDLE_SECS=60` |
 
-`DATABASE_URL` setzt die Neon-Integration aus dem Vercel Marketplace, wenn
-dort der Free-Tarif gewählt wird. Bei der Einrichtung: Region Frankfurt, Auth
-und Realtime aus, denn die Anmeldung erledigt die API selbst; verbunden nur mit
-dem API-Projekt, nur für Production, Präfix `DATABASE`. Die Integration setzt
-dann auch `DATABASE_URL_UNPOOLED`, die der Server vorzieht, weil die
-Migrationen eine Sitzungssperre brauchen, die der Pooler nicht hält. In GitHub stehen als Secrets
-`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_WEB` und
-`VERCEL_PROJECT_ID_API`, als Variable optional `API_URL`. Ist `API_URL` gesetzt,
-geht die Oberfläche erst hinaus, wenn die neue API antwortet. Vor dem Hochladen fragt der
-Ablauf bei Vercel die Namen der beiden Projekte ab und bricht ab, wenn sie
-nicht zu den in `deploy.yml` hinterlegten passen, weil eine vertauschte ID
-sonst die Oberfläche durch die API ersetzt.
+`DATABASE_URL` wird von der Neon-Integration aus dem Vercel Marketplace
+gesetzt, wenn dort der Free-Tarif gewählt wird. Bei der Einrichtung sind die
+Region Frankfurt zu wählen und Auth sowie Realtime abzuschalten, da die API die
+Anmeldung selbst übernimmt; verbunden wird die Integration nur mit dem
+API-Projekt, nur für Production und mit dem Präfix `DATABASE`. Sie setzt
+außerdem `DATABASE_URL_UNPOOLED`, die der Server bevorzugt, weil die
+Migrationen eine Sitzungssperre benötigen, die der Pooler nicht hält.
 
-Der Hobby-Tarif kennt keine Nachzahlung, weil ihm keine Zahlungsart hinterlegt
-ist: Wird ein Kontingent überschritten, ruht der betroffene Dienst bis zum
-nächsten Abrechnungszeitraum. Kosten entstehen erst nach einem Wechsel zu Pro,
-der eine Karte verlangt. Die Grenzen, die hier zuerst greifen dürften, sind
-die 100 GB Datenverkehr (siehe oben) und der bereitgestellte Speicher des
-Containers, der nach jedem Aufruf mindestens fünf Minuten wach bleibt. Der
-Hobby-Tarif ist auf persönliche, nicht kommerzielle Nutzung beschränkt.
-Stand 2026-11-27, Quelle: vercel.com/docs/plans/hobby und
-vercel.com/legal/terms.
+In GitHub sind als Secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
+`VERCEL_PROJECT_ID_WEB` und `VERCEL_PROJECT_ID_API` hinterlegt und als
+optionale Variable `API_URL`, bei deren Angabe die Oberfläche erst ausgerollt
+wird, wenn die neue API antwortet. Vor dem Hochladen fragt der Ablauf bei
+Vercel die Namen der beiden Projekte ab und bricht ab, wenn sie nicht zu den in
+`deploy.yml` hinterlegten passen, weil eine vertauschte ID sonst die Oberfläche
+durch die API ersetzt.
 
-## Die Beispiele auf der Entdecken-Seite
+Der Hobby-Tarif sieht keine Nachzahlung vor, da ihm keine Zahlungsart
+hinterlegt ist, sodass ein Dienst, dessen Kontingent überschritten wird, bis
+zum nächsten Abrechnungszeitraum ruht und Kosten erst nach einem Wechsel zum
+Pro-Tarif entstehen, der eine Karte voraussetzt. Voraussichtlich greifen
+zuerst die Grenze von 100 GB Datenverkehr, die oben beschrieben ist, und der
+bereitgestellte Speicher des Containers, der nach jedem Aufruf mindestens fünf
+Minuten aktiv bleibt. Der Hobby-Tarif ist auf persönliche, nicht kommerzielle
+Nutzung beschränkt (Stand 2026-11-27, Quellen: vercel.com/docs/plans/hobby
+und vercel.com/legal/terms).
 
-`npm run examples:seed` veröffentlicht sie unter einem eigenen Konto und ersetzt
-dabei, was dasselbe Konto vorher veröffentlicht hat. `HH_SEED_PASSWORD` ist
-Pflicht, `HH_SEED_PURGE=1` räumt zusätzlich alles andere weg und braucht dafür
-ein Konto mit Moderatorrechten.
+## Beispielentwürfe
 
-## Was noch offen ist
+`npm run examples:seed` veröffentlicht die Beispiele der Entdecken-Seite unter
+einem eigenen Konto und ersetzt dabei, was dasselbe Konto zuvor veröffentlicht
+hat. `HH_SEED_PASSWORD` ist dafür erforderlich, während `HH_SEED_PURGE=1`
+zusätzlich alle übrigen Entwürfe entfernt und ein Konto mit Moderatorrechten
+voraussetzt.
 
-* Die Oberfläche hat eine einzige serverseitige Route: das Vorschaubild unter
-  `/szenario/[slug]/opengraph-image`. Auf einem rein statischen Anbieter fällt
-  sie weg. Entweder ein Anbieter, der sie ausführt, oder das Bild wandert in
-  die API, die den Rechenkern ohnehin hat.
-* Es gibt keinen Ablauf für Datensicherungen. Veröffentlichte Entwürfe sind das
-  Einzige, was nicht aus dem Quelltext wiederherstellbar ist.
+## Offene Punkte
+
+Die Oberfläche besitzt mit dem Vorschaubild unter
+`/szenario/[slug]/opengraph-image` eine einzige serverseitige Route, die bei
+einem rein statischen Anbieter entfiele, weshalb entweder ein Anbieter gewählt
+werden muss, der sie ausführt, oder das Bild in die API verlegt werden müsste,
+die den Rechenkern ohnehin enthält.
+
+Für Datensicherungen gibt es bislang keinen Ablauf, obwohl veröffentlichte
+Entwürfe als einzige Daten nicht aus dem Quelltext wiederhergestellt werden
+können.
