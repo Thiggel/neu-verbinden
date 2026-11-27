@@ -111,13 +111,13 @@ API-Projekt, nur für Production und mit dem Präfix `DATABASE`. Sie setzt
 außerdem `DATABASE_URL_UNPOOLED`, die der Server bevorzugt, weil die
 Migrationen eine Sitzungssperre benötigen, die der Pooler nicht hält.
 
-In GitHub sind als Secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
-`VERCEL_PROJECT_ID_WEB` und `VERCEL_PROJECT_ID_API` hinterlegt und als
-optionale Variable `API_URL`, bei deren Angabe die Oberfläche erst ausgerollt
-wird, wenn die neue API antwortet. Vor dem Hochladen fragt der Ablauf bei
-Vercel die Namen der beiden Projekte ab und bricht ab, wenn sie nicht zu den in
-`deploy.yml` hinterlegten passen, weil eine vertauschte ID sonst die Oberfläche
-durch die API ersetzt.
+In GitHub sind als Secrets `VERCEL_TOKEN` und `VERCEL_ORG_ID` hinterlegt und
+als optionale Variable `API_URL`, bei deren Angabe die Oberfläche erst
+ausgerollt wird, wenn die neue API antwortet. Die IDs der beiden Projekte
+werden nicht hinterlegt, sondern vor dem Hochladen anhand der in `deploy.yml`
+genannten Projektnamen bei Vercel erfragt, weil eine vertauschte oder
+fehlerhafte ID sonst die Oberfläche durch die API ersetzen oder den Ablauf
+stillschweigend scheitern lassen könnte.
 
 Der Hobby-Tarif sieht keine Nachzahlung vor, da ihm keine Zahlungsart
 hinterlegt ist, sodass ein Dienst, dessen Kontingent überschritten wird, bis

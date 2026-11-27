@@ -66,31 +66,30 @@ jobs:
       - run: npm run lint
       - run: npm run test:ui
 
-      # The two project IDs are secrets and cannot be read back once set, so a
-      # swapped or duplicated ID would only show after the API had already
-      # replaced the web app. Their names are asked of Vercel before anything
-      # is uploaded.
-      - name: Check Vercel projects
+      # The project IDs are looked up by name, so neither a swapped nor a
+      # mistyped ID can send the API to the web project. A project name is
+      # unique within the team, and later steps read the IDs from the env.
+      - name: Resolve Vercel projects
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          API_ID: ${{ secrets.VERCEL_PROJECT_ID_API }}
-          WEB_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
         run: |
           case "$VERCEL_ORG_ID" in team_*) TEAM="?teamId=$VERCEL_ORG_ID" ;; *) TEAM="" ;; esac
-          name() {
+          id() {
             curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
-              "https://api.vercel.com/v9/projects/$1$TEAM" | jq -r .name
+              "https://api.vercel.com/v9/projects/$1$TEAM" | jq -er .id \
+              || { echo "Vercel project $1 not found in this team" >&2; exit 1; }
           }
-          api=$(name "$API_ID"); web=$(name "$WEB_ID")
-          echo "API project: $api, web project: $web"
-          [ "$api" = "${{ env.API_PROJECT }}" ] || { echo "VERCEL_PROJECT_ID_API must belong to ${{ env.API_PROJECT }}"; exit 1; }
-          [ "$web" = "${{ env.WEB_PROJECT }}" ] || { echo "VERCEL_PROJECT_ID_WEB must belong to ${{ env.WEB_PROJECT }}"; exit 1; }
+          api=$(id "$API_PROJECT"); web=$(id "$WEB_PROJECT")
+          [ "$api" != "$web" ] || { echo "both names resolve to $api"; exit 1; }
+          echo "API project: $API_PROJECT ($api), web project: $WEB_PROJECT ($web)"
+          echo "API_PROJECT_ID=$api" >> "$GITHUB_ENV"
+          echo "WEB_PROJECT_ID=$web" >> "$GITHUB_ENV"
 
       # Only what the Dockerfile reads is uploaded. The checkout by now also
       # holds rust/target, node_modules and the built web assets.
       - name: Deploy API
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_API }}
+          VERCEL_PROJECT_ID: ${{ env.API_PROJECT_ID }}
         run: |
           API="$RUNNER_TEMP/api"
           mkdir -p "$API/data"
@@ -112,7 +111,7 @@ jobs:
 
       - name: Deploy web app
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+          VERCEL_PROJECT_ID: ${{ env.WEB_PROJECT_ID }}
         run: |
           npx --yes $VERCEL_CLI pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
           npx --yes $VERCEL_CLI build --prod --token="${{ secrets.VERCEL_TOKEN }}"
