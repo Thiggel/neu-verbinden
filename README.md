@@ -1,50 +1,56 @@
 # Verkehrsnetz-Designer
 
-Zeichne das Nahverkehrsnetz, das du dir wünschst — für **Hamburg oder Berlin** —
-und erfahre, was es vermutlich kosten, wie lange es dauern und was es bringen
-würde.
+Die Anwendung erlaubt es, ein Nahverkehrsnetz für Hamburg oder Berlin zu
+zeichnen, und schätzt, was es kosten, wie lange sein Bau dauern und welchen
+Nutzen es stiften würde.
 
-> **Alle Zahlen dieser Anwendung sind Modellschätzungen.** Sie ersetzen keine
-> Standardisierte Bewertung, keine Kostenberechnung und keine Planung.
+> Alle Zahlen dieser Anwendung sind Modellschätzungen, die weder eine
+> Standardisierte Bewertung noch eine Kostenberechnung oder eine Planung
+> ersetzen.
 
-Die Oberfläche ist deutsch, der Code und diese Dokumentation sind englisch
-kommentiert.
+Die Oberfläche und diese Dokumentation sind deutsch, während der Code englisch
+kommentiert ist.
 
 ---
 
-## Was es kann
+## Funktionsumfang
 
-* Zwei echte Netze, importiert aus OpenStreetMap und im Editor umschaltbar:
-  **Hamburg** (U-Bahn, S-Bahn, AKN — 13 Linien, 273 km) und **Berlin**
-  (U-Bahn, S-Bahn, Straßenbahn — 68 Linien, 719 km). Jede Linie einzeln ein-
-  und ausschaltbar.
-* Die offiziell geplanten Vorhaben als eigene, umschaltbare Ebenen — für
-  Hamburg die U5 in fünf Baustufen, U4 Horner Geest, U4 Grasbrook und die S4,
-  dazu die vier Straßenbahnkorridore der im August 2026 vorgestellten Studie
-  für die Linksfraktion; für Berlin die Siemensbahn, die U8 ins Märkische
-  Viertel, die U3 zum Mexikoplatz und die Straßenbahn zum Ostkreuz.
-* Zeichnen statt GIS: jeder Klick setzt eine Station, dazwischen ergänzt die
-  App weitere; Kurven werden ausgerundet, Winkel rasten nur ein, wenn sie schon
-  nahe an einer Vorzugsrichtung liegen, und ein Anschluss an eine bestehende
-  Linie wird beim Zeigen deutlich markiert.
-* Während des Zeichnens laufen Länge, Stationen, Kosten, Eröffnungsjahr und
-  erreichte Einwohner live mit.
-* Sofortige Schätzung von Baukosten, Bauzeit, Eröffnungsjahr, Baubarkeit,
-  Fahrgastnachfrage, volkswirtschaftlichem Nutzen, Fiskaleffekt für den
-  Haushalt der jeweiligen Stadt und Betriebsergebnis — mit ausklappbarer Kostenaufstellung bis zum einzelnen
-  Abschnitt.
-* Speichern als Datei, Veröffentlichen, Forken, Abstimmen, Kommentieren,
-  Vergleichen und Ranglisten.
-* Eine **Wunschkarte** je Stadt: alle veröffentlichten Entwürfe
-  übereinandergelegt, als Hitzekarte dessen, was gebaut werden müsste. Sie
-  zeigt, wo unabhängig voneinander dieselbe Lücke gezeichnet wird — eine
-  Aussage, die kein einzelner Entwurf macht. Das bestehende Netz zählt nicht
-  mit, Stimmen und Forks nur logarithmisch.
+Die Anwendung enthält die bestehenden Netze zweier Städte, die aus
+OpenStreetMap importiert und im Editor umschaltbar sind: für Hamburg U-Bahn,
+S-Bahn und AKN mit 13 Linien und 273 km, für Berlin U-Bahn, S-Bahn und
+Straßenbahn mit 68 Linien und 719 km, wobei sich jede Linie einzeln ein- und
+ausblenden lässt. Die offiziell geplanten Vorhaben liegen als eigene, ebenfalls
+umschaltbare Ebenen vor, und zwar für Hamburg die U5 in fünf Baustufen, die U4
+zur Horner Geest und zum Grasbrook, die S4 sowie die vier Straßenbahnkorridore
+der im August 2026 für die Linksfraktion vorgestellten Studie, für Berlin die
+Siemensbahn, die U8 ins Märkische Viertel, die U3 zum Mexikoplatz und die
+Straßenbahn zum Ostkreuz.
 
-### Was das Modell reproduziert
+Beim Zeichnen setzt jeder Klick eine Station, zwischen denen die Anwendung
+weitere ergänzt. Kurven werden ausgerundet, Winkel rasten nur ein, wenn sie
+bereits nahe an einer Vorzugsrichtung liegen, und ein Anschluss an eine
+bestehende Linie wird hervorgehoben, sobald der Zeiger auf ihr liegt. Länge,
+Zahl der Stationen, Kosten, Eröffnungsjahr und erreichte Einwohner werden schon
+während des Zeichnens fortlaufend angezeigt.
 
-`npm run engine:calibrate` prüft die Kennwerte gegen veröffentlichte
-Hamburger Projektangaben:
+Für jeden Entwurf schätzt die Anwendung Baukosten, Bauzeit, Eröffnungsjahr,
+Baubarkeit, Fahrgastnachfrage, volkswirtschaftlichen Nutzen, den Fiskaleffekt
+für den Haushalt der jeweiligen Stadt und das Betriebsergebnis, wobei sich die
+Kosten bis zum einzelnen Abschnitt aufschlüsseln lassen. Entwürfe lassen sich
+als Datei speichern, veröffentlichen, forken, kommentieren und miteinander
+vergleichen, und über veröffentlichte Entwürfe kann abgestimmt werden, woraus
+die Ranglisten entstehen.
+
+Die Wunschkarte legt für jede Stadt alle veröffentlichten Entwürfe übereinander
+und zeigt als Hitzekarte, wo unabhängig voneinander dieselbe Lücke gezeichnet
+wurde, was sich an keinem einzelnen Entwurf ablesen lässt. Das bestehende Netz
+geht dabei nicht ein, während Stimmen und Forks nur logarithmisch gewichtet
+werden.
+
+### Abgleich mit veröffentlichten Angaben
+
+`npm run engine:calibrate` vergleicht die Kennwerte des Modells mit
+veröffentlichten Angaben zu Hamburger Vorhaben und zum Hamburger Bestandsnetz.
 
 | Referenz | Modell | veröffentlicht | Abweichung |
 | --- | ---: | ---: | ---: |
@@ -56,23 +62,25 @@ Hamburger Projektangaben:
 | Fahrten im Jahr, Bestandsnetz | 572 Mio. | 571 Mio. | +0 % |
 | Kostendeckung, Bestandsnetz | 76 % | 75 % (HOCHBAHN) | im Rahmen |
 
-Die veröffentlichten Kosten sind die jüngsten Angaben der Vorhabenträger,
-die künftige Preissteigerungen teils einrechnen. Die Fahrgastzahlen stammen
-aus dem Lagebericht 2025 der HOCHBAHN (U-Bahn 291 Mio.) und von der S-Bahn
-Hamburg (rund 280 Mio.); auf sie sind die Einsteigerraten kalibriert. `hh audit <projekt>` zeigt die Herleitung Position für
-Position, damit sich die Rechnung von Hand nachprüfen lässt.
+Bei den veröffentlichten Kosten handelt es sich um die jüngsten Angaben der
+Vorhabenträger, die künftige Preissteigerungen teilweise einrechnen. Die
+Fahrgastzahlen, auf die die Einsteigerraten kalibriert sind, stammen aus dem
+Lagebericht 2025 der HOCHBAHN (U-Bahn 291 Mio.) und von der S-Bahn Hamburg
+(rund 280 Mio.). `hh audit <projekt>` gibt die Herleitung Position für Position
+aus, sodass sich die Rechnung von Hand nachprüfen lässt.
 
 ---
 
-## Schnellstart
+## Installation und Start
 
-Voraussetzungen: **Node ≥ 20** und **Rust ≥ 1.80**. PostgreSQL ≥ 14 nur, wenn
-veröffentlicht werden soll.
+Vorausgesetzt werden Node 20 oder neuer und Rust 1.80 oder neuer, während
+PostgreSQL 14 oder neuer nur benötigt wird, wenn Entwürfe veröffentlicht werden
+sollen.
 
-Die fertigen Datensätze für Hamburg und Berlin liegen unter `data/dist/` im
-Repository. Nach dem Klonen muss also nichts aus dem Netz geholt werden; es
-fehlt nur der Rechenkern, den der Browser braucht, weil er kompiliert wird und
-deshalb nicht mitliegt.
+Da die fertigen Datensätze für Hamburg und Berlin unter `data/dist/` im
+Repository liegen, muss nach dem Klonen nichts aus dem Netz geladen werden. Zu
+erzeugen ist lediglich der Rechenkern für den Browser, der als kompiliertes
+Ergebnis nicht im Repository enthalten ist.
 
 ```bash
 git clone https://github.com/Thiggel/neu-verbinden.git
@@ -87,44 +95,48 @@ npm run data:publish   # Datensätze aus data/dist in die Web-App kopieren
 npm run dev            # http://localhost:3000
 ```
 
-Das genügt für den Editor: Zeichnen, Rechnen, Speichern und Öffnen laufen
-vollständig im Browser, ohne Server und ohne Konto.
+Für den Editor genügt das, weil Zeichnen, Rechnen, Speichern und Öffnen
+vollständig im Browser und ohne Server oder Konto laufen.
 
-### Mit Server
+### Server
 
-Für Veröffentlichen, Abstimmen, Kommentieren und Vergleichen:
+Veröffentlichen, Abstimmen, Kommentieren und Vergleichen setzen den Server und
+eine PostgreSQL-Datenbank voraus, deren Tabellen der Server beim ersten Start
+selbst anlegt.
 
 ```bash
 createdb hamburg_transit
-cp .env.example .env      # und HH_JWT_SECRET ersetzen
-npm run server            # http://localhost:8080, legt seine Tabellen selbst an
+cp .env.example .env      # HH_JWT_SECRET darin ersetzen
+npm run server            # http://localhost:8080
 ```
 
-Die Weboberfläche spricht die API unter `http://localhost:8080` an; eine andere
-Adresse über `NEXT_PUBLIC_API_URL` beim Bauen setzen.
+Die Weboberfläche spricht die API unter `http://localhost:8080` an, wobei sich
+eine andere Adresse beim Bauen über `NEXT_PUBLIC_API_URL` setzen lässt.
 
-### Die Beispiele auf der Entdecken-Seite
+### Beispielentwürfe
 
 ```bash
 HH_SEED_PASSWORD=… npm run examples:seed
 ```
 
-Veröffentlicht die vier Beispielentwürfe unter einem eigenen Konto und ersetzt
-dabei, was dasselbe Konto vorher veröffentlicht hat. Jeder enthält genau die
-eigenen Linien und das bestehende Netz, sonst nichts: ein Entwurf, der fremde
-Vorhaben mitführt, weist deren Kilometer und Kosten als seine eigenen aus.
+Der Befehl veröffentlicht die vier Beispielentwürfe der Entdecken-Seite unter
+einem eigenen Konto und ersetzt dabei, was dasselbe Konto zuvor veröffentlicht
+hat. Jeder Entwurf enthält ausschließlich seine eigenen Linien und das
+bestehende Netz, weil ein Entwurf, der fremde Vorhaben mitführt, deren Kilometer
+und Kosten als seine eigenen ausweisen würde.
 
-### Die Daten neu bauen
+### Neubau der Datensätze
 
-Nur nötig, wenn die Datensätze aktualisiert werden sollen. Der Bezug dauert
-lange und belastet fremde Server, deshalb ist er nicht Teil des Schnellstarts.
+Ein Neubau ist nur nötig, wenn die Datensätze aktualisiert werden sollen, und
+gehört nicht zum gewöhnlichen Start, weil der Bezug lange dauert und fremde
+Server belastet.
 
 ```bash
 npm run data:fetch     # OpenStreetMap über Overpass, Statistik, Geodaten
 npm run data:build     # normalisieren, geocodieren, Domänennetz erzeugen
 npm run data:publish
 
-# Berlin:
+# Berlin
 npm run data:fetch:berlin
 npm run data:build:berlin
 npm run data:publish
@@ -132,17 +144,12 @@ npm run data:publish
 
 ### Tests
 
-`test:browser` fährt einen echten Browser. Einmalig:
+Da `test:browser` einen echten Browser steuert, ist vor dem ersten Lauf
+einmalig `npx playwright install chromium` auszuführen.
 
 ```bash
-npx playwright install chromium
-```
+npm test               # alle Suiten nacheinander
 
-```bash
-# Alle Suiten auf einmal:
-npm test
-
-# Einzeln:
 npm run engine:test    # Unit-Tests des Rechenkerns und der API (Rust)
 npm run test:ui        # reine Oberflächenlogik, ohne Browser
 npm run test:engine    # der gebaute Rechenkern gegen die echten Stadtdaten
@@ -151,29 +158,30 @@ npm run test:api       # Integrationstests gegen die laufende API
 npm run test:browser   # die Oberfläche selbst, angeklickt (Playwright)
 npm run test:security  # Angriffsversuche gegen die laufende API
 
-npm run engine:bench     # Laufzeiten — nach jeder Modelländerung laufen lassen
+npm run engine:bench     # Laufzeiten, nach jeder Modelländerung
 npm run engine:calibrate # Abgleich mit veröffentlichten Projektangaben
 cd rust && cargo run --release -p hh-cli --bin hh -- audit u5   # Kostenherleitung
 ```
 
-Die Zahl der Tests steht bewusst nicht hier: sie veraltet schneller, als sie
-jemand nachträgt. `npm test` sagt sie.
+Die Zahl der Tests ist hier absichtlich nicht angegeben, weil sie schneller
+veraltet, als sie nachgetragen wird, und `npm test` sie ohnehin ausgibt.
 
 `npm run build:check` baut die Weboberfläche nach `.next-build` statt nach
-`.next` — ein Prüfbau ersetzt sonst die Dateien, die ein laufender
-`npm run dev` gerade ausliefert, und der antwortet danach mit 500.
+`.next`, weil ein Prüfbau sonst die Dateien ersetzen würde, die ein laufender
+`npm run dev` gerade ausliefert, der daraufhin mit 500 antwortet.
 
-Ein Lauf ohne Datenbankzugriff oder ohne laufende Weboberfläche überspringt
-einzelne Prüfungen. Das ist in Ordnung — die Zusammenfassung sagt es dann
-ausdrücklich („3 übersprungen"), damit ein Teillauf nicht wie ein vollständiger
-aussieht. `HH_REQUIRE_DATA=1` macht aus dem entsprechenden Überspringen der
-Rust-Tests einen Fehler; das sollte setzen, wer die Datensätze gerade gebaut hat.
+Fehlt der Zugriff auf die Datenbank oder läuft die Weboberfläche nicht,
+überspringt ein Lauf einzelne Prüfungen und weist dies in der Zusammenfassung
+ausdrücklich aus („3 übersprungen"), damit ein Teillauf nicht wie ein
+vollständiger erscheint. `HH_REQUIRE_DATA=1` macht aus dem entsprechenden
+Überspringen in den Rust-Tests einen Fehler, was sich empfiehlt, wenn die
+Datensätze gerade gebaut wurden.
 
-Die API-Suiten laufen gegen die Ratenbegrenzung, die sie selbst prüfen — nach
-ein paar Durchläufen je Stunde greift sie. Auf dem Entwicklungsrechner räumt
-`HH_TEST_DB=hamburg_transit` die *adressbezogenen* Zähler vor jedem Lauf weg;
-die konto- und namensbezogenen Grenzen bleiben in Kraft, weil die Tests genau
-die prüfen.
+Die API-Suiten unterliegen der Ratenbegrenzung, die sie selbst prüfen, sodass
+diese nach einigen Durchläufen je Stunde greift. Auf dem Entwicklungsrechner
+entfernt `HH_TEST_DB=hamburg_transit` vor jedem Lauf die adressbezogenen
+Zähler, während die konto- und namensbezogenen Grenzen in Kraft bleiben, weil
+die Tests gerade diese prüfen.
 
 ---
 
@@ -201,28 +209,29 @@ die prüfen.
      (+ PostGIS)                      (Jobs)
 ```
 
-Die wichtigste Trennung: **die Oberfläche kennt keine Fachlogik.** Sie schickt
-Zeigerpositionen und semantische Kommandos hinein und bekommt Diffs, Geometrie
-und Ergebnisse heraus. Es gibt genau eine Implementierung von Topologie,
-Geometrie, Kosten und Nutzen — in `rust/core` —, und die läuft im Browser, auf
-dem Server und in der Kommandozeile.
+Die Oberfläche enthält keine Fachlogik, sondern übergibt Zeigerpositionen und
+semantische Kommandos an den Rechenkern und erhält von ihm Diffs, Geometrie und
+Ergebnisse zurück. Topologie, Geometrie, Kosten und Nutzen sind genau einmal
+implementiert, nämlich in `rust/core`, und diese Implementierung läuft im
+Browser, auf dem Server und in der Kommandozeile.
 
 ### Verzeichnisse
 
 ```
-rust/core        Domänenmodell und alle Modelle (95 Unit-Tests)
+rust/core        Domänenmodell und alle Modelle
 rust/wasm        WebAssembly-Bindungen für den Browser
 rust/server      Axum-API, Postgres, Worker, Social
 rust/cli         Import, Kalibrierung, Benchmarks
-tools/importer   Datenpipeline (OpenStreetMap, Statistikamt Nord)
+tools/importer   Datenpipeline (OpenStreetMap, Statistikämter)
 data/curated     Handgepflegte Projektdefinitionen mit Quellenangaben
 data/dist        Versionierte, erzeugte Datensätze
 apps/web         Next.js-Anwendung
 ```
 
-### Der Rechenkern
+### Rechenkern
 
-`rust/core` ist frei von Web-, Render- und Persistenzbelangen:
+`rust/core` ist frei von Belangen der Weboberfläche, der Darstellung und der
+Persistenz und gliedert sich in die folgenden Module.
 
 | Modul | Aufgabe |
 | --- | --- |
@@ -241,35 +250,38 @@ apps/web         Next.js-Anwendung
 | `simulation` | Orchestrierung, Vergleich, Ranglisten-Kennzahlen |
 | `params` | Sämtliche Modellparameter als Daten, versioniert |
 
-Kein Wert ist im Code fest verdrahtet: `params.rs` enthält jede Kennzahl, jeden
-Anteil und jede Dauer, und ein Szenario speichert die Parameter, mit denen es
-gerechnet wurde.
+Im Code ist kein Wert fest verdrahtet, weil `params.rs` jede Kennzahl, jeden
+Anteil und jede Dauer enthält und jedes Szenario die Parameter speichert, mit
+denen es gerechnet wurde.
 
 ---
 
-## Ohne Maus
+## Bedienung über die Tastatur
 
-Die Anwendung lässt sich vollständig mit der Tastatur bedienen, das Zeichnen
-eingeschlossen. Der Mittelpunkt der Karte ist dabei der Zeiger: die Pfeiltasten
-schieben den Boden darunter durch, **Leertaste** setzt an dieser Stelle einen
-Halt, **Enter** beendet die Linie, **Rücktaste** nimmt den letzten Punkt
-zurück, **Esc** verwirft. Werkzeuge liegen auf V, D, E, S und X, Rückgängig auf
-⌘Z. Drei Sprungmarken am Anfang der Seite führen direkt zur Karte, zur Analyse
-und zur Linienliste — sonst lägen sechzig Häkchen dazwischen.
+Die Anwendung lässt sich einschließlich des Zeichnens vollständig mit der
+Tastatur bedienen. Als Zeiger dient dabei der Mittelpunkt der Karte, unter dem
+die Pfeiltasten die Karte verschieben, während die Leertaste an dieser Stelle
+einen Halt setzt, Enter die Linie beendet, die Rücktaste den letzten Punkt
+zurücknimmt und Esc die Linie verwirft. Die Werkzeuge liegen auf V, D, E, S und
+X, das Rückgängigmachen auf ⌘Z. Drei Sprungmarken am Anfang der Seite führen
+unmittelbar zur Karte, zur Analyse und zur Linienliste, die sonst erst nach
+sechzig Kontrollkästchen erreichbar wären.
 
 ---
 
-## Zwei Städte
+## Städte
 
-Die Anwendung kennt Hamburg und Berlin. Was eine Stadt ausmacht, steht in
-`data/cities/<id>.json` — Ausschnitt, Projektionsursprung, Herkunft der
-Einwohnerzahlen, Linienfarben — und nicht im Code; eine dritte Stadt ist damit
-eine Datei und ein Importlauf, kein zweiter Zweig der Pipeline.
+Die Anwendung unterstützt Hamburg und Berlin. Die Eigenschaften einer Stadt,
+darunter Ausschnitt, Projektionsursprung, Herkunft der Einwohnerzahlen und
+Linienfarben, stehen nicht im Code, sondern in `data/cities/<id>.json`, sodass
+eine dritte Stadt eine weitere Datei und einen Importlauf erfordert, aber keinen
+eigenen Zweig der Pipeline.
 
-Die metrische Ebene, in der jede Berechnung läuft, gehört zum Datensatz: sie
-ist eine lokale Näherung um *einen* Punkt, und 240 km davon entfernt wären die
-Ost-West-Abstände drei Prozent zu kurz. Der Server hält beide Städte
-gleichzeitig und rechnet jedes Szenario in der Ebene seiner eigenen Stadt.
+Die metrische Ebene, in der jede Berechnung läuft, gehört zum Datensatz, weil
+sie eine lokale Näherung um einen einzigen Punkt ist, deren Ost-West-Abstände
+in 240 km Entfernung um drei Prozent zu kurz wären. Der Server hält beide
+Städte gleichzeitig vor und rechnet jedes Szenario in der Ebene der Stadt, zu
+der es gehört.
 
 | | Hamburg | Berlin |
 | --- | ---: | ---: |
@@ -280,14 +292,15 @@ gleichzeitig und rechnet jedes Szenario in der Ebene seiner eigenen Stadt.
 | Fahrten im Jahr (Modell / veröffentlicht) | 572 Mio. / 571 Mio. | 1 244 Mio. / 1 249 Mio. |
 | Kuratierte Vorhaben | U5, U4, S4, Straßenbahnstudie | Siemensbahn, U8, U3, Straßenbahn Ostkreuz |
 
-Die Berliner Vorhaben sind mit Quelle erfasst; wo eine Angabe wie Kosten oder
-Eröffnungsjahr nicht amtlich veröffentlicht ist, bleibt sie leer.
+Die Berliner Vorhaben sind mit Quellen erfasst, wobei Angaben wie Kosten oder
+Eröffnungsjahr leer bleiben, solange sie nicht amtlich veröffentlicht sind.
 
 ---
 
 ## Daten
 
-Siehe `docs/daten.md` für die vollständige Herkunft. Kurz:
+Die vollständige Herkunft der Daten beschreibt `docs/daten.md`, die folgende
+Übersicht fasst sie zusammen.
 
 | Datensatz | Quelle | Lizenz |
 | --- | --- | --- |
@@ -298,52 +311,49 @@ Siehe `docs/daten.md` für die vollständige Herkunft. Kurz:
 | Geplante Vorhaben | kuratiert aus Projektveröffentlichungen, verortet gegen die OSM-Daten desselben Stands | — |
 | Orte und Einwohnerzahlen der Region bis Kiel, Lübeck, Rostock und Lüneburg | OpenStreetMap über Overpass | ODbL 1.0 |
 
-Die Bevölkerungsverteilung ist das analytisch interessanteste Stück: die
-Einwohnerzahlen der Stadt- beziehungsweise Ortsteile werden innerhalb jedes
-Teils nach modellierter Wohn-Geschossfläche auf ein 200-m-Raster verteilt
-(Hamburg 99 Stadtteile und 197 577 Gebäude mit Geschosszahl, Berlin 97
-Ortsteile und 208 092 Gebäude, jeweils ergänzt um Flächennutzung). Die
-Rastersumme entspricht exakt der Ausgangssumme — für Hamburg den amtlichen
-1 975 790 Einwohnern. Woher die Zahlen einer Stadt stammen, steht im
-Datensatz selbst und wird in der Oberfläche genannt; für Berlin sind es die
-3 913 644 Einwohner der Einwohnerregisterstatistik.
+Die Bevölkerungsverteilung entsteht, indem die Einwohnerzahlen der Stadt- und
+Ortsteile innerhalb jedes Teils nach modellierter Wohn-Geschossfläche auf ein
+200-m-Raster verteilt werden. Zugrunde liegen in Hamburg 99 Stadtteile und
+197 577 Gebäude mit Geschosszahl, in Berlin 97 Ortsteile und 208 092 Gebäude,
+jeweils ergänzt um die Flächennutzung. Die Rastersumme entspricht exakt der
+Ausgangssumme, für Hamburg also den amtlichen 1 975 790 Einwohnern und für
+Berlin den 3 913 644 Einwohnern der Einwohnerregisterstatistik, und die Herkunft
+der Zahlen steht im Datensatz selbst, aus dem die Oberfläche sie anzeigt.
 
-Über die Stadt hinaus reicht der Ausschnitt in die Region — für Hamburg bis
-Lüneburg, Lauenburg, Kiel, Lübeck und Rostock, für Berlin ins Brandenburger
-Umland —, damit sich auch Regionalverbindungen entwerfen lassen.
-Dort gibt es keine vergleichbare amtliche Kleinräumigkeit; verwendet wird ein
-1-km-Raster aus den Einwohnerzahlen von 1 243 OSM-Ortsknoten
-(3 862 753 Einwohner), aus dem Zellen innerhalb Hamburgs entfernt sind. Die
-Genauigkeit ist entsprechend gröber, und die Anwendung sagt das: eine Trasse,
-die nennenswert ins Umland reicht, bekommt in der Baubarkeit den Hinweis, auf
-wie vielen Kilometern die Zahlen auf dem groben Raster beruhen.
+Damit sich auch Regionalverbindungen entwerfen lassen, reicht der Ausschnitt
+über die Stadt hinaus, für Hamburg bis Lüneburg, Lauenburg, Kiel, Lübeck und
+Rostock, für Berlin ins Brandenburger Umland. Da es dort keine vergleichbar
+kleinräumige amtliche Statistik gibt, wird ein 1-km-Raster aus den
+Einwohnerzahlen von 1 243 OSM-Ortsknoten (3 862 753 Einwohner) verwendet, aus
+dem die Zellen innerhalb Hamburgs entfernt sind. Weil die Genauigkeit dort
+entsprechend gröber ist, erhält eine Trasse, die nennenswert ins Umland reicht,
+in der Baubarkeit einen Hinweis darauf, auf wie vielen Kilometern ihre Zahlen
+auf dem groben Raster beruhen.
 
 ---
 
 ## Modellierung und ihre Grenzen
 
-`docs/modell.md` beschreibt jedes Modell im Detail. Die wichtigsten Grenzen:
-
-* Das Modell kennt **keinen Baugrund**, keine Leitungslage, keine
-  Grundstücksverhältnisse und keine politischen Verfahren.
-* Die Nachfrage ist ein Einzugsbereichsmodell mit Reisezeiten aus dem
-  Netzgraphen, kein Verkehrsmodell mit Quelle-Ziel-Matrix.
-* Der Nutzen ist eine Abschätzung in der Logik der Standardisierten Bewertung,
-  aber keine solche.
-* Kosten werden als Spanne ausgewiesen. Ein Punktwert ohne Spanne wäre eine
-  Behauptung, die die Datenlage nicht trägt.
+`docs/modell.md` beschreibt jedes Modell im Einzelnen. Zu den wichtigsten
+Grenzen gehört, dass das Modell weder Baugrund noch Leitungslage,
+Grundstücksverhältnisse oder politische Verfahren kennt. Die Nachfrage beruht
+auf einem Einzugsbereichsmodell mit Reisezeiten aus dem Netzgraphen und nicht
+auf einem Verkehrsmodell mit Quelle-Ziel-Matrix, und der Nutzen ist eine
+Abschätzung in der Logik der Standardisierten Bewertung, ohne eine solche zu
+sein. Kosten werden als Spanne ausgewiesen, weil ein bloßer Punktwert eine
+Genauigkeit behaupten würde, die die Datenlage nicht trägt.
 
 Jedes veröffentlichte Szenario speichert `calculationVersion` und
-`dataVersion`. Verbessert sich das Modell, bleiben alte Ergebnisse
-reproduzierbar; die Neuberechnung ist ein ausdrücklicher Schritt.
+`dataVersion`, sodass alte Ergebnisse reproduzierbar bleiben, wenn sich das
+Modell ändert, und eine Neuberechnung stets ein ausdrücklicher Schritt ist.
 
 ---
 
 ## Leistung
 
-`npm run engine:bench`, Release-Build. Die Schnellschätzung antwortet, während
-jemand zeichnet; die vollständige Analyse ist entprellt und darf sich Zeit
-lassen.
+Die folgenden Werte stammen aus `npm run engine:bench` mit einem Release-Build.
+Die Schnellschätzung antwortet, während gezeichnet wird, wohingegen die
+vollständige Analyse entprellt ist und mehr Zeit beanspruchen darf.
 
 | Vorgang | Hamburg | Berlin |
 | --- | --- | --- |
@@ -354,75 +364,76 @@ lassen.
 | Vollständige Analyse, Bestand | 9,0 ms | 64,8 ms |
 | Szenario serialisieren / laden | 1,3 / 0,9 ms (271 kB) | 0,9 / 1,5 ms (565 kB) |
 
-Die Datensätze beider Städte wiegen zusammen 16,3 MB, der Rechenkern 1,3 MB.
+Die Datensätze beider Städte umfassen zusammen 16,3 MB, der Rechenkern 1,3 MB.
 
-Nach jeder Modelländerung `npm run engine:bench` laufen lassen: eine
-Abfrage, die in der vollständigen Analyse nicht auffällt, kann in der
-Schnellschätzung um den Faktor zwanzig durchschlagen.
-
-Reproduzierbar mit `npm run engine:bench`.
-
-Zeigerereignisse laufen vollständig an React vorbei: der Editor-Controller
-schreibt zwei GeoJSON-Quellen und bewegt einen DOM-Knoten, mehr nicht.
+Nach jeder Modelländerung sollte `npm run engine:bench` erneut laufen, weil
+eine Abfrage, die in der vollständigen Analyse nicht auffällt, die
+Schnellschätzung um den Faktor zwanzig verlangsamen kann. Zeigerereignisse
+laufen vollständig an React vorbei, da der Editor-Controller bei jeder Bewegung
+lediglich zwei GeoJSON-Quellen schreibt und einen DOM-Knoten verschiebt.
 
 ---
 
 ## Betrieb
 
-Drei Teile, die getrennt laufen: die Oberfläche (statisch, plus eine
-serverseitige Route für das Vorschaubild), die API mitsamt Hintergrundarbeiter,
-und Postgres. Das `Dockerfile` im Wurzelverzeichnis baut die API mit den
-Stadtdaten im Abbild.
+Der Dienst besteht aus drei getrennt laufenden Teilen, nämlich der Oberfläche,
+die statisch ausgeliefert wird und nur für das Vorschaubild eine serverseitige
+Route hat, der API mitsamt Hintergrundarbeiter und der Postgres-Datenbank. Das
+`Dockerfile` im Wurzelverzeichnis baut die API einschließlich der Stadtdaten in
+ein Abbild.
 
-`HH_ENV=production` schaltet eine Startprüfung scharf: ohne festes
-`HH_JWT_SECRET`, ohne `HH_ALLOWED_ORIGIN` oder mit `*` startet der Server gar
-nicht erst, statt mit einer Warnung im Protokoll monatelang falsch zu laufen.
+Mit `HH_ENV=production` prüft der Server beim Start seine Konfiguration und
+startet nicht, wenn `HH_JWT_SECRET` nicht fest gesetzt ist oder
+`HH_ALLOWED_ORIGIN` fehlt oder `*` lautet, damit eine fehlerhafte Konfiguration
+nicht monatelang mit einer bloßen Warnung im Protokoll in Betrieb bleibt.
 
-Zwei Dinge entscheiden über die Wahl des Anbieters, und beide sind nicht
-offensichtlich:
+Bei der Wahl des Anbieters sind zwei Umstände entscheidend, die nicht
+offensichtlich sind. Zum einen lädt ein Erstbesuch rund 12 MB Kartendaten,
+weshalb ein Anbieter mit hartem Volumendeckel und ohne Nachzahlung die Seite
+gerade dann abschalten würde, wenn sie zum ersten Mal breiter verlinkt wird.
+Zum anderen würde der Hintergrundarbeiter eine Datenbank, die im Leerlauf
+einschläft und nach Laufzeit abgerechnet wird, durch seine Abfragen nach Arbeit
+ständig wach halten, weshalb `HH_WORKER_IDLE_SECS` den Abstand dieser Abfragen
+im Leerlauf und `HH_DB_IDLE_SECS` die Zeit bis zum Schließen ungenutzter
+Verbindungen einstellt.
 
-* **Datenverkehr.** Ein Erstbesuch lädt rund 12 MB Kartendaten. Ein Anbieter mit
-  hartem Deckel und ohne Nachzahlung stellt die Seite genau dann ab, wenn sie
-  zum ersten Mal irgendwo verlinkt wird.
-* **Eine Datenbank, die im Leerlauf einschläft.** Der Hintergrundarbeiter fragt
-  nach Arbeit und hält sie damit wach. `HH_WORKER_IDLE_SECS` und
-  `HH_DB_IDLE_SECS` stellen ein, wie geduldig er ist.
-
-Alle Umgebungsvariablen, die Reihenfolge beim Ausrollen und was danach zu prüfen
-ist: **[`docs/betrieb.md`](docs/betrieb.md)**.
+Sämtliche Umgebungsvariablen, die Reihenfolge beim Ausrollen und die
+anschließenden Prüfungen beschreibt [`docs/betrieb.md`](docs/betrieb.md).
 
 ---
 
 ## Rechtliches
 
-Der Dienst ist in Deutschland betrieben und dafür vorbereitet: Impressum nach
-§ 5 DDG, Datenschutzerklärung, Nutzungsbedingungen und Meldeweg nach dem DSA
-liegen unter `/rechtliches` und sind aus dem Fuß jeder Seite erreichbar. Die
-Rechte auf Auskunft und Löschung sind unter `/konto` eingebaut und nicht bloß
-zugesagt.
+Der Dienst wird in Deutschland betrieben und ist darauf eingerichtet, sodass
+Impressum nach § 5 DDG, Datenschutzerklärung, Nutzungsbedingungen und der
+Meldeweg nach dem DSA unter `/rechtliches` liegen und vom Fuß jeder Seite aus
+erreichbar sind, während sich die Rechte auf Auskunft und Löschung unter
+`/konto` unmittelbar ausüben lassen.
 
-Ein Einwilligungsbanner gibt es nicht, weil es nichts einzuwilligen gibt: keine
-Analyse, kein Tracking, keine fremden Schriftarten, nichts, was beim Aufruf von
-dritter Seite nachgeladen wird. Im Browser liegen vier Werte, die für die
-gewünschte Funktion nötig sind (§ 25 Abs. 2 Nr. 2 TDDDG).
+Ein Einwilligungsbanner ist nicht vorhanden, weil keine Einwilligung einzuholen
+ist: Die Anwendung verwendet weder Analyse noch Tracking noch fremde
+Schriftarten und lädt beim Aufruf nichts von dritter Seite nach. Im Browser
+werden vier Werte gespeichert, die für die gewünschte Funktion erforderlich sind
+(§ 25 Abs. 2 Nr. 2 TDDDG).
 
-Stand, offene Punkte und was ein Anwalt ansehen sollte:
-**[`docs/recht.md`](docs/recht.md)**.
+Der Stand, die offenen Punkte und die Fragen, die eine anwaltliche Prüfung
+klären sollte, sind in [`docs/recht.md`](docs/recht.md) festgehalten.
 
 ---
 
 ## Lizenz und Namensnennung
 
-**Code: MIT** ([`LICENSE`](LICENSE)).
+Der Code steht unter der MIT-Lizenz ([`LICENSE`](LICENSE)), die für die
+Datensätze unter `data/` jedoch nicht gilt, weil diese aus fremden Datenbanken
+abgeleitet sind, deren Lizenzen fortgelten.
 
-**Daten: nicht MIT.** Die Datensätze unter `data/` sind aus fremden Datenbanken
-abgeleitet, und deren Lizenzen gelten weiter:
+Die Daten aus OpenStreetMap unterliegen der ODbL 1.0 mit ihrer
+Share-alike-Bedingung. Da die Dateien in `data/dist/` im Sinne dieser Lizenz
+abgeleitete Datenbanken und nicht bloß daraus erzeugte Werke sind, werden sie
+ihrerseits unter der ODbL angeboten, und die Namensnennung auf der Karte deckt
+lediglich die Darstellung ab, nicht aber das JSON, das der Browser lädt. Die
+Hamburger Statistik des Statistikamts Nord unterliegt der Datenlizenz
+Deutschland – Namensnennung 2.0 (dl-de/by-2-0), die Berliner Statistik des Amts
+für Statistik Berlin-Brandenburg der Lizenz CC BY 3.0 DE.
 
-* OpenStreetMap, **ODbL 1.0**, mit Share-alike. Die Dateien in `data/dist/` sind
-  abgeleitete Datenbanken im Sinne der Lizenz, nicht bloß daraus erzeugte Werke;
-  sie werden deshalb ihrerseits unter der ODbL angeboten. Die Namensnennung auf
-  der Karte deckt die *Darstellung* ab, nicht das JSON, das der Browser lädt.
-* Statistikamt Nord, Amt für Statistik Berlin-Brandenburg und die
-  Statistischen Ämter des Bundes und der Länder, **dl-de/by-2-0**.
-
-Einzelheiten und der genaue Umfang: [`LICENSE-DATA`](LICENSE-DATA).
+Die Einzelheiten und den genauen Umfang regelt [`LICENSE-DATA`](LICENSE-DATA).

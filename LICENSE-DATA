@@ -21,18 +21,24 @@ That is the obligation that is easiest to miss. Naming OpenStreetMap on the map
 satisfies attribution for the *rendered map*, which is a Produced Work. It does
 not by itself license the JSON the browser downloads, which is a database.
 
-## Statistics — dl-de/by-2-0
+## Statistics
 
-Population and employment rasters:
+The population and employment rasters of the two cities are distributed from
+official district figures. The regional raster beyond the city limits is built
+from OpenStreetMap place nodes and falls under the ODbL above.
 
-* Hamburg: Statistikamt Nord
-* Berlin: Amt für Statistik Berlin-Brandenburg, and the Berlin open data portal
-* Region: the census grid of the Statistische Ämter des Bundes und der Länder
+Hamburg, Statistikamt Nord, regional statistics of the Stadtteile:
 
     Datenlizenz Deutschland — Namensnennung — Version 2.0
     https://www.govdata.de/dl-de/by-2-0
 
-The licence requires the source to be named. Where a dataset has been changed,
+Berlin, Amt für Statistik Berlin-Brandenburg, Einwohnerregisterstatistik der
+Ortsteile zum 31.12.2025 (Statistischer Bericht A I 5 – hj 2/25):
+
+    Creative Commons Namensnennung 3.0 Deutschland (CC BY 3.0 DE)
+    https://creativecommons.org/licenses/by/3.0/de/
+
+Both licences require the source to be named. Where a dataset has been changed,
 the change has to be noted; the importers record what they do in
 `docs/daten.md`, and the derived rasters are aggregations rather than
 corrections.
