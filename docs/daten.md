@@ -1,31 +1,30 @@
 # Datenherkunft
 
-Dieses Dokument beschreibt die **Hamburger** Datenpipeline im Detail. Berlin
-folgt demselben Aufbau mit anderen Quellen: die Netzdaten kommen ebenfalls aus
-OpenStreetMap, die Einwohnerzahlen aber aus den `population`-Tags der
-OSM-Ortsteilrelationen statt von einem Statistikamt — sie sind also **nicht
-amtlich**, und die Anwendung nennt sie auch nicht so. Was für eine Stadt gilt,
-steht in `data/cities/<id>.json` und im Datensatz selbst (`provenance`).
+Dieses Dokument beschreibt die **Hamburger** Datenpipeline im Einzelnen,
+während Berlin demselben Aufbau mit anderen Quellen folgt, die in Abschnitt 5
+zusammengefasst sind. Welche Quellen für eine Stadt gelten, steht in
+`data/cities/<id>.json` und im Datensatz selbst unter `provenance`.
 
-Alle Datensätze sind versioniert. Der aktuelle Stand ist **2026-09**. Ein
-Szenario speichert den Datenstand, mit dem es gerechnet wurde; der Server
-lehnt Szenarien mit fremdem Datenstand ab, statt sie stillschweigend
-umzurechnen.
+Alle Datensätze sind versioniert, wobei der aktuelle Stand **2026-09** lautet.
+Ein Szenario speichert den Datenstand, mit dem es berechnet wurde, und der
+Server lehnt Szenarien mit einem anderen Datenstand ab, statt sie
+stillschweigend umzurechnen.
 
-Die Pipeline ist reproduzierbar: `npm run data:fetch` lädt die Rohdaten (mit
-Zwischenspeicher unter `data/raw/`), `npm run data:build` erzeugt daraus
-`data/dist/`; für Berlin `data:fetch:berlin` und `data:build:berlin`. Nichts
-wird von Hand nachbearbeitet.
+Die Pipeline ist reproduzierbar, da `npm run data:fetch` die Rohdaten lädt und
+unter `data/raw/` zwischenspeichert und `npm run data:build` daraus
+`data/dist/` erzeugt; für Berlin dienen dazu `data:fetch:berlin` und
+`data:build:berlin`. Eine Nachbearbeitung von Hand findet nicht statt.
 
-Der Zwischenspeicher ist nach dem Hash der Abfrage benannt, eine geänderte
-Abfrage legt also eine neue Datei neben die alte. Welche davon gilt, steht in
-`data/raw/index.json` — ohne diesen Zeiger nahm der Aufbau die alphabetisch
-erste, und eine umgeschriebene Abfrage blieb folgenlos.
+Der Zwischenspeicher ist nach dem Hash der Abfrage benannt, sodass eine
+geänderte Abfrage eine neue Datei neben der alten anlegt. Welche Datei gilt,
+verzeichnet `data/raw/index.json`, weil der Aufbau ohne diesen Verweis die
+alphabetisch erste Datei verwendete und eine umgeschriebene Abfrage dadurch
+wirkungslos blieb.
 
-## 1. Netz und Geografie — OpenStreetMap
+## 1. Netz und Geografie aus OpenStreetMap
 
-Bezogen über die Overpass-API, Lizenz **ODbL 1.0**, Namensnennung
-erforderlich.
+Die Daten werden über die Overpass-API bezogen und stehen unter der Lizenz
+**ODbL 1.0**, die eine Namensnennung verlangt.
 
 | Abfrage | Umfang | Verwendung |
 | --- | --- | --- |
@@ -41,143 +40,153 @@ erforderlich.
 | Orte, Gewässer, Autobahnen, Bahnstrecken der Region | 2 759 Orte, 72 Seen, 75 Küstenlinien, 163 Autobahnen, 345 Bahnstrecken | Regionalkarte, Benennung außerhalb Hamburgs |
 | Geplante und im Bau befindliche Gleise | 130 Wege | Trassenführung U5 Ost, U4 Grasbrook |
 
-### Wie aus Relationen ein Graph wird
+### Aufbau des Netzgraphen
 
-`tools/importer/build-network.mjs` löst pro Linie das Problem, dass OSM
-Richtungen und Varianten getrennt führt:
+`tools/importer/build-network.mjs` behandelt für jede Linie den Umstand, dass
+OpenStreetMap Fahrtrichtungen und Varianten getrennt führt:
 
 1. Für jede Linienvariante wird die Gleisgeometrie aus den Wegen
-   zusammengesetzt und jeder Halt darauf projiziert — das ergibt die
-   Reihenfolge der Halte, ohne sich auf die Reihenfolge der Relationsmitglieder
-   zu verlassen.
-2. Halte werden über einen normalisierten Namen und 450 m Umkreis
-   zusammengeführt, sodass „Hauptbahnhof Nord", „Hauptbahnhof Süd" und
-   „Hamburg Hauptbahnhof" ein Knoten werden.
-3. Zwischen benachbarten Halten entsteht eine Kante. Führt eine zweite Linie
-   über dieselbe Strecke — geprüft am Mittelpunkt nach Länge, 150 m Toleranz —,
-   nutzt sie **dieselbe Kante**. Daraus ergeben sich gemeinsame Gleise,
-   Umsteigepunkte und Verzweigungen von selbst.
-4. Varianten, die keine neue Kante erzeugen, sind Gegenrichtungen und
-   entfallen. Varianten, die neue Kanten erzeugen, sind echte Äste und werden
-   als eigene Linie geführt — so bleibt der Flughafen-Ast der S1 erhalten.
+   zusammengesetzt und jeder Halt auf sie projiziert, woraus sich die
+   Reihenfolge der Halte ergibt, ohne dass die Reihenfolge der
+   Relationsmitglieder maßgeblich wäre.
+2. Halte werden über einen normalisierten Namen und einen Umkreis von 450 m
+   zusammengeführt, sodass „Hauptbahnhof Nord“, „Hauptbahnhof Süd“ und
+   „Hamburg Hauptbahnhof“ einen gemeinsamen Knoten bilden.
+3. Zwischen benachbarten Halten entsteht eine Kante, und eine zweite Linie,
+   die über dieselbe Strecke führt, was am längenbezogenen Mittelpunkt mit
+   einer Toleranz von 150 m geprüft wird, nutzt **dieselbe Kante**, sodass
+   sich gemeinsame Gleise, Umsteigepunkte und Verzweigungen aus der Struktur
+   ergeben.
+4. Varianten, die keine neue Kante erzeugen, gelten als Gegenrichtungen und
+   entfallen, während Varianten mit neuen Kanten echte Äste sind und als
+   eigene Linie geführt werden, wodurch etwa der Flughafenast der S1 erhalten
+   bleibt.
 
-Ergebnis: 13 Bestandslinien, 164 Stationen, 273,7 km. Die U-Bahn kommt auf
-106,1 km — das reale Netz misst rund 106 km.
+Daraus ergeben sich 13 Bestandslinien mit 164 Stationen und 273,7 km, wovon
+106,1 km auf die U-Bahn entfallen, deren reales Netz rund 106 km misst.
 
-## 2. Bevölkerung und Beschäftigung — Statistikamt Nord
+## 2. Bevölkerung und Beschäftigung in Hamburg
 
-„Regionalstatistische Daten der Stadtteile Hamburgs", bezogen über die
-OGC-API der Freien und Hansestadt Hamburg. Lizenz **dl-de/by-2-0**.
+Grundlage sind die „Regionalstatistischen Daten der Stadtteile Hamburgs“ des
+Statistikamts Nord, die über die OGC-API der Freien und Hansestadt Hamburg
+bezogen werden und unter der Lizenz **dl-de/by-2-0** stehen.
 
-Verwendet wird der aktuellste Jahrgang (2025) für 99 Stadtteile:
-Einwohner nach Altersgruppen, Haushalte, sozialversicherungspflichtig
-Beschäftigte am Wohnort, Wohnungen, Pkw-Bestand, Fläche.
-Summe: **1 975 790 Einwohner** auf 747 km². Das Melderegister weist für ganz
-Hamburg 1 980 285 Einwohner aus; die Differenz entfällt auf Personen, die
-keinem Stadtteil zugeordnet sind.
+Verwendet wird der aktuelle Jahrgang 2025 für 99 Stadtteile mit Einwohnern
+nach Altersgruppen, Haushalten, sozialversicherungspflichtig Beschäftigten am
+Wohnort, Wohnungen, Pkw-Bestand und Fläche. Die Summe beträgt **1 975 790
+Einwohner** auf 747 km², während das Melderegister für ganz Hamburg 1 980 285
+Einwohner ausweist, wobei die Differenz auf Personen entfällt, die keinem
+Stadtteil zugeordnet sind.
 
-### Das Bevölkerungsraster
+### Bevölkerungsraster
 
-Stadtteile sind für Einzugsbereiche zu grob — ein Stadtteil ist im Mittel
-7,5 km² groß, ein Fußweg-Einzugsbereich 2 km². Deshalb wird die amtliche
-Einwohnerzahl **innerhalb** jedes Stadtteils auf ein 200-m-Raster verteilt,
-gewichtet mit modellierter Wohn-Geschossfläche:
+Da ein Stadtteil im Mittel 7,5 km² groß ist, ein fußläufiger Einzugsbereich
+aber nur 2 km², sind Stadtteile für die Berechnung von Einzugsbereichen zu
+grob. Die amtliche Einwohnerzahl wird deshalb **innerhalb** jedes Stadtteils
+auf ein Raster von 200 m verteilt und dabei mit der modellierten
+Wohngeschossfläche gewichtet:
 
 ```
 Gewicht(Zelle) = Σ Grundfläche × Geschosse   über Wohngebäude in der Zelle
                + 0,25 × Fläche Wohn-Flächennutzung   (füllt Lücken)
 ```
 
-Die Verteilung ist je Stadtteil normiert, Fehler in den Gebäudedaten wirken
-sich also nur innerhalb eines Stadtteils aus, nie auf dessen Summe. Die
-Rastersumme entspricht exakt 1 975 790.
+Weil die Verteilung je Stadtteil normiert ist, wirken sich Fehler in den
+Gebäudedaten nur innerhalb eines Stadtteils und nie auf dessen Summe aus, und
+die Summe des Rasters entspricht genau 1 975 790.
 
-### Die Arbeitsplätze
+### Arbeitsplätze
 
-Die amtliche Statistik weist Beschäftigte am **Wohnort** aus; für
-Erreichbarkeit braucht es den **Arbeitsort**. Deshalb werden 1 370 200
-Erwerbstätige am Arbeitsort (Hamburg 2025, Arbeitskreis Erwerbstätigenrechnung) stadtweit nach Nichtwohn-Geschossfläche
-verteilt, mit einem Innenstadtfaktor
-`1 + 1,9 · exp(−d/2600 m)`, der die im Gebäudebestand unterrepräsentierte
-Bürodichte der City ausgleicht.
+Die amtliche Statistik weist Beschäftigte am **Wohnort** aus, während für die
+Erreichbarkeit der **Arbeitsort** benötigt wird. Deshalb werden die 1 370 200
+Erwerbstätigen am Arbeitsort, die der Arbeitskreis Erwerbstätigenrechnung für
+Hamburg 2025 angibt, stadtweit nach Nichtwohngeschossfläche verteilt, wobei
+ein Innenstadtfaktor von `1 + 1,9 · exp(−d/2600 m)` die im Gebäudebestand
+unterrepräsentierte Bürodichte der Innenstadt ausgleicht.
 
-Das ist ausdrücklich eine **Modellierung**, nicht amtlich. Sie wird in der
-Anwendung als solche ausgewiesen. Die daraus abgeleiteten Beschäftigungszentren
-sind plausibel: Rathaus 140 k, Berliner Tor 57 k, Diebsteich 33 k, Veddel 29 k,
-Sengelmannstraße (City Nord) 27 k, Dehnhaide 24 k, Reeperbahn 22 k, Harburg 19 k,
-Waltershof 18 k.
+Diese Verteilung ist eine **Modellierung** und keine amtliche Angabe, was die
+Anwendung auch so ausweist. Die daraus abgeleiteten Beschäftigungszentren
+liegen in einer plausiblen Größenordnung, nämlich Rathaus mit 140 000,
+Berliner Tor mit 57 000, Diebsteich mit 33 000, Veddel mit 29 000,
+Sengelmannstraße (City Nord) mit 27 000, Dehnhaide mit 24 000, Reeperbahn mit
+22 000, Harburg mit 19 000 und Waltershof mit 18 000.
 
-## 2b. Die Region — Lüneburg, Lauenburg, Kiel, Rostock
+## 3. Region um Hamburg
 
-Für Hamburg allein lässt sich keine Regionalverbindung entwerfen. Der
-Datenausschnitt reicht deshalb von **53,00° bis 54,55° Nord und 9,10° bis
-12,55° Ost** — von Lüneburg und der Elbmarsch bis Kiel, Lübeck und Rostock.
+Da sich innerhalb Hamburgs allein keine Regionalverbindung entwerfen lässt,
+reicht der Datenausschnitt von **53,00° bis 54,55° Nord und von 9,10° bis
+12,55° Ost** und umfasst damit das Gebiet von Lüneburg und der Elbmarsch bis
+Kiel, Lübeck und Rostock.
 
-Außerhalb Hamburgs gibt es keine amtliche Kleinräumigkeit, die der des
-Statistikamts Nord entspräche. Verwendet wird deshalb die
-`population`-Angabe der OSM-Ortsknoten: 1 243 Orte mit Einwohnerzahl,
-zusammen **3 863 336 Einwohner**, verteilt auf ein **1-km-Raster** (252 × 198
-Zellen). Jeder Ort wird über eine Scheibe verteilt, deren Radius sich aus
-seiner Einwohnerzahl bei 1 800 Einwohnern je km² bebauter Fläche ergibt; das
-Gewicht fällt zum Rand hin quadratisch ab.
+Weil es außerhalb Hamburgs keine amtlichen Daten gibt, deren räumliche
+Auflösung der des Statistikamts Nord entspräche, wird die Angabe `population`
+der OSM-Ortsknoten verwendet. Die 1 243 Orte mit Einwohnerzahl umfassen
+zusammen **3 863 336 Einwohner**, die auf ein **Raster von 1 km** mit 252 × 198
+Zellen verteilt werden. Jeder Ort wird dabei über eine Kreisfläche verteilt,
+deren Radius sich aus seiner Einwohnerzahl bei 1 800 Einwohnern je km²
+bebauter Fläche ergibt, und deren Gewicht zum Rand hin quadratisch abnimmt.
 
-Drei Dinge sind dabei bewusst gesetzt:
+Drei Festlegungen sind dabei bewusst getroffen. Die 678 Zellen innerhalb
+Hamburger Stadtteile werden geleert, weil dort das feinere Raster von 200 m
+gilt und Hamburg andernfalls doppelt gezählt würde. Unplausible
+Einwohnerzahlen werden ersetzt, da `population` in OpenStreetMap von Nutzern
+gepflegt wird und gelegentlich die Zahl des umgebenden Amtes enthält, wie beim
+Knoten von Bad Bramstedt, der bei rund 14 000 Einwohnern 154 390 angab; liegt
+ein Wert weit über dem, was der zugehörige `place`-Typ zulässt, wird
+stattdessen eine für diesen Typ übliche Größe angesetzt, weil ein Fehler um den
+Faktor zwei geringer wiegt als einer um den Faktor zehn. Das Raster ist
+schließlich mit 1 km gegenüber 200 m in der Stadt grob, weil die zugrunde
+liegenden Daten grob sind, was für die Frage, wen eine S-Bahn nach Kiel
+erreicht, genügt, für die Lage einer Haltestelle in Neumünster jedoch nicht.
 
-* **Zellen innerhalb Hamburger Stadtteile werden geleert** (678 Stück). Dort
-  gilt das feine 200-m-Raster; ohne diesen Schritt würde Hamburg doppelt
-  gezählt.
-* **Unplausible Einwohnerzahlen werden ersetzt.** `population` ist in OSM
-  nutzergepflegt und trägt gelegentlich die Zahl des umgebenden Amtes: der
-  Knoten von Bad Bramstedt (rund 14 000 Einwohner) führte 154 390. Liegt der
-  Wert weit über dem, was der eigene `place`-Typ zulässt, wird stattdessen
-  eine typische Größe für diesen Typ angesetzt — falsch um den Faktor zwei ist
-  besser als falsch um den Faktor zehn.
-* **Das Raster ist grob, weil die Daten grob sind.** 1 km gegen 200 m in der
-  Stadt. Für die Frage „wen erreicht eine S-Bahn nach Kiel?" reicht das; für
-  eine Haltestellenlage in Neumünster nicht.
+Alle 2 756 benannten Orte der Region dienen, auch wenn sie keine Einwohnerzahl
+tragen, zusätzlich der **Benennung**, sodass eine Station außerhalb der Städte
+nach dem Dorf heißt, das sie erschließt, wie es bei „Bissee“ oder „Groß
+Kummerfeld“ auch in der Wirklichkeit der Fall wäre.
 
-Alle 2 756 benannten Orte der Region — auch die ohne Einwohnerzahl — dienen
-zusätzlich der **Benennung**: eine Station im Freien heißt nach dem Dorf, das
-sie erschließt, so wie „Bissee" oder „Groß Kummerfeld" es real täten.
-
-## 3. Geplante Vorhaben — kuratiert
+## 4. Geplante Vorhaben
 
 `data/curated/projects.json` enthält Stationsfolgen, Bauweisen, Zieltermine und
-veröffentlichte Kosten, jeweils mit Quellenangabe. **Koordinaten stehen dort
-nicht**: `tools/importer/build-projects.mjs` verortet jede Station gegen die
-OSM-Daten desselben Datenstands (Bestandsstationen, Ortsteile, Landmarken,
-Straßennamen, benannte Objekte auf den geplanten Trassen), wobei die
-Namensübereinstimmung schwerer wiegt als die Nähe.
+veröffentlichte Kosten mit jeweiliger Quellenangabe, aber **keine
+Koordinaten**. Diese ermittelt `tools/importer/build-projects.mjs`, indem es
+jede Station gegen die OSM-Daten desselben Datenstands verortet, also gegen
+Bestandsstationen, Ortsteile, Landmarken, Straßennamen und benannte Objekte auf
+den geplanten Trassen, wobei die Übereinstimmung des Namens stärker gewichtet
+wird als die Nähe.
 
-Die Trassenführung folgt, wo vorhanden, den in OSM erfassten geplanten Gleisen
-(U5 Ost, U4 Grasbrook) oder dem Bestandskorridor (S4). Für die
-Straßenbahnvorschläge wird über einen Graphen aus 67 424 Straßenwegen und
-366 161 Knoten geroutet — sonst liefen die Linien quer über die Alster.
+Die Trassenführung folgt, soweit vorhanden, den in OpenStreetMap erfassten
+geplanten Gleisen wie bei der U5 Ost und der U4 Grasbrook oder dem
+Bestandskorridor wie bei der S4. Die Straßenbahnvorschläge werden über einen
+Graphen aus 67 424 Straßenwegen und 366 161 Knoten geführt, da die Linien sonst
+quer über die Alster verliefen.
 
-Kontrollwerte: U5 Ost 5,5 km (HOCHBAHN: rund 5,8 km), U5 City Nord –
-Jarrestraße 2,4 km (rund 2,6 km).
+Zur Kontrolle ergibt sich für die U5 Ost eine Länge von 5,5 km gegenüber rund
+5,8 km bei der HOCHBAHN und für den Abschnitt der U5 von City Nord bis
+Jarrestraße eine Länge von 2,4 km gegenüber rund 2,6 km.
 
-### Das Straßenbahnnetz der Studie
+### Straßenbahnnetz der Studie
 
-Die Studie „Alternativen für eine Fortsetzung der U5 ab Borgweg“ (Dieter Doege
-und Jens Ode im Auftrag der Fraktion Die Linke in der Hamburgischen
-Bürgerschaft, Stand Juli 2026, vorgestellt am 12.08.2026) beschreibt vier
-Korridore A bis D mit zusammen 43,732 km und 91 Haltestellen, für die sie
-höchstens 1,5 Mrd. € ansetzt. Ihre Karten nennen jede Haltestelle beim Namen.
+Die Studie „Alternativen für eine Fortsetzung der U5 ab Borgweg“, die Dieter
+Doege und Jens Ode im Auftrag der Fraktion Die Linke in der Hamburgischen
+Bürgerschaft erstellt haben (Stand Juli 2026, vorgestellt am 12.08.2026),
+beschreibt vier Korridore A bis D mit zusammen 43,732 km und 91 Haltestellen,
+für die sie höchstens 1,5 Mrd. € ansetzt, und nennt in ihren Karten jede
+Haltestelle beim Namen.
 
 Die Anwendung übernimmt diese Haltestellen und verortet sie an den
-gleichnamigen Bushaltestellen in OpenStreetMap; fünf Namen, zu denen es dort
-keine Haltestelle gibt, sind an der gleichnamigen Straße verortet. Zwischen
-zwei Haltestellen folgt die Linie dem Straßennetz, sofern der Weg höchstens
-ein Viertel länger ist als die Luftlinie, und sonst der Luftlinie. So kommt
-die Anwendung auf 44,3 km gegenüber 43,7 km in der Studie. Der Korridor C ist
-als zwei Linien abgelegt, weil er sich im Westen in eine Schleife über den
-Osdorfer Born teilt, und im Korridor A beschriftet die Karte der Studie nur 21
-der 22 genannten Haltestellen.
+gleichnamigen Bushaltestellen in OpenStreetMap, während fünf Namen, zu denen es
+dort keine Haltestelle gibt, an der gleichnamigen Straße verortet sind.
+Zwischen zwei Haltestellen folgt die Linie dem Straßennetz, sofern der Weg
+höchstens ein Viertel länger ist als die Luftlinie, und andernfalls der
+Luftlinie, woraus sich 44,3 km gegenüber 43,7 km in der Studie ergeben. Der
+Korridor C ist als zwei Linien angelegt, weil er sich im Westen in eine
+Schleife über den Osdorfer Born teilt, und im Korridor A beschriftet die Karte
+der Studie nur 21 der 22 genannten Haltestellen.
 
-## 3b. Berlin
+## 5. Berlin
 
-Dieselbe Pipeline, andere Konfiguration (`data/cities/berlin.json`).
+Berlin durchläuft dieselbe Pipeline mit einer eigenen Konfiguration in
+`data/cities/berlin.json`.
 
 | Datensatz | Quelle | Umfang |
 | --- | --- | --- |
@@ -191,35 +200,40 @@ Die Einwohnerzahlen stammen aus dem Statistischen Bericht A I 5 – hj 2/25, der
 in `data/curated/berlin-ortsteile-2025.json` abgelegt ist und über die
 Ortsteilnummer (`ref:DE-BE:OT`) mit den OSM-Grenzen verknüpft wird. Ortsteile,
 deren Grenze in OpenStreetMap aus mehreren Flächen besteht, werden dabei zu
-einer Fläche zusammengeführt, damit ihre Einwohner nicht doppelt gezählt werden.
+einer Fläche zusammengeführt, damit ihre Einwohner nicht doppelt gezählt
+werden.
 
-Die 2 196 500 Arbeitsplätze sind die Erwerbstätigen am Arbeitsort 2025 nach dem
-Arbeitskreis Erwerbstätigenrechnung; sie werden wie in Hamburg nach
-Nichtwohn-Geschossfläche verteilt.
+Die 2 196 500 Arbeitsplätze entsprechen den Erwerbstätigen am Arbeitsort 2025
+nach dem Arbeitskreis Erwerbstätigenrechnung und werden wie in Hamburg nach
+Nichtwohngeschossfläche verteilt.
 
-## 4. Was fehlt
+## 6. Fehlende Daten
 
-Ehrlich benannt, weil es die Ergebnisse beeinflusst:
+Die folgenden Lücken sind aufgeführt, weil sie die Ergebnisse beeinflussen.
 
-* **Baugrund.** Hamburgs Marsch-, Sand- und Geschiebemergelschichten und der
-  Grundwasserstand sind der größte Kostentreiber im Tunnelbau. Es gibt keinen
-  offenen, flächendeckenden, maschinenlesbaren Datensatz dazu; das Modell
-  arbeitet mit einem pauschalen Faktor von 1,08.
-* **Leitungsbestand.** Für Bauweise und Kosten in offener Bauweise
-  entscheidend, nicht öffentlich verfügbar.
-* **Quelle-Ziel-Verflechtung.** Es gibt keine offene Matrix für Hamburg. Das
-  Nachfragemodell arbeitet deshalb mit Einzugsbereichen und Reisezeiten zu
-  Beschäftigungszentren statt mit Wegeketten.
-* **Fahrgastzahlen je Station.** HOCHBAHN und S-Bahn veröffentlichen keine
-  stationsscharfen Zahlen. Kalibriert wird gegen die Netzsumme.
-* **Amtliche Kleinräumigkeit außerhalb Hamburgs.** Schleswig-Holstein,
-  Niedersachsen und Mecklenburg-Vorpommern veröffentlichen Einwohnerzahlen je
-  Gemeinde, aber nicht in einem gemeinsamen, maschinenlesbaren Raster. Wer es
-  genauer braucht: der **Zensus-2022-Gitterdatensatz** des Statistischen
-  Bundesamtes (100-m-Raster, dl-de/by-2-0) deckt die gesamte Region ab und
-  ließe sich anstelle der OSM-Ortsknoten einlesen — er ist nur rund 2 GB groß
-  und deshalb hier nicht mitgeliefert. Der Importer erwartet lediglich
-  Zellmittelpunkt und Einwohnerzahl.
+Zum **Baugrund** gibt es keinen offenen, flächendeckenden und maschinenlesbaren
+Datensatz, obwohl die Marsch-, Sand- und Geschiebemergelschichten Hamburgs und
+der Grundwasserstand den größten Kostentreiber im Tunnelbau darstellen,
+weshalb das Modell mit einem pauschalen Faktor von 1,08 arbeitet.
 
-Wären diese Daten verfügbar, würden sie über dieselbe Pipeline eingespeist —
-die Modelle lesen sie aus `CityData`, nicht aus dem Code.
+Der **Leitungsbestand**, der für Bauweise und Kosten der offenen Bauweise
+entscheidend ist, ist nicht öffentlich verfügbar.
+
+Eine offene **Quelle-Ziel-Matrix** gibt es für Hamburg nicht, weshalb das
+Nachfragemodell mit Einzugsbereichen und Reisezeiten zu Beschäftigungszentren
+arbeitet statt mit Wegeketten.
+
+**Fahrgastzahlen je Station** veröffentlichen weder die HOCHBAHN noch die
+S-Bahn, sodass gegen die Summe des Netzes kalibriert wird.
+
+**Amtliche Daten mit feiner räumlicher Auflösung außerhalb Hamburgs**
+veröffentlichen Schleswig-Holstein, Niedersachsen und Mecklenburg-Vorpommern
+zwar je Gemeinde, aber nicht in einem gemeinsamen, maschinenlesbaren Raster.
+Der **Gitterdatensatz des Zensus 2022** des Statistischen Bundesamtes mit
+einem Raster von 100 m unter dl-de/by-2-0 deckt die gesamte Region ab und
+ließe sich anstelle der OSM-Ortsknoten einlesen, wird aber wegen seiner Größe
+von rund 2 GB nicht mitgeliefert, wobei der Importer lediglich
+Zellmittelpunkt und Einwohnerzahl erwartet.
+
+Stünden diese Daten zur Verfügung, würden sie über dieselbe Pipeline
+eingespeist, da die Modelle sie aus `CityData` und nicht aus dem Code lesen.
