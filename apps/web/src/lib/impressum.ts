@@ -20,9 +20,9 @@ export const OPERATOR = {
   /** Full name, or the company with its legal form. */
   name: 'Filipe Laitenberger',
   /** Street and number. A PO box is not sufficient under § 5 DDG. */
-  street: 'Richard-Linde-Weg 1',
+  street: 'Lohbrügger Landstraße 8',
   /** Postcode and town. */
-  city: '21033 Hamburg',
+  city: '21031 Hamburg',
   country: 'Deutschland',
   /** Must actually be read: it is also the contact point under Art. 12 DSA. */
   email: 'f.laitenberger@gmail.com',
