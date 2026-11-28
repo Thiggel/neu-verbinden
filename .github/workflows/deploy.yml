@@ -114,5 +114,20 @@ jobs:
           VERCEL_PROJECT_ID: ${{ env.WEB_PROJECT_ID }}
         run: |
           npx --yes $VERCEL_CLI pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+          # Variables marked as sensitive in Vercel cannot be read back, so the
+          # pull writes the placeholder "[SENSITIVE]" in their place, and a build
+          # outside Vercel would inline it as the API address. The address is
+          # public anyway, so it is taken from the repository variable instead,
+          # and the build stops if neither source yields a usable URL.
+          ENV_FILE=.vercel/.env.production.local
+          if [ -n "${{ vars.API_URL }}" ]; then
+            grep -v '^NEXT_PUBLIC_API_URL=' "$ENV_FILE" > "$ENV_FILE.tmp" || true
+            echo 'NEXT_PUBLIC_API_URL="${{ vars.API_URL }}"' >> "$ENV_FILE.tmp"
+            mv "$ENV_FILE.tmp" "$ENV_FILE"
+          fi
+          grep -Eq '^NEXT_PUBLIC_API_URL="?https?://' "$ENV_FILE" || {
+            echo "NEXT_PUBLIC_API_URL is missing or not a URL; set the repository variable API_URL." >&2
+            exit 1
+          }
           npx --yes $VERCEL_CLI build --prod --token="${{ secrets.VERCEL_TOKEN }}"
           npx --yes $VERCEL_CLI deploy --prebuilt --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"

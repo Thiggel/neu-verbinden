@@ -119,8 +119,12 @@ außerdem `DATABASE_URL_UNPOOLED`, die der Server bevorzugt, weil die
 Migrationen eine Sitzungssperre benötigen, die der Pooler nicht hält.
 
 In GitHub sind als Secrets `VERCEL_TOKEN` und `VERCEL_ORG_ID` hinterlegt und
-als optionale Variable `API_URL`, bei deren Angabe die Oberfläche erst
-ausgerollt wird, wenn die neue API antwortet. Die IDs der beiden Projekte
+als Variable `API_URL`, bei deren Angabe die Oberfläche erst ausgerollt wird,
+wenn die neue API antwortet, und die außerdem als `NEXT_PUBLIC_API_URL` in den
+Bau der Oberfläche eingeht. Das ist nötig, weil Vercel eine als vertraulich
+markierte Variable beim Herunterladen der Einstellungen durch den Platzhalter
+`[SENSITIVE]` ersetzt, den ein Bau außerhalb von Vercel sonst als Adresse der
+API übernähme. Die IDs der beiden Projekte
 werden nicht hinterlegt, sondern vor dem Hochladen anhand der in `deploy.yml`
 genannten Projektnamen bei Vercel erfragt, weil eine vertauschte oder
 fehlerhafte ID sonst die Oberfläche durch die API ersetzen oder den Ablauf
