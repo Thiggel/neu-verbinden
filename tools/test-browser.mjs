@@ -81,7 +81,7 @@ async function open(path = '/', { city = 'hamburg' } = {}) {
 
 /** Dismiss the welcome sheet, choosing a starting point by its visible text. */
 async function start(page, choice = 'Geplante Vorhaben') {
-  const heading = page.getByRole('heading', { name: /Netzentwurf für/ });
+  const heading = page.getByRole('heading', { name: /Wie würdest du .* verbinden/ });
   await heading.waitFor({ state: 'visible', timeout: READY });
   // Scoped to the sheet's own buttons. Matching on text alone picked the hidden
   // <option> of the scenario <select> behind it, which is never clickable.
